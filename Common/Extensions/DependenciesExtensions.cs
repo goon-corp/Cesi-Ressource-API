@@ -56,6 +56,8 @@ using Ressource_API.Features.ProfilePictures.Services;
 using Ressource_API.Features.ProfilePictures.Factories;
 using Ressource_API.Features.Quizzes.Repositories;
 using Ressource_API.Features.Quizzes.Factories;
+using Ressource_API.Features.QuizzQuestions.Factories;
+using Ressource_API.Features.QuizzQuestions.Repositories;
 using Ressource_API.Features.QuizzQuestions.Services;
 using Ressource_API.Features.RefreshTokens.Repositories;
 using Ressource_API.Features.RefreshTokens.Services;
@@ -138,6 +140,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPollFactory, PollFactory>();
         builder.Services.AddScoped<IProfilePictureFactory, ProfilePictureFactory>();
         builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
+        builder.Services.AddScoped<IQuizzQuestionFactory, QuizzQuestionFactory>();
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
@@ -211,6 +214,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPollRepository, PollRepository>();
         builder.Services.AddScoped<IProfilePictureRepository, ProfilePictureRepository>();
         builder.Services.AddScoped<IQuizzRepository, QuizzRepository>();
+        builder.Services.AddScoped<IQuizzQuestionRepository, QuizzQuestionRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         builder.Services.AddScoped<IRegionRepository, RegionRepository>();
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
