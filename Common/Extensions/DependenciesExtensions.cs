@@ -1,0 +1,308 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using Ressource_API.Common.Data;
+using Ressource_API.Features.Addresses.Repositories;
+using Ressource_API.Features.Addresses.Factories;
+using Ressource_API.Features.Articles.Repositories;
+using Ressource_API.Features.Articles.Services;
+using Ressource_API.Features.Articles.Factories;
+using Ressource_API.Features.BackofficeLogLevels.Repositories;
+using Ressource_API.Features.BackofficeLogLevels.Services;
+using Ressource_API.Features.BackofficeLogLevels.Factories;
+using Ressource_API.Features.BackofficeLogs.Repositories;
+using Ressource_API.Features.BackofficeLogs.Services;
+using Ressource_API.Features.BackofficeLogs.Factories;
+using Ressource_API.Features.BackofficeOperationTypes.Repositories;
+using Ressource_API.Features.BackofficeOperationTypes.Services;
+using Ressource_API.Features.BackofficeOperationTypes.Factories;
+using Ressource_API.Features.Cities.Repositories;
+using Ressource_API.Features.Cities.Factories;
+using Ressource_API.Features.Comments.Repositories;
+using Ressource_API.Features.Comments.Services;
+using Ressource_API.Features.Comments.Factories;
+using Ressource_API.Features.Departments.Repositories;
+using Ressource_API.Features.Departments.Services;
+using Ressource_API.Features.Departments.Factories;
+using Ressource_API.Features.EmailLogs.Repositories;
+using Ressource_API.Features.EmailLogs.Services;
+using Ressource_API.Features.EmailLogs.Factories;
+using Ressource_API.Features.Events.Repositories;
+using Ressource_API.Features.Events.Services;
+using Ressource_API.Features.Events.Factories;
+using Ressource_API.Features.FriendsRequests.Repositories;
+using Ressource_API.Features.FriendsRequests.Services;
+using Ressource_API.Features.FriendsRequests.Factories;
+using Ressource_API.Features.HealthChecks.Services;
+using Ressource_API.Features.Logins.Repositories;
+using Ressource_API.Features.Logins.Services;
+using Ressource_API.Features.Logins.Factories;
+using Ressource_API.Features.Notifications.Repositories;
+using Ressource_API.Features.Notifications.Services;
+using Ressource_API.Features.Notifications.Factories;
+using Ressource_API.Features.PasswordHistories.Repositories;
+using Ressource_API.Features.PasswordHistories.Services;
+using Ressource_API.Features.PasswordHistories.Factories;
+using Ressource_API.Features.PollOptions.Repositories;
+using Ressource_API.Features.PollOptions.Services;
+using Ressource_API.Features.PollOptions.Factories;
+using Ressource_API.Features.Polls.Repositories;
+using Ressource_API.Features.Polls.Services;
+using Ressource_API.Features.Polls.Factories;
+using Ressource_API.Features.ProfilePictures.Repositories;
+using Ressource_API.Features.ProfilePictures.Services;
+using Ressource_API.Features.ProfilePictures.Factories;
+using Ressource_API.Features.Quizzes.Repositories;
+using Ressource_API.Features.Quizzes.Factories;
+using Ressource_API.Features.QuizzQuestions.Services;
+using Ressource_API.Features.RefreshTokens.Repositories;
+using Ressource_API.Features.RefreshTokens.Services;
+using Ressource_API.Features.RefreshTokens.Factories;
+using Ressource_API.Features.Regions.Repositories;
+using Ressource_API.Features.Regions.Services;
+using Ressource_API.Features.Regions.Factories;
+using Ressource_API.Features.Reports.Repositories;
+using Ressource_API.Features.Reports.Services;
+using Ressource_API.Features.Reports.Factories;
+using Ressource_API.Features.ReportTypes.Repositories;
+using Ressource_API.Features.ReportTypes.Services;
+using Ressource_API.Features.ReportTypes.Factories;
+using Ressource_API.Features.RessourceConfidentialityTypes.Repositories;
+using Ressource_API.Features.RessourceConfidentialityTypes.Services;
+using Ressource_API.Features.RessourceConfidentialityTypes.Factories;
+using Ressource_API.Features.RessourceMedias.Repositories;
+using Ressource_API.Features.RessourceMedias.Services;
+using Ressource_API.Features.RessourceMedias.Factories;
+using Ressource_API.Features.RessourceProgressions.Repositories;
+using Ressource_API.Features.RessourceProgressions.Services;
+using Ressource_API.Features.RessourceProgressions.Factories;
+using Ressource_API.Features.Ressources.Repositories;
+using Ressource_API.Features.Ressources.Services;
+using Ressource_API.Features.Ressources.Factories;
+using Ressource_API.Features.RessourceStatuses.Repositories;
+using Ressource_API.Features.RessourceStatuses.Services;
+using Ressource_API.Features.RessourceStatuses.Factories;
+using Ressource_API.Features.RessourceTypes.Repositories;
+using Ressource_API.Features.RessourceTypes.Services;
+using Ressource_API.Features.RessourceTypes.Factories;
+using Ressource_API.Features.SessionMessages.Repositories;
+using Ressource_API.Features.SessionMessages.Services;
+using Ressource_API.Features.SessionMessages.Factories;
+using Ressource_API.Features.Sessions.Repositories;
+using Ressource_API.Features.Sessions.Services;
+using Ressource_API.Features.Sessions.Factories;
+using Ressource_API.Features.Tags.Repositories;
+using Ressource_API.Features.Tags.Services;
+using Ressource_API.Features.Tags.Factories;
+using Ressource_API.Features.UserRoles.Repositories;
+using Ressource_API.Features.UserRoles.Services;
+using Ressource_API.Features.UserRoles.Factories;
+using Ressource_API.Features.Users.Repositories;
+using Ressource_API.Features.Users.Services;
+using Ressource_API.Features.Users.Factories;
+
+namespace Ressource_API.Common.Extensions;
+
+public static class DependenciesExtensions
+{
+    public static void InjectDependencies(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddControllers();
+        builder.Services.AddHttpContextAccessor();
+        builder.AddRepositories();
+        builder.AddServices();
+        builder.AddFactories();
+        builder.AddSwagger();
+        builder.AddEfCoreConfiguration();
+    }
+
+    private static void AddFactories(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IAddressFactory, AddressFactory>();
+        builder.Services.AddScoped<IArticleFactory, ArticleFactory>();
+        builder.Services.AddScoped<IBackofficeLogFactory, BackofficeLogFactory>();
+        builder.Services.AddScoped<IBackofficeLogLevelFactory, BackofficeLogLevelFactory>();
+        builder.Services.AddScoped<IBackofficeOperationTypeFactory, BackofficeOperationTypeFactory>();
+        builder.Services.AddScoped<ICityFactory, CityFactory>();
+        builder.Services.AddScoped<ICommentFactory, CommentFactory>();
+        builder.Services.AddScoped<IDepartmentFactory, DepartmentFactory>();
+        builder.Services.AddScoped<IEmailLogFactory, EmailLogFactory>();
+        builder.Services.AddScoped<IEventFactory, EventFactory>();
+        builder.Services.AddScoped<IFriendsRequestFactory, FriendsRequestFactory>();
+        builder.Services.AddScoped<ILoginFactory, LoginFactory>();
+        builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
+        builder.Services.AddScoped<IPasswordHistoryFactory, PasswordHistoryFactory>();
+        builder.Services.AddScoped<IPollOptionFactory, PollOptionFactory>();
+        builder.Services.AddScoped<IPollFactory, PollFactory>();
+        builder.Services.AddScoped<IProfilePictureFactory, ProfilePictureFactory>();
+        builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
+        builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
+        builder.Services.AddScoped<IRegionFactory, RegionFactory>();
+        builder.Services.AddScoped<IReportFactory, ReportFactory>();
+        builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
+        builder.Services.AddScoped<IRessourceConfidentialityTypeFactory, RessourceConfidentialityTypeFactory>();
+        builder.Services.AddScoped<IRessourceMediaFactory, RessourceMediaFactory>();
+        builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
+        builder.Services.AddScoped<IRessourceFactory, RessourceFactory>();
+        builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
+        builder.Services.AddScoped<IRessourceTypeFactory, RessourceTypeFactory>();
+        builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
+        builder.Services.AddScoped<ISessionFactory, SessionFactory>();
+        builder.Services.AddScoped<ITagFactory, TagFactory>();
+        builder.Services.AddScoped<IUserRoleFactory, UserRoleFactory>();
+        builder.Services.AddScoped<IUserFactory, UserFactory>();
+    }
+
+    private static void AddServices(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IArticleService, ArticleService>();
+        builder.Services.AddScoped<IBackofficeLogService, BackofficeLogService>();
+        builder.Services.AddScoped<IBackofficeLogLevelService, BackofficeLogLevelService>();
+        builder.Services.AddScoped<IBackofficeOperationTypeService, BackofficeOperationTypeService>();
+        builder.Services.AddScoped<ICommentService, CommentService>();
+        builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+        builder.Services.AddScoped<IEmailLogService, EmailLogService>();
+        builder.Services.AddScoped<IEventService, EventService>();
+        builder.Services.AddScoped<IFriendsRequestService, FriendsRequestService>();
+        builder.Services.AddScoped<ILoginService, LoginService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IPasswordHistoryService, PasswordHistoryService>();
+        builder.Services.AddScoped<IPollOptionService, PollOptionService>();
+        builder.Services.AddScoped<IPollService, PollService>();
+        builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
+        builder.Services.AddScoped<IQuizzQuestionService, QuizzQuestionService>();
+        builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        builder.Services.AddScoped<IRegionService, RegionService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddScoped<IReportTypeService, ReportTypeService>();
+        builder.Services.AddScoped<IRessourceConfidentialityTypeService, RessourceConfidentialityTypeService>();
+        builder.Services.AddScoped<IRessourceMediaService, RessourceMediaService>();
+        builder.Services.AddScoped<IRessourceProgressionService, RessourceProgressionService>();
+        builder.Services.AddScoped<IRessourceService, RessourceService>();
+        builder.Services.AddScoped<IRessourceStatusService, RessourceStatusService>();
+        builder.Services.AddScoped<IRessourceTypeService, RessourceTypeService>();
+        builder.Services.AddScoped<ISessionMessageService, SessionMessageService>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+    }
+
+    private static void AddRepositories(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+        builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+        builder.Services.AddScoped<IBackofficeLogRepository, BackofficeLogRepository>();
+        builder.Services.AddScoped<IBackofficeLogLevelRepository, BackofficeLogLevelRepository>();
+        builder.Services.AddScoped<IBackofficeOperationTypeRepository, BackofficeOperationTypeRepository>();
+        builder.Services.AddScoped<ICityRepository, CityRepository>();
+        builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+        builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        builder.Services.AddScoped<IEmailLogRepository, EmailLogRepository>();
+        builder.Services.AddScoped<IEventRepository, EventRepository>();
+        builder.Services.AddScoped<IFriendsRequestRepository, FriendsRequestRepository>();
+        builder.Services.AddScoped<ILoginRepository, LoginRepository>();
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+        builder.Services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+        builder.Services.AddScoped<IPollOptionRepository, PollOptionRepository>();
+        builder.Services.AddScoped<IPollRepository, PollRepository>();
+        builder.Services.AddScoped<IProfilePictureRepository, ProfilePictureRepository>();
+        builder.Services.AddScoped<IQuizzRepository, QuizzRepository>();
+        builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        builder.Services.AddScoped<IRegionRepository, RegionRepository>();
+        builder.Services.AddScoped<IReportRepository, ReportRepository>();
+        builder.Services.AddScoped<IReportTypeRepository, ReportTypeRepository>();
+        builder.Services.AddScoped<IRessourceConfidentialityTypeRepository, RessourceConfidentialityTypeRepository>();
+        builder.Services.AddScoped<IRessourceMediaRepository, RessourceMediaRepository>();
+        builder.Services.AddScoped<IRessourceProgressionRepository, RessourceProgressionRepository>();
+        builder.Services.AddScoped<IRessourceRepository, RessourceRepository>();
+        builder.Services.AddScoped<IRessourceStatusRepository, RessourceStatusRepository>();
+        builder.Services.AddScoped<IRessourceTypeRepository, RessourceTypeRepository>();
+        builder.Services.AddScoped<ISessionMessageRepository, SessionMessageRepository>();
+        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+        builder.Services.AddScoped<ITagRepository, TagRepository>();
+        builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+    }
+
+    private static void AddJwt(this WebApplicationBuilder builder)
+    {
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ??
+                        throw new InvalidOperationException("JWT secret 'JWT_SECRET' not found.");
+
+        var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+        builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // True in production
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+            });
+
+        builder.Services.AddAuthorization();
+    }
+
+    private static void AddSwagger(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddOpenApi();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo() { Title = "Ressource_relationnelles", Version = "v1" });
+        });
+    }
+
+    private static void AddEfCoreConfiguration(this WebApplicationBuilder builder)
+    {
+        var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'DATABASE_CONNECTION_STRING' not found.");
+
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(
+                connectionString,
+                npgsqlOptions => npgsqlOptions.CommandTimeout(30)));
+    }
+
+    private static void AddCorsConfiguration(this WebApplicationBuilder builder)
+    {
+        var clientUrl = Environment.GetEnvironmentVariable("URL_CLIENT") ??
+                        throw new InvalidOperationException("Client app URL 'URL_CLIENT' not found.");
+
+        var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
+                            throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowClientApp",
+                policy =>
+                {
+                    policy.WithOrigins(clientUrl)
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            options.AddPolicy("AllowBackLog",
+                policy =>
+                {
+                    policy.WithOrigins(backofficeUrl)
+                        .AllowCredentials()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+        });
+    }
+}

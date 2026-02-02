@@ -1,4 +1,4 @@
-namespace Common.Data.Factories;
+namespace Ressource_API.Common.Data.Factories;
 
 /// <summary>
 /// Base interface for all factories

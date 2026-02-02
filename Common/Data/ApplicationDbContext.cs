@@ -1,9 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
-using Features;
 using Microsoft.EntityFrameworkCore;
+using Ressource_API.Features.Addresses.Models;
+using Ressource_API.Features.Articles.Models;
+using Ressource_API.Features.BackofficeLogLevels.Models;
+using Ressource_API.Features.BackofficeLogs.Models;
+using Ressource_API.Features.BackofficeOperationTypes.Models;
+using Ressource_API.Features.Cities.Models;
+using Ressource_API.Features.Comments.Models;
+using Ressource_API.Features.Departments.Models;
+using Ressource_API.Features.EmailLogs.Models;
+using Ressource_API.Features.Events.Models;
+using Ressource_API.Features.FriendsRequests.Models;
+using Ressource_API.Features.Logins.Models;
+using Ressource_API.Features.Notifications.Models;
+using Ressource_API.Features.PasswordHistories.Models;
+using Ressource_API.Features.PasswordInfos.Models;
+using Ressource_API.Features.PollOptions.Models;
+using Ressource_API.Features.Polls.Models;
+using Ressource_API.Features.ProfilePictures.Models;
+using Ressource_API.Features.Quizzes.Models;
+using Ressource_API.Features.QuizzQuestions.Models;
+using Ressource_API.Features.RefreshTokens.Models;
+using Ressource_API.Features.Regions.Models;
+using Ressource_API.Features.Reports.Models;
+using Ressource_API.Features.ReportTypes.Models;
+using Ressource_API.Features.RessourceConfidentialityTypes.Models;
+using Ressource_API.Features.RessourceMedias.Models;
+using Ressource_API.Features.RessourceProgressions.Models;
+using Ressource_API.Features.Ressources.Models;
+using Ressource_API.Features.RessourceStatuses.Models;
+using Ressource_API.Features.RessourceTypes.Models;
+using Ressource_API.Features.SessionMessages.Models;
+using Ressource_API.Features.Sessions.Models;
+using Ressource_API.Features.Tags.Models;
+using Ressource_API.Features.UserRoles.Models;
+using Ressource_API.Features.Users.Models;
 
-namespace Common.Data;
+namespace Ressource_API.Common.Data;
 
 public partial class ApplicationDbContext : DbContext
 {

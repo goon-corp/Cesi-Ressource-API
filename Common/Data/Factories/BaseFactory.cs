@@ -1,4 +1,6 @@
-namespace Common.Data.Factories;
+using Ressource_API.Common.Data.Factories;
+
+namespace Ressource_API.Common.Data.Factories;
 
 /// <summary>
 /// Abstract base class for all factories
