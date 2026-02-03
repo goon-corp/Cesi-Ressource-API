@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
@@ -118,6 +119,7 @@ public static class DependenciesExtensions
         builder.AddFactories();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
+        builder.AddHybridCache();
     }
 
     private static void AddFactories(this WebApplicationBuilder builder)
@@ -318,6 +320,24 @@ public static class DependenciesExtensions
                         .AllowAnyMethod()
                         .AllowAnyHeader();
                 });
+        });
+    }
+
+    private static void AddHybridCache(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHybridCache(options =>
+        {
+            options.DefaultEntryOptions = new HybridCacheEntryOptions()
+            {
+                Expiration = TimeSpan.FromMinutes(10),
+                LocalCacheExpiration = TimeSpan.FromMinutes(10)
+            };
+        });
+
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+            options.Configuration = redisConnectionString;
         });
     }
 }
