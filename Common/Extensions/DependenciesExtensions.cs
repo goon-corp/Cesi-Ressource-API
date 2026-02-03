@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
@@ -104,6 +105,10 @@ using Ressource_API.Features.UserRoles.Factories;
 using Ressource_API.Features.Users.Repositories;
 using Ressource_API.Features.Users.Services;
 using Ressource_API.Features.Users.Factories;
+using Simply.Auth.Argon2.Configuration;
+using Simply.Auth.Argon2.Services;
+using Simply.Auth.AspNetCore.Extensions;
+using Simply.Auth.Core.Abstractions;
 
 namespace Ressource_API.Common.Extensions;
 
@@ -113,11 +118,46 @@ public static class DependenciesExtensions
     {
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
+        builder.AddSimply(65536, 3, 4, "ressource-api", "ressource-front");
         builder.AddRepositories();
         builder.AddServices();
         builder.AddFactories();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
+    }
+
+    private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,
+        int parallelismDegree, string issuer, string audience)
+    {
+        string jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+                           ?? throw new Exception("JWT_SECRET not found");
+
+
+        builder.Services.AddSimplyAuth(
+            argon2 =>
+            {
+                argon2.MemorySize = memorySize;
+                argon2.Iterations = iterations;
+                argon2.DegreeOfParallelism = parallelismDegree;
+            },
+            jwt =>
+            {
+                jwt.SecretKey = jwtSecret;
+                jwt.Issuer = issuer;
+                jwt.Audience = audience;
+            });
+
+        var descriptor = builder.Services.FirstOrDefault(d =>
+            d.ServiceType == typeof(ISimplyPasswordHasher));
+
+        if (descriptor != null)
+            builder.Services.Remove(descriptor);
+
+        builder.Services.AddSingleton<ISimplyPasswordHasher>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<SimplyArgon2Options>>();
+            return new SimplyArgon2Hasher(options);
+        });
     }
 
     private static void AddFactories(this WebApplicationBuilder builder)
