@@ -2,8 +2,12 @@ namespace Ressource_API.Features.Tags.TagDtos;
 
 public class CreateTagDto
 {
-    // TODO: Add properties needed to create a Tag
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public string Description { get; set; } = string.Empty;
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
+    public string Label { get; set; } = null!;
+    
 }
