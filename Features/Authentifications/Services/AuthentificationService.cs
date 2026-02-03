@@ -2,28 +2,38 @@ using api.CZ.Features.Authentifications.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Common.Services;
+using Ressource_API.Features.Authentifications.AuthentificationDtos;
+using Ressource_API.Features.Logins.Repositories;
+using Ressource_API.Features.Logins.Factories;
+using Ressource_API.Features.Logins.Models;
+using Ressource_API.Features.PasswordInfos.Repositories;
+using Ressource_API.Features.PasswordInfos.Factories;
+using Ressource_API.Features.PasswordHistories.Services;
+using Ressource_API.Features.PasswordInfos.Models;
 using Ressource_API.Features.RefreshTokens.Services;
 using Ressource_API.Features.Users.Factories;
+using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.Repositories;
 using Simply.Auth.AspNetCore.Models;
 using Simply.Auth.Core.Abstractions;
 using Simply.Auth.Core.Enums;
+
 namespace Ressource_API.Features.Authentifications.Services;
-
-
-
 
 public class AuthentificationService : IAuthentificationService
 {
     private const int MaxFailedLoginAttempts = 5;
     private const int LockoutDurationMinutes = 15;
+    private const int ResetTokenExpirationMinutes = 15;
 
     private readonly IUserRepository _userRepository;
     private readonly ISimplyAuthService _simplyAuthService;
     private readonly IUserFactory _userFactory;
+    private readonly ILoginRepository _loginRepository;
+    private readonly ILoginFactory _loginFactory;
+    private readonly IPasswordInfoRepository _passwordInfoRepository;
+    private readonly IPasswordInfoFactory _passwordInfoFactory;
     private readonly IEmailService _emailService;
-    private readonly IEmailConfirmationTokenService _emailConfirmationTokenService;
-    private readonly IPasswordResetTokenService _passwordResetTokenService;
     private readonly IRefreshTokenService _tokenService;
     private readonly IPasswordHistoryManager _passwordHistoryManager;
     private readonly ILogger<AuthentificationService> _logger;
@@ -33,18 +43,22 @@ public class AuthentificationService : IAuthentificationService
         ISimplyAuthService simplyAuthService,
         IUserFactory userFactory,
         IEmailService emailService,
-        IEmailConfirmationTokenService emailConfirmationTokenService,
-        IPasswordResetTokenService passwordResetTokenService,
         IRefreshTokenService tokenService,
         IPasswordHistoryManager passwordHistoryManager,
+        ILoginRepository loginRepository,
+        ILoginFactory loginFactory,
+        IPasswordInfoRepository passwordInfoRepository,
+        IPasswordInfoFactory passwordInfoFactory,
         ILogger<AuthentificationService> logger)
     {
         _userRepository = userRepository;
         _simplyAuthService = simplyAuthService;
         _userFactory = userFactory;
+        _loginRepository = loginRepository;
+        _loginFactory = loginFactory;
+        _passwordInfoRepository = passwordInfoRepository;
+        _passwordInfoFactory = passwordInfoFactory;
         _emailService = emailService;
-        _emailConfirmationTokenService = emailConfirmationTokenService;
-        _passwordResetTokenService = passwordResetTokenService;
         _tokenService = tokenService;
         _passwordHistoryManager = passwordHistoryManager;
         _logger = logger;
@@ -60,31 +74,37 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("Password must be identical.");
         }
 
-        if (await _userRepository.AnyAsync(u => u.Email == dto.Email))
+        if (await _loginRepository.AnyAsync(l => l.Email == dto.Email))
         {
             _logger.LogWarning("Registration failed: email already exists {Email}", dto.Email);
             return Result.Failure("Email already exists");
         }
 
-        var hash = _simplyAuthService.HashPassword(dto.Password);
+        var passwordHash = _simplyAuthService.HashPassword(dto.Password);
 
-        User newUserAccount = _userFactory.Create(dto.Email, dto.FirstName, dto.LastName, hash);
-        newUserAccount.MemberSince = DateTime.UtcNow;
+        User newUser = _userFactory.Create(dto.UserName, dto.FirstName, dto.LastName, dto.UserRoleId);
+        newUser.ActivationCode = Guid.NewGuid();
+        newUser.IsActive = false;
         
-        var newAccount = await _userRepository.AddAsync(newUserAccount);
+        var savedUser = await _userRepository.AddAsync(newUser);
 
-        var confirmationToken = await _emailConfirmationTokenService.NewToken(newUserAccount.Id);
+        Login newLogin = _loginFactory.Create(dto.Email, passwordHash, savedUser.Id);
+        await _loginRepository.AddAsync(newLogin);
+
+        PasswordInfo passwordInfo = _passwordInfoFactory.Create(savedUser.Id);
+        await _passwordInfoRepository.AddAsync(passwordInfo);
+
+        var activationToken = newUser.ActivationCode.Value.ToString();
         
         await _emailService.SendRegisteringConfirmationEmail(
-            confirmationToken.Token,
-            newUserAccount.FirstName,
-            newUserAccount.LastName,
-            newUserAccount.Email, 
+            activationToken,
+            newUser.FirstName,
+            newUser.LastName,
+            dto.Email, 
             "Confirmation de création de compte",
             "Confirmez votre compte");
-            
         
-        _logger.LogInformation("User registered successfully: {UserId}", newUserAccount.Id);
+        _logger.LogInformation("User registered successfully: {UserId}", newUser.Id);
         
         return Result.Success();
     }
@@ -93,74 +113,84 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Login attempt for email {Email}", dto.Email);
 
-        var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var login = await _loginRepository.FirstOrDefaultAsync(l => l.Email == dto.Email);
 
-        if (user is null)
+        if (login is null)
         {
-            _logger.LogWarning("Login failed: user not found for {Email}", dto.Email);
+            _logger.LogWarning("Login failed: login not found for {Email}", dto.Email);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
         }
 
-        // Check if account is locked
-        if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow)
+        var user = await _userRepository.FindAsync(login.UserId);
+
+        if (user is null)
         {
-            var remainingMinutes = (int)Math.Ceiling((user.LockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+            _logger.LogError("Login failed: user not found for {UserId}", login.UserId);
+            return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+        }
+
+        var passwordInfo = await _passwordInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
+
+        if (passwordInfo is null)
+        {
+            passwordInfo = _passwordInfoFactory.Create(user.Id);
+            await _passwordInfoRepository.AddAsync(passwordInfo);
+        }
+
+        var lockoutEndTime = passwordInfo.ResetDate?.AddMinutes(LockoutDurationMinutes);
+        if (passwordInfo.AttemptCount >= MaxFailedLoginAttempts && 
+            lockoutEndTime.HasValue && 
+            lockoutEndTime.Value > DateTime.UtcNow)
+        {
+            var remainingMinutes = (int)Math.Ceiling((lockoutEndTime.Value - DateTime.UtcNow).TotalMinutes);
             _logger.LogWarning("Login failed: account locked for {UserId}, {Minutes} minutes remaining", user.Id, remainingMinutes);
             return Result.Failure<SimplyAuthResponse>($"Account is locked. Please try again in {remainingMinutes} minute(s).");
         }
 
-        if (!user.AccountActivated)
+        if (!user.IsActive || user.ActivationCode.HasValue)
         {
             _logger.LogWarning("Login failed: account not activated for {UserId}", user.Id);
             return Result.Failure<SimplyAuthResponse>("Le compte doit être activé.");
         }
 
-        if (!user.Active)
-        {
-            _logger.LogWarning("Login failed: account disabled for {UserId}", user.Id);
-            return Result.Failure<SimplyAuthResponse>("Account has been disabled. Please contact support.");
-        }
-
-        var result = _simplyAuthService.VerifyPassword(dto.Password, user.PasswordHash);
+        var result = _simplyAuthService.VerifyPassword(dto.Password, login.PasswordHash);
 
         if (result == SimplyVerificationResult.Failed)
         {
-            // Increment failed login attempts
-            user.FailedLoginAttempts++;
-            user.UpdateTime = DateTime.UtcNow;
+            passwordInfo.AttemptCount++;
+            passwordInfo.UpdateTime = DateTime.UtcNow;
 
-            if (user.FailedLoginAttempts >= MaxFailedLoginAttempts)
+            if (passwordInfo.AttemptCount >= MaxFailedLoginAttempts)
             {
-                user.LockedUntil = DateTime.UtcNow.AddMinutes(LockoutDurationMinutes);
-                _logger.LogWarning("Account locked for {UserId} after {Attempts} failed attempts", user.Id, user.FailedLoginAttempts);
+                passwordInfo.ResetDate = DateTime.UtcNow;
+                _logger.LogWarning("Account locked for {UserId} after {Attempts} failed attempts", user.Id, passwordInfo.AttemptCount);
             }
 
-            await _userRepository.UpdateAsync(user);
-            _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id, user.FailedLoginAttempts);
+            await _passwordInfoRepository.UpdateAsync(passwordInfo);
+            _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id, passwordInfo.AttemptCount);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
         }
 
-        // Reset failed login attempts on successful login
-        if (user.FailedLoginAttempts > 0 || user.LockedUntil.HasValue)
+        if (passwordInfo.AttemptCount > 0)
         {
-            user.FailedLoginAttempts = 0;
-            user.LockedUntil = null;
-            user.UpdateTime = DateTime.UtcNow;
-            await _userRepository.UpdateAsync(user);
+            passwordInfo.AttemptCount = 0;
+            passwordInfo.ResetDate = null;
+            passwordInfo.UpdateTime = DateTime.UtcNow;
+            await _passwordInfoRepository.UpdateAsync(passwordInfo);
         }
 
         if (result == SimplyVerificationResult.SuccessRehashNeeded)
         {
             var newHash = _simplyAuthService.HashPassword(dto.Password);
-            user.PasswordHash = newHash;
-            await _userRepository.UpdateAsync(user);
+            login.PasswordHash = newHash;
+            login.UpdateTime = DateTime.UtcNow;
+            await _loginRepository.UpdateAsync(login);
             _logger.LogInformation("Password rehashed for user {UserId}", user.Id);
         }
 
         var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString());
 
-        // Create session for refresh token
-        await _tokenService.CreateSession(
+        await _tokenService.CreateRefreshToken(
             user.Id,
             tokens.RefreshToken,
             tokens.RefreshTokenExpiration);
@@ -180,46 +210,31 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Account confirmation attempt with token {Token}", token);
 
-        var confirmationToken = await _emailConfirmationTokenService.GetEntityByToken(token);
-
-        if (confirmationToken is null)
+        if (!Guid.TryParse(token, out var activationCode))
         {
-            _logger.LogWarning("Account confirmation failed: token not found");
+            _logger.LogWarning("Account confirmation failed: invalid token format");
             return Result.Failure("Invalid token.");
         }
 
-        if (confirmationToken.Consumed)
-        {
-            _logger.LogWarning("Account confirmation failed: token already consumed for user {UserId}", confirmationToken.IdUsers);
-            return Result.Failure("Token already used.");
-        }
-
-        if (confirmationToken.ExpiresAt < DateTime.UtcNow)
-        {
-            _logger.LogWarning("Account confirmation failed: token expired for user {UserId}", confirmationToken.IdUsers);
-            return Result.Failure("Token expired.");
-        }
-
-        var user = await _userRepository.FindAsync(confirmationToken.IdUsers);
+        var user = await _userRepository.FirstOrDefaultAsync(u => u.ActivationCode == activationCode);
 
         if (user is null)
         {
-            _logger.LogError("Account confirmation failed: user {UserId} not found for valid token", confirmationToken.IdUsers);
-            return Result.Failure("User not found.");
+            _logger.LogWarning("Account confirmation failed: user not found for token");
+            return Result.Failure("Invalid token.");
         }
 
-        if (user.AccountActivated)
+        if (!user.ActivationCode.HasValue)
         {
             _logger.LogWarning("Account confirmation attempted on already activated account {UserId}", user.Id);
-            await _emailConfirmationTokenService.Consume(token);
             return Result.Success();
         }
 
-        user.AccountActivated = true;
+        user.ActivationCode = null;
+        user.IsActive = true;
         user.UpdateTime = DateTime.UtcNow;
     
         await _userRepository.UpdateAsync(user);
-        await _emailConfirmationTokenService.Consume(token);
 
         _logger.LogInformation("Account activated successfully for user {UserId}", user.Id);
 
@@ -230,42 +245,50 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Password reset request for email {Email}", dto.Email);
 
-        var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var login = await _loginRepository.FirstOrDefaultAsync(l => l.Email == dto.Email);
 
-        // SECURITY: Don't reveal if email exists or not (prevents email enumeration)
-        // Always return success, but only send email if user exists
-        if (user is null)
+        if (login is null)
         {
             _logger.LogWarning("Password reset requested for non-existent email {Email}", dto.Email);
-            // Simulate processing time to prevent timing attacks
             await Task.Delay(Random.Shared.Next(100, 300));
             return Result.Success();
         }
 
-        if (!user.AccountActivated)
+        var user = await _userRepository.FindAsync(login.UserId);
+
+        if (user is null || !user.IsActive || user.ActivationCode.HasValue)
         {
-            _logger.LogWarning("Password reset requested for unactivated account {UserId}", user.Id);
-            // Still return success to prevent email enumeration
+            _logger.LogWarning("Password reset requested for unactivated account");
             return Result.Success();
         }
 
-        // Generate and store reset token
-        var resetToken = await _passwordResetTokenService.NewToken(user.Id);
+        var passwordInfo = await _passwordInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
 
-        // Send password reset email
+        if (passwordInfo is null)
+        {
+            passwordInfo = _passwordInfoFactory.Create(user.Id);
+            await _passwordInfoRepository.AddAsync(passwordInfo);
+        }
+
+        var resetToken = Guid.NewGuid().ToString();
+        passwordInfo.ResetToken = resetToken;
+        passwordInfo.ResetDate = DateTime.UtcNow;
+        passwordInfo.UpdateTime = DateTime.UtcNow;
+        await _passwordInfoRepository.UpdateAsync(passwordInfo);
+
         var emailResult = await _emailService.SendPasswordResetEmail(
-            resetToken.Token,
+            resetToken,
             user.FirstName,
             user.LastName,
-            user.Email,
+            login.Email,
             "Réinitialisation de votre mot de passe",
             "Vous avez demandé à réinitialiser votre mot de passe.",
-            TimeSpan.FromMinutes(15));
+            TimeSpan.FromMinutes(ResetTokenExpirationMinutes));
 
         if (!emailResult.IsSuccess)
         {
             _logger.LogError("Failed to send password reset email to {Email}: {Error}",
-                user.Email, emailResult.Error);
+                login.Email, emailResult.Error);
             return Result.Failure("Failed to send reset email. Please try again later.");
         }
 
@@ -283,41 +306,46 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("Passwords must match.");
         }
 
-        var resetToken = await _passwordResetTokenService.GetEntityByToken(dto.Token);
+        var passwordInfo = await _passwordInfoRepository
+            .FirstOrDefaultAsync(p => p.ResetToken == dto.Token);
 
-        if (resetToken is null)
+        if (passwordInfo is null)
         {
-            _logger.LogWarning("Password reset failed: invalid or expired token");
+            _logger.LogWarning("Password reset failed: invalid token");
             return Result.Failure("Invalid or expired reset token.");
         }
 
-        if (resetToken.Consumed)
+        if (!passwordInfo.ResetDate.HasValue)
         {
-            _logger.LogWarning("Password reset failed: token already used for user {UserId}",
-                resetToken.IdUsers);
-            return Result.Failure("This reset link has already been used.");
+            _logger.LogWarning("Password reset failed: token has no reset date");
+            return Result.Failure("Invalid reset token.");
         }
 
-        if (resetToken.ExpiresAt < DateTime.UtcNow)
+        var tokenAge = DateTime.UtcNow - passwordInfo.ResetDate.Value;
+        if (tokenAge.TotalMinutes > ResetTokenExpirationMinutes)
         {
-            _logger.LogWarning("Password reset failed: token expired for user {UserId}",
-                resetToken.IdUsers);
+            _logger.LogWarning("Password reset failed: token expired for user {UserId}", passwordInfo.UserId);
             return Result.Failure("This reset link has expired. Please request a new one.");
         }
 
-        var user = await _userRepository.FindAsync(resetToken.IdUsers);
+        var user = await _userRepository.FindAsync(passwordInfo.UserId);
 
         if (user is null)
         {
-            _logger.LogError("Password reset failed: user {UserId} not found for valid token",
-                resetToken.IdUsers);
+            _logger.LogError("Password reset failed: user {UserId} not found for valid token", passwordInfo.UserId);
             return Result.Failure("User not found.");
         }
 
-        // Ensure password info exists
+        var login = await _loginRepository.FirstOrDefaultAsync(l => l.UserId == user.Id);
+
+        if (login is null)
+        {
+            _logger.LogError("Password reset failed: login not found for user {UserId}", user.Id);
+            return Result.Failure("Login information not found.");
+        }
+
         await _passwordHistoryManager.EnsurePasswordsInfoExistsAsync(user.Id);
 
-        // Check if new password is one of the last 5 passwords
         var isPasswordReused = await _passwordHistoryManager.IsPasswordReusedAsync(user.Id, dto.NewPassword);
         if (isPasswordReused)
         {
@@ -325,26 +353,24 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("You cannot reuse any of your last 5 passwords. Please choose a different password.");
         }
 
-        // Add current password to history before resetting
-        await _passwordHistoryManager.AddPasswordToHistoryAsync(user.Id, user.PasswordHash);
+        await _passwordHistoryManager.AddPasswordToHistoryAsync(user.Id, login.PasswordHash);
 
-        // Hash the new password
         var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
 
-        // Update user's password
-        user.PasswordHash = newHash;
-        user.UpdateTime = DateTime.UtcNow;
+        login.PasswordHash = newHash;
+        login.UpdateTime = DateTime.UtcNow;
 
-        await _userRepository.UpdateAsync(user);
+        await _loginRepository.UpdateAsync(login);
 
-        // Consume the reset token
-        await _passwordResetTokenService.Consume(dto.Token);
+        passwordInfo.ResetToken = null;
+        passwordInfo.ResetDate = null;
+        passwordInfo.UpdateTime = DateTime.UtcNow;
+        await _passwordInfoRepository.UpdateAsync(passwordInfo);
 
-        // Send confirmation email
         await _emailService.SendPasswordResetConfirmationEmail(
             user.FirstName,
             user.LastName,
-            user.Email,
+            login.Email,
             "Votre mot de passe a été modifié",
             "Votre mot de passe a été modifié avec succès.");
 
@@ -357,7 +383,6 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Refresh token attempt");
 
-        // Get session by refresh token
         var session = await _tokenService.GetByRefreshToken(dto.RefreshToken);
 
         if (session is null)
@@ -366,29 +391,25 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure<SimplyAuthResponse>("Invalid or expired refresh token.");
         }
 
-        // Get user
-        var user = await _userRepository.FindAsync(session.IdUsers);
+        var user = await _userRepository.FindAsync(session.UserId);
 
         if (user is null)
         {
-            _logger.LogError("User {UserId} not found for valid session", session.IdUsers);
+            _logger.LogError("User {UserId} not found for valid session", session.UserId);
             return Result.Failure<SimplyAuthResponse>("User not found.");
         }
 
-        if (!user.AccountActivated)
+        if (!user.IsActive || user.ActivationCode.HasValue)
         {
             _logger.LogWarning("Refresh token attempt for unactivated account {UserId}", user.Id);
             return Result.Failure<SimplyAuthResponse>("Account is not activated.");
         }
 
-        // Consume old session
-        await _tokenService.ConsumeSession(dto.RefreshToken);
+        await _tokenService.ConsumeRefreshToken(dto.RefreshToken);
 
-        // Generate new tokens
         var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString());
 
-        // Create new session for new refresh token
-        await _tokenService.CreateSession(
+        await _tokenService.CreateRefreshToken(
             user.Id,
             tokens.RefreshToken,
             tokens.RefreshTokenExpiration);
@@ -408,12 +429,11 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Logout attempt");
 
-        var consumed = await _tokenService.ConsumeSession(refreshToken);
+        var consumed = await _tokenService.ConsumeRefreshToken(refreshToken);
 
         if (!consumed)
         {
             _logger.LogWarning("Logout attempted with invalid or already consumed refresh token");
-            // Still return success for security (don't reveal session state)
             return Result.Success();
         }
 
@@ -426,14 +446,14 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Retrieving active sessions for user {UserId}", userId);
 
-        var sessions = await _tokenService.GetActiveSessionsByUserId(userId);
+        var sessions = await _tokenService.GetActiveRefreshTokensByUserId(userId);
         var currentSession = await _tokenService.GetByRefreshToken(currentRefreshToken);
 
         var sessionDtos = sessions.Select(s => new SessionDto
         {
             Id = s.Id,
             CreatedAt = s.CreationTime,
-            ExpiresAt = s.ExpiresAt,
+            ExpiresAt = s.ExpirationTime,
             IsCurrentSession = currentSession != null && s.Id == currentSession.Id
         }).ToList();
 
@@ -444,7 +464,7 @@ public class AuthentificationService : IAuthentificationService
     {
         _logger.LogInformation("Revoking session {SessionId} for user {UserId}", sessionId, userId);
 
-        var revoked = await _tokenService.RevokeSessionForUser(sessionId, userId);
+        var revoked = await _tokenService.RevokeRefreshTokenForUser(sessionId, userId);
 
         if (!revoked)
         {
@@ -467,7 +487,7 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("Current session not found.");
         }
 
-        await _tokenService.RevokeAllSessionsExceptCurrent(userId, currentSession.Id);
+        await _tokenService.RevokeAllRefreshTokensExceptCurrent(userId, currentSession.Id);
 
         return Result.Success();
     }
@@ -490,18 +510,24 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("User not found.");
         }
 
-        var verifyResult = _simplyAuthService.VerifyPassword(dto.CurrentPassword, user.PasswordHash);
+        var login = await _loginRepository.FirstOrDefaultAsync(l => l.UserId == userId);
 
-        if (verifyResult == Simply.Auth.Core.Enums.SimplyVerificationResult.Failed)
+        if (login == null)
+        {
+            _logger.LogError("Password change failed: login not found for user {UserId}", userId);
+            return Result.Failure("Login information not found.");
+        }
+
+        var verifyResult = _simplyAuthService.VerifyPassword(dto.CurrentPassword, login.PasswordHash);
+
+        if (verifyResult == SimplyVerificationResult.Failed)
         {
             _logger.LogWarning("Password change failed: current password incorrect for user {UserId}", userId);
             return Result.Failure("Current password is incorrect.");
         }
 
-        // Ensure password info exists
         await _passwordHistoryManager.EnsurePasswordsInfoExistsAsync(userId);
 
-        // Check if new password is one of the last 5 passwords
         var isPasswordReused = await _passwordHistoryManager.IsPasswordReusedAsync(userId, dto.NewPassword);
         if (isPasswordReused)
         {
@@ -509,29 +535,25 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("You cannot reuse any of your last 5 passwords. Please choose a different password.");
         }
 
-        // Add current password to history before changing
-        await _passwordHistoryManager.AddPasswordToHistoryAsync(userId, user.PasswordHash);
+        await _passwordHistoryManager.AddPasswordToHistoryAsync(userId, login.PasswordHash);
 
-        // Hash the new password
         var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
 
-        user.PasswordHash = newHash;
-        user.UpdateTime = DateTime.UtcNow;
+        login.PasswordHash = newHash;
+        login.UpdateTime = DateTime.UtcNow;
 
-        await _userRepository.UpdateAsync(user);
+        await _loginRepository.UpdateAsync(login);
 
-        // Revoke all other sessions for security
         var currentSession = await _tokenService.GetByRefreshToken(currentRefreshToken);
         if (currentSession != null)
         {
-            await _tokenService.RevokeAllSessionsExceptCurrent(userId, currentSession.Id);
+            await _tokenService.RevokeAllRefreshTokensExceptCurrent(userId, currentSession.Id);
         }
 
-        // Send confirmation email
         await _emailService.SendPasswordResetConfirmationEmail(
             user.FirstName,
             user.LastName,
-            user.Email,
+            login.Email,
             "Votre mot de passe a été modifié",
             "Votre mot de passe a été modifié avec succès.");
 

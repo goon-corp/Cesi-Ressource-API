@@ -1,15 +1,19 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
+using Ressource_API.Common.Services;
+using Ressource_API.Common.Utils;
 using Ressource_API.Features.Addresses.Repositories;
 using Ressource_API.Features.Addresses.Factories;
 using Ressource_API.Features.Articles.Repositories;
 using Ressource_API.Features.Articles.Services;
 using Ressource_API.Features.Articles.Factories;
+using Ressource_API.Features.Authentifications.Services;
 using Ressource_API.Features.BackofficeLogLevels.Repositories;
 using Ressource_API.Features.BackofficeLogLevels.Services;
 using Ressource_API.Features.BackofficeLogLevels.Factories;
@@ -45,7 +49,8 @@ using Ressource_API.Features.Notifications.Services;
 using Ressource_API.Features.Notifications.Factories;
 using Ressource_API.Features.PasswordHistories.Repositories;
 using Ressource_API.Features.PasswordHistories.Services;
-using Ressource_API.Features.PasswordHistories.Factories;
+using Ressource_API.Features.PasswordInfos.Factories;
+using Ressource_API.Features.PasswordInfos.Repositories;
 using Ressource_API.Features.PollOptions.Repositories;
 using Ressource_API.Features.PollOptions.Services;
 using Ressource_API.Features.PollOptions.Factories;
@@ -175,10 +180,10 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IFriendsRequestFactory, FriendsRequestFactory>();
         builder.Services.AddScoped<ILoginFactory, LoginFactory>();
         builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
-        builder.Services.AddScoped<IPasswordHistoryFactory, PasswordHistoryFactory>();
         builder.Services.AddScoped<IPollOptionFactory, PollOptionFactory>();
         builder.Services.AddScoped<IPollFactory, PollFactory>();
         builder.Services.AddScoped<IProfilePictureFactory, ProfilePictureFactory>();
+        builder.Services.AddScoped<IPasswordInfoFactory, PasswordInfoFactory>();
         builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
         builder.Services.AddScoped<IQuizzQuestionFactory, QuizzQuestionFactory>();
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
@@ -212,6 +217,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IPasswordHistoryService, PasswordHistoryService>();
+        builder.Services.AddScoped<IPasswordHistoryManager, PasswordHistoryManager>();
         builder.Services.AddScoped<IPollOptionService, PollOptionService>();
         builder.Services.AddScoped<IPollService, PollService>();
         builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
@@ -232,6 +238,9 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IUserRoleService, UserRoleService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+        builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailSender, EmailSender>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
@@ -250,6 +259,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ILoginRepository, LoginRepository>();
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+        builder.Services.AddScoped<IPasswordInfoRepository, PasswordInfoRepository>();
         builder.Services.AddScoped<IPollOptionRepository, PollOptionRepository>();
         builder.Services.AddScoped<IPollRepository, PollRepository>();
         builder.Services.AddScoped<IProfilePictureRepository, ProfilePictureRepository>();

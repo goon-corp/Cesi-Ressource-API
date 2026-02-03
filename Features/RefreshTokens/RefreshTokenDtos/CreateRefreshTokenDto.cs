@@ -1,9 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Ressource_API.Features.RefreshTokens.RefreshTokenDtos;
 
 public class CreateRefreshTokenDto
 {
-    // TODO: Add properties needed to create a RefreshToken
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public string Description { get; set; } = string.Empty;
+    [Required]
+    public string Token { get; set; } = null!;
+
+    [Required]
+    public DateTime ExpirationTime { get; set; }
+
+    [Required]
+    public Guid UserId { get; set; }
 }

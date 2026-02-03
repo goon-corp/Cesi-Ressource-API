@@ -1,7 +1,6 @@
 using Ressource_API.Features.PasswordHistories.Models;
 using Ressource_API.Features.PasswordHistories.PasswordHistoryDtos;
 using Ressource_API.Features.PasswordHistories.Repositories;
-using Ressource_API.Features.PasswordHistories.Factories;
 
 namespace Ressource_API.Features.PasswordHistories.Services;
 

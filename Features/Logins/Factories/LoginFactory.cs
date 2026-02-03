@@ -21,27 +21,56 @@ public class LoginFactory : BaseFactory<Login>, ILoginFactory
     {
         if (parameters.Length == 0)
         {
-            // Create default instance
             return new Login
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                Email = string.Empty,
+                PasswordHash = string.Empty,
+                CreationTime = DateTime.UtcNow,
+                UserId = Guid.Empty
             };
         }
 
-        if (parameters[0] is CreateLoginDto dto)
+        return parameters switch
         {
-            // Create from DTO
-            return new Login
+            [CreateLoginDto dto] => new Login
             {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
-            };
-        }
-
-        throw new ArgumentException("Invalid parameters for Login creation");
+                Id = Guid.NewGuid(),
+                Email = dto.Email,
+                PasswordHash = dto.PasswordHash,
+                CreationTime = DateTime.UtcNow,
+                UserId = dto.UserId
+            },
+            
+            [string email] => new Login
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                PasswordHash = string.Empty,
+                CreationTime = DateTime.UtcNow,
+                UserId = Guid.Empty
+            },
+            
+            [string email, string passwordHash, string passwordSalt] => new Login
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                PasswordHash = passwordHash,
+                CreationTime = DateTime.UtcNow,
+                UserId = Guid.Empty
+            },
+            
+            [string email, string passwordHash, string passwordSalt, Guid userId] => new Login
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                PasswordHash = passwordHash,
+                CreationTime = DateTime.UtcNow,
+                UserId = userId
+            },
+            
+            _ => throw new ArgumentException(
+                "Paramètres invalides. Attendu : () ou (CreateLoginDto) ou (email) ou (email, passwordHash, passwordSalt) ou (email, passwordHash, passwordSalt, userId)")
+        };
     }
 }
