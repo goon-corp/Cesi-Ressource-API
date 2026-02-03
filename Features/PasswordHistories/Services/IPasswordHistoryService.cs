@@ -5,9 +5,9 @@ namespace Ressource_API.Features.PasswordHistories.Services;
 
 public interface IPasswordHistoryService
 {
-    Task<IEnumerable<PasswordHistory>> GetAllPasswordHistorysAsync(CancellationToken cancellationToken = default);
-    Task<PasswordHistory?> GetPasswordHistoryByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<PasswordHistory> CreatePasswordHistoryAsync(CreatePasswordHistoryDto dto, CancellationToken cancellationToken = default);
-    Task<PasswordHistory?> UpdatePasswordHistoryAsync(int id, UpdatePasswordHistoryDto dto, CancellationToken cancellationToken = default);
-    Task<bool> DeletePasswordHistoryAsync(int id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<GetPasswordHistoryDto>> GetAllAsync();
+    Task<IEnumerable<GetPasswordHistoryDto>> GetByPasswordInfoIdAsync(Guid passwordInfoId);
+    Task<GetPasswordHistoryDto?> GetByIdAsync(Guid id);
+    Task<GetPasswordHistoryDto?> CreateAsync(CreatePasswordHistoryDto dto);
+    Task<bool> DeleteAsync(Guid id);
 }
