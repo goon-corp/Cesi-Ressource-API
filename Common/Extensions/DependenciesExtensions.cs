@@ -266,6 +266,17 @@ public static class DependenciesExtensions
         builder.Services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo() { Title = "Ressource_relationnelles", Version = "v1" });
+            options.AddSecurityDefinition("api-key", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Name = "x-api-key",
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("api-key", document)] = []
+            });
         });
     }
 
