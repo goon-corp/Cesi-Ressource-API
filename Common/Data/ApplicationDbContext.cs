@@ -447,7 +447,6 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("email");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
             entity.Property(e => e.UpdateTime)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
