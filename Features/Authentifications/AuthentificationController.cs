@@ -105,40 +105,40 @@ public class AuthentificationController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("sessions")]
-    public async Task<IActionResult> GetActiveSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    [HttpGet("token")]
+    public async Task<IActionResult> GetActiveSessions([FromHeader(Name = "x-refresh-token")] string refreshToken)
     {
         var userId = GetUserId();
         var result = await _service.GetActiveSessions(userId, refreshToken);
 
         return result.Match<IActionResult>(
-            onSuccess: sessions => Ok(sessions),
+            onSuccess: tokens => Ok(tokens),
             onFailure: error => BadRequest(new { error })
         );
     }
 
     [Authorize]
-    [HttpDelete("sessions/{sessionId:guid}")]
-    public async Task<IActionResult> RevokeSession(Guid sessionId)
+    [HttpDelete("token/{refreshTokenId:guid}")]
+    public async Task<IActionResult> RevokeSession(Guid tokenId)
     {
         var userId = GetUserId();
-        var result = await _service.RevokeSession(userId, sessionId);
+        var result = await _service.RevokeToken(userId, tokenId);
 
         return result.Match<IActionResult>(
-            onSuccess: () => Ok(new { message = "Session revoked successfully." }),
+            onSuccess: () => Ok(new { message = "Token revoked successfully." }),
             onFailure: error => NotFound(new { error })
         );
     }
 
     [Authorize]
-    [HttpDelete("sessions")]
-    public async Task<IActionResult> RevokeAllOtherSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    [HttpDelete("tokens")]
+    public async Task<IActionResult> RevokeAllOtherSessions([FromHeader(Name = "x-refresh-token")] string refreshToken)
     {
         var userId = GetUserId();
         var result = await _service.RevokeAllOtherSessions(userId, refreshToken);
 
         return result.Match<IActionResult>(
-            onSuccess: () => Ok(new { message = "All other sessions revoked successfully." }),
+            onSuccess: () => Ok(new { message = "All other tokens revoked successfully." }),
             onFailure: error => BadRequest(new { error })
         );
     }
@@ -147,7 +147,7 @@ public class AuthentificationController : ControllerBase
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(
         [FromBody] ChangePasswordDto dto,
-        [FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+        [FromHeader(Name = "x-refresh-token")] string refreshToken)
     {
         var userId = GetUserId();
         var result = await _service.ChangePassword(userId, dto, refreshToken);

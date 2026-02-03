@@ -51,7 +51,7 @@ public class LoginFactory : BaseFactory<Login>, ILoginFactory
                 UserId = Guid.Empty
             },
             
-            [string email, string passwordHash, string passwordSalt] => new Login
+            [string email, string passwordHash] => new Login
             {
                 Id = Guid.NewGuid(),
                 Email = email,
@@ -60,7 +60,7 @@ public class LoginFactory : BaseFactory<Login>, ILoginFactory
                 UserId = Guid.Empty
             },
             
-            [string email, string passwordHash, string passwordSalt, Guid userId] => new Login
+            [string email, string passwordHash, Guid userId] => new Login
             {
                 Id = Guid.NewGuid(),
                 Email = email,
@@ -70,7 +70,7 @@ public class LoginFactory : BaseFactory<Login>, ILoginFactory
             },
             
             _ => throw new ArgumentException(
-                "Paramètres invalides. Attendu : () ou (CreateLoginDto) ou (email) ou (email, passwordHash, passwordSalt) ou (email, passwordHash, passwordSalt, userId)")
+                "Paramètres invalides. Attendu : () ou (CreateLoginDto) ou (email) ou (email, passwordHash, passwordSalt) ou (email, passwordHash, userId)")
         };
     }
 }

@@ -460,7 +460,7 @@ public class AuthentificationService : IAuthentificationService
         return Result.Success(sessionDtos);
     }
 
-    public async Task<Result> RevokeSession(Guid userId, Guid sessionId)
+    public async Task<Result> RevokeToken(Guid userId, Guid sessionId)
     {
         _logger.LogInformation("Revoking session {SessionId} for user {UserId}", sessionId, userId);
 
