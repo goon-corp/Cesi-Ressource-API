@@ -21,25 +21,23 @@ public class PasswordHistoryService : IPasswordHistoryService
         return histories.Select(h => new GetPasswordHistoryDto
         {
             Id = h.Id,
-            ChangedAt = h.ChangedAt,
             CreationTime = h.CreationTime,
             UpdateTime = h.UpdateTime,
-            IdPasswordsInfos = h.IdPasswordsInfos
+            IdPasswordsInfos = h.PasswordInfosId
         });
     }
 
     public async Task<IEnumerable<GetPasswordHistoryDto>> GetByPasswordInfoIdAsync(Guid passwordInfoId)
     {
         var histories = await _repository.ListAsync(h =>
-            h.IdPasswordsInfos == passwordInfoId && h.DeletionTime == null);
+            h.PasswordInfosId == passwordInfoId && h.DeletionTime == null);
 
-        return histories.OrderByDescending(h => h.ChangedAt).Select(h => new GetPasswordHistoryDto
+        return histories.OrderByDescending(h => h.UpdateTime).Select(h => new GetPasswordHistoryDto
         {
             Id = h.Id,
-            ChangedAt = h.ChangedAt,
             CreationTime = h.CreationTime,
             UpdateTime = h.UpdateTime,
-            IdPasswordsInfos = h.IdPasswordsInfos
+            IdPasswordsInfos = h.PasswordInfosId
         });
     }
 
@@ -53,10 +51,9 @@ public class PasswordHistoryService : IPasswordHistoryService
         return new GetPasswordHistoryDto
         {
             Id = history.Id,
-            ChangedAt = history.ChangedAt,
             CreationTime = history.CreationTime,
             UpdateTime = history.UpdateTime,
-            IdPasswordsInfos = history.IdPasswordsInfos
+            IdPasswordsInfos = history.PasswordInfosId
         };
     }
 
@@ -66,8 +63,8 @@ public class PasswordHistoryService : IPasswordHistoryService
         {
             Id = Guid.NewGuid(),
             PasswordHash = dto.PasswordHash,
-            ChangedAt = DateTime.UtcNow,
-            IdPasswordsInfos = dto.IdPasswordsInfos,
+            UpdateTime = DateTime.UtcNow,
+            PasswordInfosId = dto.IdPasswordsInfos,
             CreationTime = DateTime.UtcNow
         };
 
@@ -76,10 +73,9 @@ public class PasswordHistoryService : IPasswordHistoryService
         return new GetPasswordHistoryDto
         {
             Id = history.Id,
-            ChangedAt = history.ChangedAt,
             CreationTime = history.CreationTime,
             UpdateTime = history.UpdateTime,
-            IdPasswordsInfos = history.IdPasswordsInfos
+            IdPasswordsInfos = history.PasswordInfosId
         };
     }
 

@@ -1,23 +1,26 @@
+using Ressource_API.Features.PasswordHistories.Models;
+using Ressource_API.Features.PasswordHistories.Repositories;
+using Ressource_API.Features.PasswordInfos.Models;
+using Ressource_API.Features.PasswordInfos.Repositories;
+using Ressource_API.Features.Users.Repositories;
 using Simply.Auth.Core.Abstractions;
 
 
 namespace Ressource_API.Features.PasswordHistories.Services;
-
-
 
 public class PasswordHistoryManager : IPasswordHistoryManager
 {
     private const int MaxPasswordHistory = 5;
 
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordsInfoRepository _passwordsInfoRepository;
+    private readonly IPasswordInfoRepository _passwordsInfoRepository;
     private readonly IPasswordHistoryRepository _passwordHistoryRepository;
     private readonly ISimplyAuthService _authService;
     private readonly ILogger<PasswordHistoryManager> _logger;
 
     public PasswordHistoryManager(
         IUserRepository userRepository,
-        IPasswordsInfoRepository passwordsInfoRepository,
+        IPasswordInfoRepository passwordsInfoRepository,
         IPasswordHistoryRepository passwordHistoryRepository,
         ISimplyAuthService authService,
         ILogger<PasswordHistoryManager> logger)
@@ -32,18 +35,18 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     public async Task<bool> IsPasswordReusedAsync(Guid userId, string newPassword)
     {
         var user = await _userRepository.FindAsync(userId);
-
-        if (user == null || !user.IdPasswordsInfos.HasValue)
+        var relatedPassword = await _passwordsInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (user == null || relatedPassword == null)
         {
             return false;
         }
 
         var histories = await _passwordHistoryRepository.ListAsync(h =>
-            h.IdPasswordsInfos == user.IdPasswordsInfos.Value &&
+            h.PasswordInfosId == relatedPassword.Id &&
             h.DeletionTime == null);
 
         var recentHistories = histories
-            .OrderByDescending(h => h.ChangedAt)
+            .OrderByDescending(h => h.UpdateTime)
             .Take(MaxPasswordHistory)
             .ToList();
 
@@ -64,33 +67,27 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     public async Task AddPasswordToHistoryAsync(Guid userId, string passwordHash)
     {
         var user = await _userRepository.FindAsync(userId);
-
-        if (user == null)
+        var relatedPassword = await _passwordsInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (user == null || relatedPassword == null)
         {
-            _logger.LogError("Cannot add password to history: User {UserId} not found", userId);
+            _logger.LogError("Cannot add password to history: User {UserId} infos not found", userId);
             return;
         }
 
         await EnsurePasswordsInfoExistsAsync(userId);
 
-        if (!user.IdPasswordsInfos.HasValue)
-        {
-            _logger.LogError("Cannot add password to history: PasswordsInfo not created for user {UserId}", userId);
-            return;
-        }
-
-        var newHistory = new PasswordHistory
+        var newHistory = new PasswordHistory()
         {
             Id = Guid.NewGuid(),
             PasswordHash = passwordHash,
-            ChangedAt = DateTime.UtcNow,
-            IdPasswordsInfos = user.IdPasswordsInfos.Value,
+            UpdateTime = DateTime.UtcNow,
+            PasswordInfosId = relatedPassword.Id,
             CreationTime = DateTime.UtcNow
         };
 
         await _passwordHistoryRepository.AddAsync(newHistory);
 
-        await CleanupOldPasswordHistoriesAsync(user.IdPasswordsInfos.Value);
+        await CleanupOldPasswordHistoriesAsync(relatedPassword.Id);
 
         _logger.LogInformation("Password added to history for user {UserId}", userId);
     }
@@ -98,65 +95,63 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     public async Task EnsurePasswordsInfoExistsAsync(Guid userId)
     {
         var user = await _userRepository.FindAsync(userId);
-
-        if (user == null)
+        var relatedPassword = await _passwordsInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (user == null || relatedPassword == null)
         {
             _logger.LogError("Cannot ensure PasswordsInfo: User {UserId} not found", userId);
             return;
         }
 
-        if (user.IdPasswordsInfos.HasValue)
+        var existingInfo = await _passwordsInfoRepository.FindAsync(relatedPassword.Id);
+        if (existingInfo != null && existingInfo.DeletionTime == null)
         {
-            var existingInfo = await _passwordsInfoRepository.FindAsync(user.IdPasswordsInfos.Value);
-            if (existingInfo != null && existingInfo.DeletionTime == null)
-            {
-                return;
-            }
+            return;
         }
+    
 
-        var passwordsInfo = new PasswordsInfo
-        {
-            Id = Guid.NewGuid(),
-            AttemptCount = 0,
-            LastLogin = DateTime.UtcNow,
-            LastReset = DateTime.UtcNow,
-            CreationTime = DateTime.UtcNow
-        };
-
-        await _passwordsInfoRepository.AddAsync(passwordsInfo);
-
-        user.IdPasswordsInfos = passwordsInfo.Id;
-        user.UpdateTime = DateTime.UtcNow;
-        await _userRepository.UpdateAsync(user);
-
-        _logger.LogInformation("PasswordsInfo created for user {UserId}", userId);
-    }
-
-    private async Task CleanupOldPasswordHistoriesAsync(Guid passwordsInfoId)
+    var passwordsInfo = new PasswordInfo()
     {
-        var histories = await _passwordHistoryRepository.ListAsync(h =>
-            h.IdPasswordsInfos == passwordsInfoId &&
-            h.DeletionTime == null);
+        Id = Guid.NewGuid(),
+        AttemptCount = 0,
+        ResetDate = DateTime.UtcNow,
+        CreationTime = DateTime.UtcNow
+    };
 
-        var orderedHistories = histories
-            .OrderByDescending(h => h.ChangedAt)
-            .ToList();
+    await _passwordsInfoRepository.AddAsync(passwordsInfo);
 
-        var historiesToDelete = orderedHistories
-            .Skip(MaxPasswordHistory)
-            .ToList();
+    relatedPassword.Id = passwordsInfo.Id;
+    user.UpdateTime = DateTime.UtcNow;
+    await _userRepository.UpdateAsync(user);
 
-        foreach (var history in historiesToDelete)
-        {
-            history.DeletionTime = DateTime.UtcNow;
-            history.UpdateTime = DateTime.UtcNow;
-            await _passwordHistoryRepository.SoftDeleteAsync(history);
-        }
+    _logger.LogInformation("PasswordsInfo created for user {UserId}", userId);
+}
 
-        if (historiesToDelete.Any())
-        {
-            _logger.LogInformation("Cleaned up {Count} old password histories for PasswordsInfo {Id}",
-                historiesToDelete.Count, passwordsInfoId);
-        }
+private async Task CleanupOldPasswordHistoriesAsync(Guid passwordsInfoId)
+{
+    var histories = await _passwordHistoryRepository.ListAsync(h =>
+        h.PasswordInfosId == passwordsInfoId &&
+        h.DeletionTime == null);
+
+    var orderedHistories = histories
+        .OrderByDescending(h => h.UpdateTime)
+        .ToList();
+
+    var historiesToDelete = orderedHistories
+        .Skip(MaxPasswordHistory)
+        .ToList();
+
+    foreach (var history in historiesToDelete)
+    {
+        history.DeletionTime = DateTime.UtcNow;
+        history.UpdateTime = DateTime.UtcNow;
+        await _passwordHistoryRepository.SoftDeleteAsync(history);
     }
+
+    if (historiesToDelete.Any())
+    {
+        _logger.LogInformation("Cleaned up {Count} old password histories for PasswordsInfo {Id}",
+            historiesToDelete.Count, passwordsInfoId);
+    }
+}
+
 }

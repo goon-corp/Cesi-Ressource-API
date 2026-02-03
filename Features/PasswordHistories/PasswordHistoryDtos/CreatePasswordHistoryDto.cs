@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.CZ.Features.PasswordHistories.DTOs;
+namespace Ressource_API.Features.PasswordHistories.PasswordHistoryDtos;
 
 public class CreatePasswordHistoryDto
 {
