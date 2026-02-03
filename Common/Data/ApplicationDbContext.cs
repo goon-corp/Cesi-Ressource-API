@@ -120,6 +120,13 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<UserRole> UsersRoles { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        string connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+                                  ?? throw new InvalidOperationException(
+                                      "Connection string 'DATABASE_CONNECTION_STRING' not found.");
+        optionsBuilder.UseNpgsql(connectionString);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -134,15 +141,15 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.CityId).HasColumnName("city_id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.DepartmentId).HasColumnName("department_id");
             entity.Property(e => e.RegionId).HasColumnName("region_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -197,7 +204,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.BackofficeLogLevelId).HasColumnName("backoffice_log_level_id");
             entity.Property(e => e.BackofficeOperationTypeId).HasColumnName("backoffice_operation_type_id");
             entity.Property(e => e.EventTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("event_time");
             entity.Property(e => e.LogContent).HasColumnName("log_content");
 
@@ -282,14 +289,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("content");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -355,7 +362,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("sender_email");
             entity.Property(e => e.SentTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("sent_time");
         });
 
@@ -369,10 +376,10 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.DateEnd)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("date_end");
             entity.Property(e => e.DateStart)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("date_start");
             entity.Property(e => e.EventLink).HasColumnName("event_link");
             entity.Property(e => e.IsVirtual).HasColumnName("is_virtual");
@@ -396,16 +403,16 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.UserSenderId).HasColumnName("user_sender_id");
             entity.Property(e => e.UserReceiverId).HasColumnName("user_receiver_id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.RequestStatus)
                 .HasMaxLength(255)
                 .HasColumnName("request_status");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.UserReceiver).WithMany(p => p.ReceivedFriendRequests)
@@ -431,10 +438,10 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -442,7 +449,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -463,11 +470,11 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.MarkedAsRead).HasColumnName("marked_as_read");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -487,16 +494,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.PasswordInfosId).HasColumnName("password_infos_id");
             entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.PasswordInfos).WithMany(p => p.PasswordsHistories)
@@ -516,17 +523,17 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.AttemptCount).HasColumnName("attempt_count");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.ResetDate)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("reset_date");
             entity.Property(e => e.ResetToken).HasColumnName("reset_token");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -564,17 +571,17 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Option)
                 .HasMaxLength(255)
                 .HasColumnName("option");
             entity.Property(e => e.PollId).HasColumnName("poll_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.Poll).WithMany(p => p.PollsOptions)
@@ -593,14 +600,14 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.ImageUrl).HasColumnName("image_url");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -641,10 +648,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("correct_answer");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.PossibleAnswers)
                 .HasColumnType("jsonb")
@@ -654,7 +661,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("question");
             entity.Property(e => e.QuizzId).HasColumnName("quizz_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.Quizz).WithMany(p => p.QuizzesQuestions)
@@ -666,6 +673,8 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<RefreshToken>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("refresh_tokens_pk");
+            
+            entity.HasIndex(e => e.Token, "token_hash_IDX");
 
             entity.ToTable("refresh_tokens");
 
@@ -673,12 +682,13 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.ExpirationTime).HasColumnName("expiration_time");
             entity.Property(e => e.Token).HasColumnName("refresh_token");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -718,13 +728,13 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.IsCheckedByModerator).HasColumnName("is_checked_by_moderator");
             entity.Property(e => e.ReportTypeId).HasColumnName("report_type_id");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -754,16 +764,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(50)
                 .HasColumnName("label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
         });
 
@@ -777,10 +787,10 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.RessourceConfidentialityTypeId).HasColumnName("ressource_confidentiality_type_id");
@@ -791,7 +801,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("title");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ViewCount).HasColumnName("view_count");
@@ -849,16 +859,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(50)
                 .HasColumnName("label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
         });
 
@@ -872,16 +882,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(50)
                 .HasColumnName("label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
         });
 
@@ -895,10 +905,10 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.MediaUrl).HasColumnName("media_url");
             entity.Property(e => e.MimeType)
@@ -906,7 +916,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("mime_type");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.RessourcesMedia)
@@ -925,16 +935,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(50)
                 .HasColumnName("label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
         });
 
@@ -948,7 +958,7 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.IdWs).HasColumnName("id_ws");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
@@ -956,7 +966,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("status");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.Sessions)
@@ -978,7 +988,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("content");
             entity.Property(e => e.SentTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("sent_time");
             entity.Property(e => e.SessionId).HasColumnName("session_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
@@ -1004,16 +1014,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(50)
                 .HasColumnName("label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
             entity.HasMany(d => d.Ressources).WithMany(p => p.Tags)
@@ -1047,10 +1057,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.ActivationCode).HasColumnName("activation_code");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
@@ -1060,7 +1070,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("last_name");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
             entity.Property(e => e.UserName)
                 .HasMaxLength(100)
@@ -1178,16 +1188,16 @@ public partial class ApplicationDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("deletion_time");
             entity.Property(e => e.RoleLabel)
                 .HasMaxLength(50)
                 .HasColumnName("role_label");
             entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
         });
 

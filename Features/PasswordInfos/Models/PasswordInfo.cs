@@ -17,7 +17,7 @@ public partial class PasswordInfo
 
     public int AttemptCount { get; set; }
 
-    public Guid? ResetToken { get; set; }
+    public string? ResetToken { get; set; }
 
     public DateTime? ResetDate { get; set; }
 

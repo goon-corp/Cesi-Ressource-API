@@ -11,6 +11,8 @@ public partial class RefreshToken
     public string Token { get; set; } = null!;
 
     public bool IsActive { get; set; }
+    
+    public DateTime ExpirationTime { get; set; }
 
     public DateTime CreationTime { get; set; }
 
