@@ -49,7 +49,7 @@ public class HealthCheckController : ControllerBase
         }
 
         // Return 503 if unhealthy, else 200
-        if (result.Value.Status == "Unhealthy")
+        if (result.Value?.Status == "Unhealthy")
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable, 

@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -129,6 +130,7 @@ public static class DependenciesExtensions
         builder.AddFactories();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
+        builder.AddHybridCache();
     }
 
     private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,
@@ -316,6 +318,17 @@ public static class DependenciesExtensions
         builder.Services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo() { Title = "Ressource_relationnelles", Version = "v1" });
+            options.AddSecurityDefinition("api-key", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Name = "x-api-key",
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("api-key", document)] = []
+            });
         });
     }
 
@@ -357,6 +370,24 @@ public static class DependenciesExtensions
                         .AllowAnyMethod()
                         .AllowAnyHeader();
                 });
+        });
+    }
+
+    private static void AddHybridCache(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHybridCache(options =>
+        {
+            options.DefaultEntryOptions = new HybridCacheEntryOptions()
+            {
+                Expiration = TimeSpan.FromMinutes(10),
+                LocalCacheExpiration = TimeSpan.FromMinutes(10)
+            };
+        });
+
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+            options.Configuration = redisConnectionString;
         });
     }
 }
