@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+using Ressource_API.Common.Data;
 using Ressource_API.Common.Middlewares;
 
 namespace Ressource_API.Common.Extensions;
@@ -11,7 +13,7 @@ public static class AppBuildingExtensions
         builder.InjectDependencies();
         var app = builder.Build();
         
-        
+        app.ApplyPendingMigrations();
         
         // CORS
         app.AddCorsRules();
@@ -45,6 +47,27 @@ public static class AppBuildingExtensions
         {
             app.UseSwagger();
             app.UseSwaggerUI();
+        }
+    }
+
+    private static void ApplyPendingMigrations(this WebApplication app)
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var pendingMigrations = dbContext.Database.GetPendingMigrations();
+            dbContext.Database.Migrate();
+
+            if (pendingMigrations.Any())
+            {
+                Console.WriteLine("Applying pending migrations...");
+                dbContext.Database.Migrate();
+                Console.WriteLine("Migrations applied successfully.");
+            }
+            else
+            {
+                Console.WriteLine("No pending migrations found.");
+            }
         }
     }
     
