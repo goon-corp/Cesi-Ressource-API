@@ -1,4 +1,4 @@
-using api.CZ.Features.Authentifications.DTOs;
+using Ressource_API.Features.Authentifications.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Common.Services;

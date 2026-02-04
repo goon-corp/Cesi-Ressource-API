@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.CZ.Features.Authentifications.DTOs;
+namespace Ressource_API.Features.Authentifications.DTOs;
 
 public class RefreshTokenDto
 {

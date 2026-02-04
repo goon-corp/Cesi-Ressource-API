@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using api.CZ.Features.Authentifications.DTOs;
+using Ressource_API.Features.Authentifications.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Features.Authentifications.AuthentificationDtos;
