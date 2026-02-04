@@ -21,17 +21,31 @@ public static class TagExtensions
         }
     }
 
-    extension(UpdateTagDto updateTagDto)
+    extension(ReturnTagDto returnTagDto)
     {
         public Tag ToModel(Guid tagId)
         {
             return new Tag
             {
                 Id = tagId,
-                Label = updateTagDto.Label,
-                CreationTime = updateTagDto.CreationTime,
-                UpdateTime = updateTagDto.UpdateTime,
-                DeletionTime = null
+                Label = returnTagDto.Label,
+                CreationTime = returnTagDto.CreationTime,
+                UpdateTime = returnTagDto.UpdateTime,
+                DeletionTime = returnTagDto.DeletionTime
+            };
+        }
+    }
+
+    extension(Tag tag)
+    {
+        public ReturnTagDto ToDto()
+        {
+            return new ReturnTagDto()
+            {
+                Label = tag.Label,
+                CreationTime = tag.CreationTime,
+                UpdateTime = tag.UpdateTime,
+                DeletionTime = tag.DeletionTime
             };
         }
     }
