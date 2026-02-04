@@ -500,7 +500,6 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("deletion_time");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.PasswordInfosId).HasColumnName("password_infos_id");
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt");
             entity.Property(e => e.UpdateTime)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
