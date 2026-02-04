@@ -1,30 +1,25 @@
-﻿namespace Ressource_API.Common.Pagination;
+﻿public class PaginatedList<T> : List<T>
+{
+    public int PageIndex  { get; }
+    public int PageSize   { get; }
+    public int TotalCount { get; }
+    public int TotalPages { get; }
 
-public class PaginatedList<T> : List<T> {
-
-    public int PageIndex  { get; private set; }
-    public int PageSize   { get; private set; }
-    public int TotalCount { get; private set; }
-    public int TotalPages { get; private set; }
-
-    public PaginatedList(List<T> source, int pageIndex, int pageSize) {
+    public PaginatedList(
+        List<T> items,
+        int pageIndex,
+        int pageSize,
+        int totalCount)
+    {
         PageIndex = pageIndex;
         PageSize = pageSize;
-        TotalCount = source.Count();
-        TotalPages = (int) Math.Ceiling(TotalCount / (double)PageSize);
+        TotalCount = totalCount;
 
-        AddRange(source.Skip(PageIndex * PageSize).Take(PageSize));
+        TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        AddRange(items);
     }
 
-    public bool HasPreviousPage {
-        get {
-            return (PageIndex > 0);
-        }
-    }
-
-    public bool HasNextPage {
-        get {
-            return (PageIndex+1 < TotalPages);
-        }
-    }
+    public bool HasPreviousPage => PageIndex > 1;
+    public bool HasNextPage => PageIndex < TotalPages;
 }

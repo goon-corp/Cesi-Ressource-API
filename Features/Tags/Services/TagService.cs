@@ -26,45 +26,21 @@ public class TagService : ITagService
         TagQuery tagQuery,
         CancellationToken cancellationToken = default)
     {
-        var tags = await _cache.GetOrCreateAsync(
-            "tags",
-            async token => await _repository.ListAsync(token)
-        );
+        // Si filtres → DB directe
+        if ( !string.IsNullOrWhiteSpace(tagQuery.TagName) ||
+                    tagQuery.CreatedAt.HasValue ||
+                    tagQuery.IsDeleted.HasValue)
+        {
+            return await _repository.PaginatedListAsync(tagQuery, cancellationToken);
+        }
 
-        IEnumerable<Tag> query = tags;
+        // Sinon → cache
+        var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
+        var tags = await _cache.GetOrCreateAsync( cacheKey, async token => await _repository.PaginatedListAsync(tagQuery,token) );
         
-
-        if (!string.IsNullOrWhiteSpace(tagQuery.TagName))
-        {
-            query = query.Where(t =>
-                t.Label.Contains(tagQuery.TagName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (tagQuery.CreatedAt.HasValue)
-        {
-            query = query.Where(t =>
-                t.CreationTime.Date == tagQuery.CreatedAt.Value.Date);
-        }
-
-        if (tagQuery.IsDeleted is not null)
-        {
-
-            query = (bool)tagQuery.IsDeleted
-                ? query.Where(t => t.DeletionTime != null)
-                : query.Where(t => t.DeletionTime == null);
-        }
-        
-
-        var filteredList = query.ToList();
-
-        var paginatedTags = new PaginatedList<Tag>(
-            filteredList,
-            tagQuery.page,
-            tagQuery.size
-        );
-
-        return paginatedTags;
+        return tags;
     }
+
 
 
     public async Task<Tag?> GetTagByIdAsync(int id, CancellationToken cancellationToken = default)
