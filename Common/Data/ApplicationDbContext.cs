@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Ressource_API.Features.Addresses.Models;
 using Ressource_API.Features.Articles.Models;
 using Ressource_API.Features.BackofficeLogLevels.Models;
@@ -119,14 +117,6 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserRole> UsersRoles { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        string connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
-                                  ?? throw new InvalidOperationException(
-                                      "Connection string 'DATABASE_CONNECTION_STRING' not found.");
-        optionsBuilder.UseNpgsql(connectionString);
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

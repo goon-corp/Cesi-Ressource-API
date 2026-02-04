@@ -287,11 +287,17 @@ public static class DependenciesExtensions
         var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
                                ?? throw new InvalidOperationException(
                                    "Connection string 'DATABASE_CONNECTION_STRING' not found.");
+        
+        var poolSize = Int32.Parse(Environment.GetEnvironmentVariable("DBCONTEXT_POOL_SIZE") ?? "1024");
 
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(
-                connectionString,
-                npgsqlOptions => npgsqlOptions.CommandTimeout(30)));
+        builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    // Optimisation pour les tests de charge
+                    npgsqlOptions.EnableRetryOnFailure(5);
+                }),
+            poolSize: poolSize
+        );
     }
 
     private static void AddCorsConfiguration(this WebApplicationBuilder builder)
