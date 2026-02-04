@@ -26,17 +26,17 @@ public class TagService : ITagService
         TagQuery tagQuery,
         CancellationToken cancellationToken = default)
     {
-        // Si filtres → DB directe
+        var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
+
         if ( !string.IsNullOrWhiteSpace(tagQuery.TagName) ||
-                    tagQuery.CreatedAt.HasValue ||
-                    tagQuery.IsDeleted.HasValue)
+             tagQuery.CreatedAt.HasValue ||
+             tagQuery.IsDeleted.HasValue)
         {
-            return await _repository.PaginatedListAsync(tagQuery, cancellationToken);
+            return await tagsTask;
         }
 
-        // Sinon → cache
         var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
-        var tags = await _cache.GetOrCreateAsync( cacheKey, async token => await _repository.PaginatedListAsync(tagQuery,token) );
+        var tags = await _cache.GetOrCreateAsync( cacheKey, async _ => await tagsTask );
         
         return tags;
     }

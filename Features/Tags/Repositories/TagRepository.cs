@@ -24,6 +24,8 @@ public class TagRepository : BaseRepository<Tag>, ITagRepository
         // -------------------------
         // Filtering (SQL)
         // -------------------------
+        
+        tags = tags.OrderByDescending(t => t.CreationTime);
 
         if (!string.IsNullOrWhiteSpace(query.TagName))
         {
