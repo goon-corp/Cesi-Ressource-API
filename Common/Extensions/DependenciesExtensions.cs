@@ -288,10 +288,14 @@ public static class DependenciesExtensions
                                ?? throw new InvalidOperationException(
                                    "Connection string 'DATABASE_CONNECTION_STRING' not found.");
 
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(
-                connectionString,
-                npgsqlOptions => npgsqlOptions.CommandTimeout(30)));
+        builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    // Optimisation pour les tests de charge
+                    npgsqlOptions.EnableRetryOnFailure(5);
+                }),
+            poolSize: 1024 // default
+        );
     }
 
     private static void AddCorsConfiguration(this WebApplicationBuilder builder)
