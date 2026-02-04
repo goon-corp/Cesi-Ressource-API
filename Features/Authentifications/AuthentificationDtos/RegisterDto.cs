@@ -28,7 +28,4 @@ public class RegisterDto
 
     [Required]
     public string ConfirmPassword { get; set; } = null!;
-
-    [Required]
-    public Guid UserRoleId { get; set; }
 }

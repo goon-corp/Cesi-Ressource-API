@@ -1,16 +1,20 @@
 using Ressource_API.Common.ResultPattern;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Ressource_API.Features.EmailLogs.Repositories;
+using Ressource_API.Features.EmailLogs.Services;
 
-namespace Ressource_API.Common.Services;
+namespace Ressource_API.Common.Services.EmailService;
 
 public class EmailService : IEmailService
 {
     private readonly IEmailSender _emailSender;
+    private readonly IEmailLogService _emailLogService;
     private readonly string _baseUrl;
 
-    public EmailService(IEmailSender emailSender)
+    public EmailService(IEmailSender emailSender, IEmailLogService emailLogService)
     {
         _emailSender = emailSender;
+        _emailLogService = emailLogService;
         _baseUrl = Environment.GetEnvironmentVariable("URL_FRONT") 
             ?? throw new KeyNotFoundException("URL_FRONT environment variable is not set");
     }
@@ -39,7 +43,7 @@ public class EmailService : IEmailService
             linkExpiration: linkExpiration
         );
 
-        return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent);
+        return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent, EmailOperationType.CREATED_USER_ACCOUNT.ToOperationString());
     }
 
     public async Task<Result> SendAdministratorCreationEmail(
@@ -63,7 +67,7 @@ public class EmailService : IEmailService
             footerNote: "Si vous n'êtes pas à l'origine de cette demande, veuillez contacter l'équipe support."
         );
 
-        return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent);
+        return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent,EmailOperationType.CREATED_ADMIN_ACCOUNT.ToOperationString() );
     }
 
     public async Task<Result> SendPasswordResetEmail(
@@ -90,7 +94,7 @@ public class EmailService : IEmailService
             linkExpiration: linkExpiration
         );
 
-        return await SendEmailSafelyAsync(email, subject, htmlContent);
+        return await SendEmailSafelyAsync(email, subject, htmlContent, EmailOperationType.RESET_PASSWORD.ToOperationString());
     }
 
     public async Task<Result> SendPasswordResetConfirmationEmail(
@@ -115,13 +119,14 @@ public class EmailService : IEmailService
             showSecurityAlert: true
         );
 
-        return await SendEmailSafelyAsync(email, subject, htmlContent);
+        return await SendEmailSafelyAsync(email, subject, htmlContent, EmailOperationType.MODIFIED_PASSWORD.ToOperationString());
     }
 
-    private async Task<Result> SendEmailSafelyAsync(string email, string subject, string htmlContent)
+    private async Task<Result> SendEmailSafelyAsync(string email, string subject, string htmlContent, string operationType)
     {
         try
         {
+            await _emailLogService.AddEmailLogAsync(email, htmlContent, operationType );
             await _emailSender.SendEmailAsync(email, subject, htmlContent);
             return Result.Success();
         }

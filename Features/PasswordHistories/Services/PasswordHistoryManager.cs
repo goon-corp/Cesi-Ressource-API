@@ -1,3 +1,4 @@
+using Ressource_API.Features.Logins.Repositories;
 using Ressource_API.Features.PasswordHistories.Models;
 using Ressource_API.Features.PasswordHistories.Repositories;
 using Ressource_API.Features.PasswordInfos.Models;
@@ -15,6 +16,7 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     private readonly IUserRepository _userRepository;
     private readonly IPasswordInfoRepository _passwordsInfoRepository;
     private readonly IPasswordHistoryRepository _passwordHistoryRepository;
+    private readonly ILoginRepository _loginRepository;
     private readonly ISimplyAuthService _authService;
     private readonly ILogger<PasswordHistoryManager> _logger;
 
@@ -23,11 +25,13 @@ public class PasswordHistoryManager : IPasswordHistoryManager
         IPasswordInfoRepository passwordsInfoRepository,
         IPasswordHistoryRepository passwordHistoryRepository,
         ISimplyAuthService authService,
+        ILoginRepository loginRepository,
         ILogger<PasswordHistoryManager> logger)
     {
         _userRepository = userRepository;
         _passwordsInfoRepository = passwordsInfoRepository;
         _passwordHistoryRepository = passwordHistoryRepository;
+        _loginRepository = loginRepository;
         _authService = authService;
         _logger = logger;
     }
@@ -36,7 +40,8 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     {
         var user = await _userRepository.FindAsync(userId);
         var relatedPassword = await _passwordsInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
-        if (user == null || relatedPassword == null)
+        var relatedLogin = await _loginRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (user == null || relatedPassword == null || relatedLogin == null)
         {
             return false;
         }
@@ -61,6 +66,12 @@ public class PasswordHistoryManager : IPasswordHistoryManager
             }
         }
 
+        var samePasswordAsOld = _authService.VerifyPassword(newPassword, relatedLogin.PasswordHash);
+        if (samePasswordAsOld != Simply.Auth.Core.Enums.SimplyVerificationResult.Failed)
+        {
+            _logger.LogWarning("User {UserId} new password must not be the same as the actual password", userId);
+            return true;
+        }
         return false;
     }
 

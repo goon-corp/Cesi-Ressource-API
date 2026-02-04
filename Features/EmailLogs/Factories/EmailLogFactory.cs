@@ -1,19 +1,19 @@
 using Ressource_API.Features.EmailLogs.Models;
-using Ressource_API.Features.EmailLogs.EmailLogDtos;
 using Ressource_API.Common.Data.Factories;
+using Ressource_API.Features.EmailLogs.EmailLogDtos;
 
 namespace Ressource_API.Features.EmailLogs.Factories;
 
 public class EmailLogFactory : BaseFactory<EmailLog>, IEmailLogFactory
 {
     /// <summary>
-    /// Creates a EmailLog from a DTO
+    /// Creates a Login from a DTO
     /// </summary>
     public EmailLog Create(CreateEmailLogDto dto)
     {
         return CreateInstance(dto);
     }
-
+    
     /// <summary>
     /// Implementation of the abstract CreateInstance method
     /// </summary>
@@ -21,27 +21,44 @@ public class EmailLogFactory : BaseFactory<EmailLog>, IEmailLogFactory
     {
         if (parameters.Length == 0)
         {
-            // Create default instance
             return new EmailLog
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                SentTime = DateTime.UtcNow,
+                Content = string.Empty,
+                SenderEmail = string.Empty,
+                ReceiverEmail = string.Empty,
+                OperationType = string.Empty
             };
         }
 
-        if (parameters[0] is CreateEmailLogDto dto)
+        // Création avec paramètres typés
+        return parameters switch
         {
-            // Create from DTO
-            return new EmailLog
+            // Création complète avec tous les paramètres
+            [string content, string senderEmail, string receiverEmail, string operationType] => new EmailLog
             {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
-            };
-        }
-
-        throw new ArgumentException("Invalid parameters for EmailLog creation");
+                Id = Guid.NewGuid(),
+                SentTime = DateTime.UtcNow,
+                Content = content,
+                SenderEmail = senderEmail,
+                ReceiverEmail = receiverEmail,
+                OperationType = operationType
+            },
+            
+            // Création avec une date d'envoi personnalisée
+            [string content, string senderEmail, string receiverEmail, string operationType, DateTime sentTime] => new EmailLog
+            {
+                Id = Guid.NewGuid(),
+                SentTime = sentTime,
+                Content = content,
+                SenderEmail = senderEmail,
+                ReceiverEmail = receiverEmail,
+                OperationType = operationType
+            },
+            
+            _ => throw new ArgumentException(
+                "Paramètres invalides. Attendu : () ou (content, senderEmail, receiverEmail, operationType) ou (content, senderEmail, receiverEmail, operationType, sentTime)")
+        };
     }
 }

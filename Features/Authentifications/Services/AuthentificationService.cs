@@ -1,7 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Ressource_API.Features.Authentifications.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Common.Services;
+using Ressource_API.Common.Services.EmailService;
 using Ressource_API.Features.Authentifications.AuthentificationDtos;
 using Ressource_API.Features.Logins.Repositories;
 using Ressource_API.Features.Logins.Factories;
@@ -10,13 +13,16 @@ using Ressource_API.Features.PasswordInfos.Repositories;
 using Ressource_API.Features.PasswordInfos.Factories;
 using Ressource_API.Features.PasswordHistories.Services;
 using Ressource_API.Features.PasswordInfos.Models;
+using Ressource_API.Features.RefreshTokens.Repositories;
 using Ressource_API.Features.RefreshTokens.Services;
+using Ressource_API.Features.UserRoles.Repositories;
 using Ressource_API.Features.Users.Factories;
 using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.Repositories;
 using Simply.Auth.AspNetCore.Models;
 using Simply.Auth.Core.Abstractions;
 using Simply.Auth.Core.Enums;
+using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace Ressource_API.Features.Authentifications.Services;
 
@@ -31,6 +37,7 @@ public class AuthentificationService : IAuthentificationService
     private readonly IUserFactory _userFactory;
     private readonly ILoginRepository _loginRepository;
     private readonly ILoginFactory _loginFactory;
+    private readonly IUserRoleRepository _userRoleRepository;
     private readonly IPasswordInfoRepository _passwordInfoRepository;
     private readonly IPasswordInfoFactory _passwordInfoFactory;
     private readonly IEmailService _emailService;
@@ -45,6 +52,7 @@ public class AuthentificationService : IAuthentificationService
         IEmailService emailService,
         IRefreshTokenService tokenService,
         IPasswordHistoryManager passwordHistoryManager,
+        IUserRoleRepository userRoleRepository,
         ILoginRepository loginRepository,
         ILoginFactory loginFactory,
         IPasswordInfoRepository passwordInfoRepository,
@@ -56,6 +64,7 @@ public class AuthentificationService : IAuthentificationService
         _userFactory = userFactory;
         _loginRepository = loginRepository;
         _loginFactory = loginFactory;
+        _userRoleRepository = userRoleRepository;
         _passwordInfoRepository = passwordInfoRepository;
         _passwordInfoFactory = passwordInfoFactory;
         _emailService = emailService;
@@ -67,7 +76,7 @@ public class AuthentificationService : IAuthentificationService
     public async Task<Result> RegisterUser(RegisterDto dto)
     {
         _logger.LogInformation("Registration attempt for email {Email}", dto.Email);
-        
+
         if (dto.Password != dto.ConfirmPassword)
         {
             _logger.LogWarning("Registration failed: password mismatch for {Email}", dto.Email);
@@ -82,10 +91,12 @@ public class AuthentificationService : IAuthentificationService
 
         var passwordHash = _simplyAuthService.HashPassword(dto.Password);
 
-        User newUser = _userFactory.Create(dto.UserName, dto.FirstName, dto.LastName, dto.UserRoleId);
+        var userRole = await _userRoleRepository.FirstOrDefaultAsync(r => r.RoleLabel == "Utilisateur") ?? throw new Exception("Invalid role");
+        
+        User newUser = _userFactory.Create(dto.UserName, dto.FirstName, dto.LastName, userRole.Id);
         newUser.ActivationCode = Guid.NewGuid();
         newUser.IsActive = false;
-        
+
         var savedUser = await _userRepository.AddAsync(newUser);
 
         Login newLogin = _loginFactory.Create(dto.Email, passwordHash, savedUser.Id);
@@ -95,20 +106,20 @@ public class AuthentificationService : IAuthentificationService
         await _passwordInfoRepository.AddAsync(passwordInfo);
 
         var activationToken = newUser.ActivationCode.Value.ToString();
-        
+
         await _emailService.SendRegisteringConfirmationEmail(
             activationToken,
             newUser.FirstName,
             newUser.LastName,
-            dto.Email, 
+            dto.Email,
             "Confirmation de création de compte",
             "Confirmez votre compte");
-        
+
         _logger.LogInformation("User registered successfully: {UserId}", newUser.Id);
-        
+
         return Result.Success();
     }
-    
+
     public async Task<Result<SimplyAuthResponse>> Login(LoginDto dto)
     {
         _logger.LogInformation("Login attempt for email {Email}", dto.Email);
@@ -138,13 +149,15 @@ public class AuthentificationService : IAuthentificationService
         }
 
         var lockoutEndTime = passwordInfo.ResetDate?.AddMinutes(LockoutDurationMinutes);
-        if (passwordInfo.AttemptCount >= MaxFailedLoginAttempts && 
-            lockoutEndTime.HasValue && 
+        if (passwordInfo.AttemptCount >= MaxFailedLoginAttempts &&
+            lockoutEndTime.HasValue &&
             lockoutEndTime.Value > DateTime.UtcNow)
         {
             var remainingMinutes = (int)Math.Ceiling((lockoutEndTime.Value - DateTime.UtcNow).TotalMinutes);
-            _logger.LogWarning("Login failed: account locked for {UserId}, {Minutes} minutes remaining", user.Id, remainingMinutes);
-            return Result.Failure<SimplyAuthResponse>($"Account is locked. Please try again in {remainingMinutes} minute(s).");
+            _logger.LogWarning("Login failed: account locked for {UserId}, {Minutes} minutes remaining", user.Id,
+                remainingMinutes);
+            return Result.Failure<SimplyAuthResponse>(
+                $"Account is locked. Please try again in {remainingMinutes} minute(s).");
         }
 
         if (!user.IsActive || user.ActivationCode.HasValue)
@@ -163,11 +176,13 @@ public class AuthentificationService : IAuthentificationService
             if (passwordInfo.AttemptCount >= MaxFailedLoginAttempts)
             {
                 passwordInfo.ResetDate = DateTime.UtcNow;
-                _logger.LogWarning("Account locked for {UserId} after {Attempts} failed attempts", user.Id, passwordInfo.AttemptCount);
+                _logger.LogWarning("Account locked for {UserId} after {Attempts} failed attempts", user.Id,
+                    passwordInfo.AttemptCount);
             }
 
             await _passwordInfoRepository.UpdateAsync(passwordInfo);
-            _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id, passwordInfo.AttemptCount);
+            _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id,
+                passwordInfo.AttemptCount);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
         }
 
@@ -188,7 +203,7 @@ public class AuthentificationService : IAuthentificationService
             _logger.LogInformation("Password rehashed for user {UserId}", user.Id);
         }
 
-        var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString());
+        var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString(), new[] {new Claim(ClaimTypes.Role, "Utilisateur") });
 
         await _tokenService.CreateRefreshToken(
             user.Id,
@@ -233,7 +248,7 @@ public class AuthentificationService : IAuthentificationService
         user.ActivationCode = null;
         user.IsActive = true;
         user.UpdateTime = DateTime.UtcNow;
-    
+
         await _userRepository.UpdateAsync(user);
 
         _logger.LogInformation("Account activated successfully for user {UserId}", user.Id);
@@ -308,6 +323,7 @@ public class AuthentificationService : IAuthentificationService
 
         var passwordInfo = await _passwordInfoRepository
             .FirstOrDefaultAsync(p => p.ResetToken == dto.Token);
+
 
         if (passwordInfo is null)
         {

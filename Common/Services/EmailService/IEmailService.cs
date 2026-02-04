@@ -1,6 +1,6 @@
 using Ressource_API.Common.ResultPattern;
 
-namespace Ressource_API.Common.Services;
+namespace Ressource_API.Common.Services.EmailService;
 
 public interface IEmailService
 {

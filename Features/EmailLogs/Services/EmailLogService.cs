@@ -1,3 +1,4 @@
+using DotNetEnv;
 using Ressource_API.Features.EmailLogs.Models;
 using Ressource_API.Features.EmailLogs.EmailLogDtos;
 using Ressource_API.Features.EmailLogs.Repositories;
@@ -28,42 +29,11 @@ public class EmailLogService : IEmailLogService
         return await _repository.FindAsync(id, cancellationToken);
     }
 
-    public async Task<EmailLog> CreateEmailLogAsync(CreateEmailLogDto dto, CancellationToken cancellationToken = default)
+    public async Task AddEmailLogAsync(string receiver, string content, string operationType,
+        CancellationToken cancellationToken = default)
     {
-        // Use factory to create the entity from DTO
-        var emaillog = _factory.Create(dto);
-        
-        return await _repository.AddAsync(emaillog, cancellationToken);
-    }
-
-    public async Task<EmailLog?> UpdateEmailLogAsync(int id, UpdateEmailLogDto dto, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return null;
-        }
-
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
-        await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
-    }
-
-    public async Task<bool> DeleteEmailLogAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return false;
-        }
-
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+        var sender = Environment.GetEnvironmentVariable("SMTP_SENDER") ?? throw new KeyNotFoundException("SMTP_SENDER not defined");
+        var newLog = _factory.Create( content, sender, receiver, operationType);
+        await _repository.AddAsync(newLog, cancellationToken);
     }
 }

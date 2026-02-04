@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
 using Ressource_API.Common.Services;
+using Ressource_API.Common.Services.EmailService;
 using Ressource_API.Common.Utils;
 using Ressource_API.Features.Addresses.Repositories;
 using Ressource_API.Features.Addresses.Factories;
