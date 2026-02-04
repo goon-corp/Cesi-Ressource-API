@@ -73,7 +73,7 @@ public class AuthentificationService : IAuthentificationService
         _logger = logger;
     }
 
-    public async Task<Result> RegisterUser(RegisterDto dto)
+    public async Task<Result> RegisterUser(RegisterDto dto, string roleName = "Utilisateur")
     {
         _logger.LogInformation("Registration attempt for email {Email}", dto.Email);
 
@@ -91,7 +91,7 @@ public class AuthentificationService : IAuthentificationService
 
         var passwordHash = _simplyAuthService.HashPassword(dto.Password);
 
-        var userRole = await _userRoleRepository.FirstOrDefaultAsync(r => r.RoleLabel == "Utilisateur") ?? throw new Exception("Invalid role");
+        var userRole = await _userRoleRepository.FirstOrDefaultAsync(r => r.RoleLabel == roleName) ?? throw new Exception("Invalid role");
         
         User newUser = _userFactory.Create(dto.UserName, dto.FirstName, dto.LastName, userRole.Id);
         newUser.ActivationCode = Guid.NewGuid();
@@ -202,8 +202,8 @@ public class AuthentificationService : IAuthentificationService
             await _loginRepository.UpdateAsync(login);
             _logger.LogInformation("Password rehashed for user {UserId}", user.Id);
         }
-
-        var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString(), new[] {new Claim(ClaimTypes.Role, "Utilisateur") });
+        
+        var tokens = _simplyAuthService.GenerateTokens(user.Id.ToString(), new[] {new Claim(ClaimTypes.Role, user.UserRole.RoleLabel) });
 
         await _tokenService.CreateRefreshToken(
             user.Id,
