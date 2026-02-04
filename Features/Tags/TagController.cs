@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Tags.Models;
+using Ressource_API.Features.Tags.Query;
 using Ressource_API.Features.Tags.TagDtos;
 using Ressource_API.Features.Tags.Services;
 
@@ -22,20 +24,15 @@ public class TagController : ControllerBase
     /// Get all tags
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Tag>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Tag>>> GetAllTags(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<Tag>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<Tag>>> GetAllTags(
+        [FromQuery] TagQuery tagQuery,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var tags = await _service.GetAllTagsAsync(cancellationToken);
-            return Ok(tags);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all tags");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving tags");
-        }
+        var tags = await _service.GetAllTagsAsync(tagQuery, cancellationToken);
+        return Ok(tags);
     }
+
 
     /// <summary>
     /// Get a tag by ID
@@ -100,7 +97,7 @@ public class TagController : ControllerBase
     [ProducesResponseType(typeof(Tag), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Tag>> UpdateTag(int id, [FromBody] UpdateTagDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<Tag>> UpdateTag(Guid id, [FromBody] UpdateTagDto dto, CancellationToken cancellationToken)
     {
         try
         {
@@ -131,7 +128,7 @@ public class TagController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteTag(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteTag(Guid id, CancellationToken cancellationToken)
     {
         try
         {
