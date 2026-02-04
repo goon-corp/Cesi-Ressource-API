@@ -32,7 +32,7 @@ public class EmailLogService : IEmailLogService
     public async Task AddEmailLogAsync(string receiver, string content, string operationType,
         CancellationToken cancellationToken = default)
     {
-        var sender = Environment.GetEnvironmentVariable("SMTP_SENDER") ?? throw new KeyNotFoundException("SMTP_SENDER not defined");
+        var sender = Environment.GetEnvironmentVariable("SMTP_EMAIL_SENDER") ?? throw new KeyNotFoundException("SMTP_EMAIL_SENDER not defined");
         var newLog = _factory.Create( content, sender, receiver, operationType);
         await _repository.AddAsync(newLog, cancellationToken);
     }
