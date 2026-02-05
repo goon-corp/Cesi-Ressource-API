@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Hybrid;
 using Ressource_API.Features.UserRoles.Models;
 using Ressource_API.Features.UserRoles.UserRoleDtos;
 using Ressource_API.Features.UserRoles.Repositories;
@@ -9,17 +10,24 @@ public class UserRoleService : IUserRoleService
 {
     private readonly IUserRoleRepository _repository;
     private readonly IUserRoleFactory _factory;
+    private readonly HybridCache _cache;
 
     public UserRoleService(
         IUserRoleRepository repository,
-        IUserRoleFactory factory)
+        IUserRoleFactory factory, 
+        HybridCache cache)
     {
         _repository = repository;
         _factory = factory;
+        _cache = cache;
     }
 
     public async Task<IEnumerable<UserRole>> GetAllUserRolesAsync(CancellationToken cancellationToken = default)
     {
+        
+        var roles = await _cache.GetOrCreateAsync($"roles",
+            async token => { return await _repository.ListAsync(token); });
+
         return await _repository.ListAsync(cancellationToken);
     }
 
