@@ -46,30 +46,6 @@ public class EmailService : IEmailService
         return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent, EmailOperationType.CREATED_USER_ACCOUNT.ToOperationString());
     }
 
-    public async Task<Result> SendAdministratorCreationEmail(
-        string newAdminFirstName,
-        string newAdminLastName,
-        string receiverEmail,
-        string subject,
-        string message)
-    {
-        var loginLink = $"{_baseUrl}/login";
-        
-        var htmlContent = BuildEmailTemplate(
-            title: "Compte administrateur créé",
-            greeting: $"Bonjour {newAdminFirstName} {newAdminLastName},",
-            mainContent: $"""
-                <p>{message}</p>
-                <p>Un compte administrateur a été créé pour vous. Vous pouvez dès maintenant vous connecter à la plateforme.</p>
-            """,
-            buttonText: "Accéder à la plateforme",
-            buttonLink: loginLink,
-            footerNote: "Si vous n'êtes pas à l'origine de cette demande, veuillez contacter l'équipe support."
-        );
-
-        return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent,EmailOperationType.CREATED_ADMIN_ACCOUNT.ToOperationString() );
-    }
-
     public async Task<Result> SendPasswordResetEmail(
         string resetToken,
         string firstName,

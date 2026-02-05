@@ -26,17 +26,6 @@ public class AdminAuthentificationController : ControllerBase
         return Guid.Parse(userIdClaim!);
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-    {
-        var result = await _service.RegisterUser(dto, "Administrateur");
-
-        return result.Match<IActionResult>(
-            onSuccess: () => Created(),
-            onFailure: error => BadRequest(new { error })
-        );
-    }
-
     [HttpPut("confirm-account/{token}")]
     public async Task<IActionResult> ConfirmAccount(string token)
     {
