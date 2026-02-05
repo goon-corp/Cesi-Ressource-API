@@ -6,42 +6,52 @@ namespace Ressource_API.Features.PasswordInfos.Factories;
 
 public class PasswordInfoFactory : BaseFactory<PasswordInfo>, IPasswordInfoFactory
 {
-    /// <summary>
-    /// Creates a PasswordInfo from a DTO
-    /// </summary>
     public PasswordInfo Create(CreatePasswordInfoDto dto)
     {
         return CreateInstance(dto);
     }
 
-    /// <summary>
-    /// Implementation of the abstract CreateInstance method
-    /// </summary>
     protected override PasswordInfo CreateInstance(params object[] parameters)
     {
         if (parameters.Length == 0)
         {
-            // Create default instance
             return new PasswordInfo
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                AttemptCount = 0,
+                UserId = Guid.Empty
             };
         }
 
-        if (parameters[0] is CreatePasswordInfoDto dto)
+        return parameters switch
         {
-            // Create from DTO
-            return new PasswordInfo
+            [CreatePasswordInfoDto dto] => new PasswordInfo
             {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
-            };
-        }
-
-        throw new ArgumentException("Invalid parameters for PasswordInfo creation");
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                AttemptCount = dto.AttemptCount,
+                UserId = dto.UserId
+            },
+            
+            [Guid userId] => new PasswordInfo
+            {
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                AttemptCount = 0,
+                UserId = userId
+            },
+            
+            [Guid userId, int attemptCount] => new PasswordInfo
+            {
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                AttemptCount = attemptCount,
+                UserId = userId
+            },
+            
+            _ => throw new ArgumentException(
+                "Paramètres invalides. Attendu : () ou (CreatePasswordInfoDto) ou (userId) ou (userId, attemptCount)")
+        };
     }
 }

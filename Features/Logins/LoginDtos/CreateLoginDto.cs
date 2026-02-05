@@ -1,9 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Ressource_API.Features.Logins.LoginDtos;
 
 public class CreateLoginDto
 {
-    // TODO: Add properties needed to create a Login
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public string Description { get; set; } = string.Empty;
+    [Required]
+    [EmailAddress]
+    [MaxLength(255)]
+    public string Email { get; set; } = null!;
+
+    [Required] public string PasswordHash { get; set; } = null!;
+
+    [Required] public string PasswordSalt { get; set; } = null!;
+
+    [Required] public Guid UserId { get; set; }
 }

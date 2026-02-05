@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Ressource_API.Common.Data;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.HealthChecks.Dtos;
@@ -10,13 +11,16 @@ public class HealthCheckService : IHealthCheckService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<HealthCheckService> _logger;
+    private readonly HybridCache _cache;
 
     public HealthCheckService(
         ApplicationDbContext dbContext,
-        ILogger<HealthCheckService> logger)
+        ILogger<HealthCheckService> logger,
+        HybridCache cache)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<Result<HealthCheckDto>> CheckHealthAsync(CancellationToken cancellationToken = default)
@@ -28,11 +32,11 @@ public class HealthCheckService : IHealthCheckService
             // Effectuer les vérifications
             var apiCheck = CheckApi();
             var databaseCheck = await CheckDatabaseAsync(cancellationToken);
-
+            var redisCheck = await CheckRedisAsync(_cache,cancellationToken);
             overallStopwatch.Stop();
 
             // Déterminer le statut global
-            var checks = new List<HealthCheckEntry> { apiCheck, databaseCheck };
+            var checks = new List<HealthCheckEntry> { apiCheck, databaseCheck, redisCheck };
             var overallStatus = checks.Any(c => c.Status == "Unhealthy") ? "Unhealthy" : "Healthy";
 
             var healthCheckDto = new HealthCheckDto
@@ -114,6 +118,44 @@ public class HealthCheckService : IHealthCheckService
         }
     }
 
+    private async Task<HealthCheckEntry> CheckRedisAsync(HybridCache cache, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        const string key = "__redis_probe__";
+        try
+        {
+            await cache.SetAsync(
+                key,
+                "ok",
+                new HybridCacheEntryOptions
+                {
+                    LocalCacheExpiration = TimeSpan.FromSeconds(1)
+                });
+
+            // Force a distributed operation
+            await cache.RemoveAsync(key);
+            stopwatch.Stop();
+
+            return new HealthCheckEntry(
+                Name: "redis",
+                Status: "Healthy",
+                DurationMs: stopwatch.Elapsed.TotalMilliseconds
+            );
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error during Redis health check");
+
+            return new HealthCheckEntry(
+                Name: "redis",
+                Status: "Unhealthy",
+                DurationMs: stopwatch.Elapsed.TotalMilliseconds,
+                Error: ex.Message
+            );
+        }
+    }
+    
     private async Task<HealthCheckEntry> CheckDatabaseAsync(CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();

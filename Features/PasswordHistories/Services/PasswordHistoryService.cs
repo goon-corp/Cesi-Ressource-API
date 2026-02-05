@@ -1,69 +1,95 @@
 using Ressource_API.Features.PasswordHistories.Models;
 using Ressource_API.Features.PasswordHistories.PasswordHistoryDtos;
 using Ressource_API.Features.PasswordHistories.Repositories;
-using Ressource_API.Features.PasswordHistories.Factories;
 
 namespace Ressource_API.Features.PasswordHistories.Services;
 
 public class PasswordHistoryService : IPasswordHistoryService
 {
     private readonly IPasswordHistoryRepository _repository;
-    private readonly IPasswordHistoryFactory _factory;
 
-    public PasswordHistoryService(
-        IPasswordHistoryRepository repository,
-        IPasswordHistoryFactory factory)
+    public PasswordHistoryService(IPasswordHistoryRepository repository)
     {
         _repository = repository;
-        _factory = factory;
     }
 
-    public async Task<IEnumerable<PasswordHistory>> GetAllPasswordHistorysAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<GetPasswordHistoryDto>> GetAllAsync()
     {
-        return await _repository.ListAsync(cancellationToken);
-    }
+        var histories = await _repository.ListAsync(h => h.DeletionTime == null);
 
-    public async Task<PasswordHistory?> GetPasswordHistoryByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _repository.FindAsync(id, cancellationToken);
-    }
-
-    public async Task<PasswordHistory> CreatePasswordHistoryAsync(CreatePasswordHistoryDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var passwordhistory = _factory.Create(dto);
-        
-        return await _repository.AddAsync(passwordhistory, cancellationToken);
-    }
-
-    public async Task<PasswordHistory?> UpdatePasswordHistoryAsync(int id, UpdatePasswordHistoryDto dto, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
+        return histories.Select(h => new GetPasswordHistoryDto
         {
+            Id = h.Id,
+            CreationTime = h.CreationTime,
+            UpdateTime = h.UpdateTime,
+            IdPasswordsInfos = h.PasswordInfosId
+        });
+    }
+
+    public async Task<IEnumerable<GetPasswordHistoryDto>> GetByPasswordInfoIdAsync(Guid passwordInfoId)
+    {
+        var histories = await _repository.ListAsync(h =>
+            h.PasswordInfosId == passwordInfoId && h.DeletionTime == null);
+
+        return histories.OrderByDescending(h => h.UpdateTime).Select(h => new GetPasswordHistoryDto
+        {
+            Id = h.Id,
+            CreationTime = h.CreationTime,
+            UpdateTime = h.UpdateTime,
+            IdPasswordsInfos = h.PasswordInfosId
+        });
+    }
+
+    public async Task<GetPasswordHistoryDto?> GetByIdAsync(Guid id)
+    {
+        var history = await _repository.FindAsync(id);
+
+        if (history == null || history.DeletionTime != null)
             return null;
-        }
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
-        await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+        return new GetPasswordHistoryDto
+        {
+            Id = history.Id,
+            CreationTime = history.CreationTime,
+            UpdateTime = history.UpdateTime,
+            IdPasswordsInfos = history.PasswordInfosId
+        };
     }
 
-    public async Task<bool> DeletePasswordHistoryAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<GetPasswordHistoryDto?> CreateAsync(CreatePasswordHistoryDto dto)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
+        var history = new PasswordHistory
         {
-            return false;
-        }
+            Id = Guid.NewGuid(),
+            PasswordHash = dto.PasswordHash,
+            UpdateTime = DateTime.UtcNow,
+            PasswordInfosId = dto.IdPasswordsInfos,
+            CreationTime = DateTime.UtcNow
+        };
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
+        await _repository.AddAsync(history);
+
+        return new GetPasswordHistoryDto
+        {
+            Id = history.Id,
+            CreationTime = history.CreationTime,
+            UpdateTime = history.UpdateTime,
+            IdPasswordsInfos = history.PasswordInfosId
+        };
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var history = await _repository.FindAsync(id);
+
+        if (history == null || history.DeletionTime != null)
+            return false;
+
+        history.DeletionTime = DateTime.UtcNow;
+        history.UpdateTime = DateTime.UtcNow;
+
+        await _repository.SoftDeleteAsync(history);
+
         return true;
     }
 }

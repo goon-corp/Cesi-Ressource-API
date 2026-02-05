@@ -1,69 +1,59 @@
+using Ressource_API.Common.Services;
 using Ressource_API.Features.RefreshTokens.Models;
-using Ressource_API.Features.RefreshTokens.RefreshTokenDtos;
 using Ressource_API.Features.RefreshTokens.Repositories;
 using Ressource_API.Features.RefreshTokens.Factories;
 
 namespace Ressource_API.Features.RefreshTokens.Services;
 
-public class RefreshTokenService : IRefreshTokenService
+/// <summary>
+/// Service for managing user refresh tokens and session lifecycle
+/// </summary>
+public class RefreshTokenService : BaseTokenService<RefreshToken, IRefreshTokenRepository, IRefreshTokenFactory>, IRefreshTokenService
 {
-    private readonly IRefreshTokenRepository _repository;
-    private readonly IRefreshTokenFactory _factory;
-
     public RefreshTokenService(
         IRefreshTokenRepository repository,
-        IRefreshTokenFactory factory)
+        IRefreshTokenFactory factory,
+        ILogger<RefreshTokenService> logger)
+        : base(
+            repository,
+            factory,
+            logger,
+            getTokenId: s => s.Id,
+            getEntityId: s => s.UserId,
+            getToken: s => s.Token,
+            getConsumed: s => !s.IsActive,
+            getExpiresAt: s => s.ExpirationTime,
+            setConsumed: (s, consumed) => s.IsActive = !consumed,
+            setUpdateTime: (s, time) => s.UpdateTime = time,
+            createTokenFunc: (userId, token, expiresAt) => factory.Create(userId, token, expiresAt))
     {
-        _repository = repository;
-        _factory = factory;
     }
 
-    public async Task<IEnumerable<RefreshToken>> GetAllRefreshTokensAsync(CancellationToken cancellationToken = default)
-    {
-        return await _repository.ListAsync(cancellationToken);
-    }
+    // Delegate methods to base with user-specific naming
+    public new async Task<RefreshToken?> GetByRefreshToken(string refreshToken) =>
+        await base.GetByToken(refreshToken);
 
-    public async Task<RefreshToken?> GetRefreshTokenByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _repository.FindAsync(id, cancellationToken);
-    }
+    public new async Task<RefreshToken> CreateRefreshToken(Guid userId, string refreshToken, DateTime expiresAt) =>
+        await base.CreateToken(userId, refreshToken, expiresAt);
 
-    public async Task<RefreshToken> CreateRefreshTokenAsync(CreateRefreshTokenDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var refreshtoken = _factory.Create(dto);
-        
-        return await _repository.AddAsync(refreshtoken, cancellationToken);
-    }
+    public new async Task<bool> ConsumeRefreshToken(string refreshToken) =>
+        await base.ConsumeToken(refreshToken);
 
-    public async Task<RefreshToken?> UpdateRefreshTokenAsync(int id, UpdateRefreshTokenDto dto, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return null;
-        }
+    public async Task<bool> RevokeAllUserRefreshTokens(Guid userId) =>
+        await base.RevokeAllEntityTokens(userId);
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
-        await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
-    }
+    public new async Task<bool> RevokeRefreshToken(Guid sessionId) =>
+        await base.RevokeToken(sessionId);
 
-    public async Task<bool> DeleteRefreshTokenAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return false;
-        }
+    public new async Task CleanupExpiredRefreshTokens() =>
+        await base.CleanupExpiredTokens();
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
-    }
+    public async Task<List<RefreshToken>> GetActiveRefreshTokensByUserId(Guid userId) =>
+        await base.GetActiveTokensByEntityId(userId);
+
+    public async Task<bool> RevokeRefreshTokenForUser(Guid sessionId, Guid userId) =>
+        await base.RevokeTokenForEntity(sessionId, userId);
+
+    public new async Task<bool> RevokeAllRefreshTokensExceptCurrent(Guid userId, Guid currentRefreshTokenId) =>
+        await base.RevokeAllTokensExceptCurrent(userId, currentRefreshTokenId);
 }

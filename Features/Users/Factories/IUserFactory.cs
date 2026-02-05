@@ -6,5 +6,4 @@ namespace Ressource_API.Features.Users.Factories;
 
 public interface IUserFactory : IBaseFactory<User>
 {
-    User Create(CreateUserDto dto);
 }

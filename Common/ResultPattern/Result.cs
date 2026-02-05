@@ -20,7 +20,6 @@ public class Result : IResult
     }
 
     public bool IsSuccess { get; }
-    public bool IsFailure => !IsSuccess;
     public string? Error { get; }
     public IReadOnlyList<string> Errors { get; }
 
@@ -82,7 +81,7 @@ public class Result : IResult
     /// </summary>
     public static Result Combine(params Result[] results)
     {
-        var failures = results.Where(r => r.IsFailure).ToList();
+        var failures = results.Where(r => !r.IsSuccess).ToList();
         
         if (!failures.Any())
             return Success();
@@ -98,7 +97,7 @@ public class Result : IResult
     {
         foreach (var result in results)
         {
-            if (result.IsFailure)
+            if (!result.IsSuccess)
                 return result;
         }
 
@@ -111,31 +110,31 @@ public class Result : IResult
 /// </summary>
 public class Result<T> : Result, IResult<T>
 {
-    private readonly T? _value;
+    private readonly T? _data;
 
-    protected internal Result(T? value, bool isSuccess, string? error, IEnumerable<string>? errors = null)
+    protected internal Result(T? data, bool isSuccess, string? error, IEnumerable<string>? errors = null)
         : base(isSuccess, error, errors)
     {
-        _value = value;
+        _data = data;
     }
 
-    public T? Value
+    public T? Data
     {
         get
         {
-            if (IsFailure)
+            if (!IsSuccess)
                 throw new InvalidOperationException("Cannot access Value of a failed result");
             
-            return _value;
+            return _data;
         }
     }
 
     /// <summary>
     /// Gets the value or returns a default value if failed
     /// </summary>
-    public T? GetValueOrDefault(T? defaultValue = default)
+    public T? GetValueOrDefault(T? defaultData = default)
     {
-        return IsSuccess ? _value : defaultValue;
+        return IsSuccess ? _data : defaultData;
     }
 
     // === Utility Methods ===
@@ -146,7 +145,7 @@ public class Result<T> : Result, IResult<T>
     public void Match(Action<T> onSuccess, Action<string> onFailure)
     {
         if (IsSuccess)
-            onSuccess(_value!);
+            onSuccess(_data!);
         else
             onFailure(Error!);
     }
@@ -156,7 +155,7 @@ public class Result<T> : Result, IResult<T>
     /// </summary>
     public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<string, TResult> onFailure)
     {
-        return IsSuccess ? onSuccess(_value!) : onFailure(Error!);
+        return IsSuccess ? onSuccess(_data!) : onFailure(Error!);
     }
 
     /// <summary>
@@ -165,7 +164,7 @@ public class Result<T> : Result, IResult<T>
     public Result<TResult> Map<TResult>(Func<T, TResult> mapper)
     {
         return IsSuccess 
-            ? Success(mapper(_value!)) 
+            ? Success(mapper(_data!)) 
             : Failure<TResult>(Errors);
     }
 
@@ -175,7 +174,7 @@ public class Result<T> : Result, IResult<T>
     public Result<TResult> Bind<TResult>(Func<T, Result<TResult>> binder)
     {
         return IsSuccess 
-            ? binder(_value!) 
+            ? binder(_data!) 
             : Failure<TResult>(Errors);
     }
 
@@ -185,7 +184,7 @@ public class Result<T> : Result, IResult<T>
     public Result<T> Tap(Action<T> action)
     {
         if (IsSuccess)
-            action(_value!);
+            action(_data!);
         
         return this;
     }
@@ -196,10 +195,10 @@ public class Result<T> : Result, IResult<T>
     public async Task<Result<T>> TapAsync(Func<T, Task> action)
     {
         if (IsSuccess)
-            await action(_value!);
+            await action(_data!);
         
         return this;
     }
 
-    public static implicit operator Result<T>(T value) => Success(value);
+    public static implicit operator Result<T>(T data) => Success(data);
 }

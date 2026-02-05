@@ -1,15 +1,24 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
+using Ressource_API.Common.Filters;
+using Ressource_API.Common.Services;
+using Ressource_API.Common.Services.EmailService;
+using Ressource_API.Common.Utils;
 using Ressource_API.Features.Addresses.Repositories;
 using Ressource_API.Features.Addresses.Factories;
 using Ressource_API.Features.Articles.Repositories;
 using Ressource_API.Features.Articles.Services;
 using Ressource_API.Features.Articles.Factories;
+using Ressource_API.Features.Authentifications.Services;
 using Ressource_API.Features.BackofficeLogLevels.Repositories;
 using Ressource_API.Features.BackofficeLogLevels.Services;
 using Ressource_API.Features.BackofficeLogLevels.Factories;
@@ -45,7 +54,8 @@ using Ressource_API.Features.Notifications.Services;
 using Ressource_API.Features.Notifications.Factories;
 using Ressource_API.Features.PasswordHistories.Repositories;
 using Ressource_API.Features.PasswordHistories.Services;
-using Ressource_API.Features.PasswordHistories.Factories;
+using Ressource_API.Features.PasswordInfos.Factories;
+using Ressource_API.Features.PasswordInfos.Repositories;
 using Ressource_API.Features.PollOptions.Repositories;
 using Ressource_API.Features.PollOptions.Services;
 using Ressource_API.Features.PollOptions.Factories;
@@ -105,6 +115,10 @@ using Ressource_API.Features.UserRoles.Factories;
 using Ressource_API.Features.Users.Repositories;
 using Ressource_API.Features.Users.Services;
 using Ressource_API.Features.Users.Factories;
+using Simply.Auth.Argon2.Configuration;
+using Simply.Auth.Argon2.Services;
+using Simply.Auth.AspNetCore.Extensions;
+using Simply.Auth.Core.Abstractions;
 
 namespace Ressource_API.Common.Extensions;
 
@@ -112,14 +126,58 @@ public static class DependenciesExtensions
 {
     public static void InjectDependencies(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
+        builder.Services.AddControllers( options => 
+            options.Filters.Add<ValidationFilter>())//Applique le result pattern pour les exceptions de validators
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+            }); // Force le snake cae sur le retour des formats JSON
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true; // Désactive le comportement par défaut des erreurs de validation
+        });
         builder.Services.AddHttpContextAccessor();
+        builder.AddSimply(65536, 3, 4, "ressource-api", "ressource-front");
         builder.AddRepositories();
         builder.AddServices();
         builder.AddFactories();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
         builder.AddHybridCache();
+    }
+
+    private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,
+        int parallelismDegree, string issuer, string audience)
+    {
+        string jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+                           ?? throw new Exception("JWT_SECRET not found");
+
+
+        builder.Services.AddSimplyAuth(
+            argon2 =>
+            {
+                argon2.MemorySize = memorySize;
+                argon2.Iterations = iterations;
+                argon2.DegreeOfParallelism = parallelismDegree;
+            },
+            jwt =>
+            {
+                jwt.SecretKey = jwtSecret;
+                jwt.Issuer = issuer;
+                jwt.Audience = audience;
+            });
+
+        var descriptor = builder.Services.FirstOrDefault(d =>
+            d.ServiceType == typeof(ISimplyPasswordHasher));
+
+        if (descriptor != null)
+            builder.Services.Remove(descriptor);
+
+        builder.Services.AddSingleton<ISimplyPasswordHasher>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<SimplyArgon2Options>>();
+            return new SimplyArgon2Hasher(options);
+        });
     }
 
     private static void AddFactories(this WebApplicationBuilder builder)
@@ -137,10 +195,10 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IFriendsRequestFactory, FriendsRequestFactory>();
         builder.Services.AddScoped<ILoginFactory, LoginFactory>();
         builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
-        builder.Services.AddScoped<IPasswordHistoryFactory, PasswordHistoryFactory>();
         builder.Services.AddScoped<IPollOptionFactory, PollOptionFactory>();
         builder.Services.AddScoped<IPollFactory, PollFactory>();
         builder.Services.AddScoped<IProfilePictureFactory, ProfilePictureFactory>();
+        builder.Services.AddScoped<IPasswordInfoFactory, PasswordInfoFactory>();
         builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
         builder.Services.AddScoped<IQuizzQuestionFactory, QuizzQuestionFactory>();
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
@@ -174,6 +232,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IPasswordHistoryService, PasswordHistoryService>();
+        builder.Services.AddScoped<IPasswordHistoryManager, PasswordHistoryManager>();
         builder.Services.AddScoped<IPollOptionService, PollOptionService>();
         builder.Services.AddScoped<IPollService, PollService>();
         builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
@@ -194,6 +253,9 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IUserRoleService, UserRoleService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+        builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailSender, EmailSender>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
@@ -212,6 +274,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ILoginRepository, LoginRepository>();
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+        builder.Services.AddScoped<IPasswordInfoRepository, PasswordInfoRepository>();
         builder.Services.AddScoped<IPollOptionRepository, PollOptionRepository>();
         builder.Services.AddScoped<IPollRepository, PollRepository>();
         builder.Services.AddScoped<IProfilePictureRepository, ProfilePictureRepository>();
