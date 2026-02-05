@@ -12,11 +12,6 @@ public interface IResult
     bool IsSuccess { get; }
     
     /// <summary>
-    /// Indicates whether the operation failed
-    /// </summary>
-    bool IsFailure { get; }
-    
-    /// <summary>
     /// The error message if the operation failed
     /// </summary>
     string? Error { get; }
@@ -35,5 +30,5 @@ public interface IResult<out T> : IResult
     /// <summary>
     /// The value returned by the operation
     /// </summary>
-    T? Value { get; }
+    T? Data { get; }
 }
