@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Ressource_API.Common.Validators;
 
 namespace Ressource_API.Features.Authentifications.AuthentificationDtos;
 
@@ -23,7 +24,7 @@ public class RegisterDto
     public string LastName { get; set; } = null!;
 
     [Required]
-    [MinLength(8)]
+    [PasswordValidator]
     public string Password { get; set; } = null!;
 
     [Required]

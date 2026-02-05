@@ -1,12 +1,15 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Ressource_API.Common.Data;
+using Ressource_API.Common.Filters;
 using Ressource_API.Common.Services;
 using Ressource_API.Common.Services.EmailService;
 using Ressource_API.Common.Utils;
@@ -123,7 +126,16 @@ public static class DependenciesExtensions
 {
     public static void InjectDependencies(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
+        builder.Services.AddControllers( options => 
+            options.Filters.Add<ValidationFilter>())//Applique le result pattern pour les exceptions de validators
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+            }); // Force le snake cae sur le retour des formats JSON
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true; // Désactive le comportement par défaut des erreurs de validation
+        });
         builder.Services.AddHttpContextAccessor();
         builder.AddSimply(65536, 3, 4, "ressource-api", "ressource-front");
         builder.AddRepositories();

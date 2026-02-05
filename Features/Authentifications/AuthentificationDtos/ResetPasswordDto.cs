@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using Ressource_API.Common.Validators;
 
-namespace Ressource_API.Features.Authentifications.DTOs;
-
+namespace Ressource_API.Features.Authentifications.AuthentificationDtos;
 public class ResetPasswordDto
 {
     [Required]
     public required string Token { get; set; }
 
     [Required]
-    [MinLength(8)]
+    [PasswordValidator]
     public required string NewPassword { get; set; }
 
     [Required]

@@ -51,12 +51,12 @@ public abstract class BaseTokenService<TToken, TRepository, TFactory> : IBaseTok
 
     public async Task<TToken?> GetByToken(string refreshToken)
     {
-        var sessions = await Repository.ListAsync(s =>
+        var session = await Repository.FirstOrDefaultAsync(s =>
             GetToken(s) == refreshToken &&
             !GetConsumed(s) &&
             GetExpiresAt(s) > DateTime.UtcNow);
 
-        return sessions.FirstOrDefault();
+        return session;
     }
 
     public async Task<TToken> CreateToken(Guid entityId, string refreshToken, DateTime expiresAt)
