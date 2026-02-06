@@ -4,7 +4,6 @@ using Ressource_API.Features.Tags.Extensions;
 using Ressource_API.Features.Tags.Models;
 using Ressource_API.Features.Tags.TagDtos;
 using Ressource_API.Features.Tags.Repositories;
-using Ressource_API.Features.Tags.Factories;
 using Ressource_API.Features.Tags.Query;
 
 namespace Ressource_API.Features.Tags.Services;
@@ -36,9 +35,42 @@ public class TagService : ITagService
         }
 
         var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
-        var tags = await _cache.GetOrCreateAsync( cacheKey, async _ => await tagsTask );
+        
+        var tags = await _cache.GetOrCreateAsync( cacheKey, async _ =>
+        {
+            var tags = await tagsTask;
+
+            foreach (var tag in tags)
+            { 
+                var tagPagesCacheKey = $"invert:tags:{tag.Id}";
+
+                var invertedTagsPages = await _cache.GetOrCreateAsync(tagPagesCacheKey, async _ =>
+                {
+                    return await Task.FromResult(new HashSet<string>());
+                });
+                invertedTagsPages.Add(cacheKey);
+                await _cache.SetAsync(tagPagesCacheKey, invertedTagsPages);
+            }
+            return tags;
+        });
+
         
         return tags;
+    }
+    
+    public async Task<bool> DeleteTagAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var existing = await _repository.FindAsync(id, cancellationToken);
+        
+
+        if (existing == null)
+        {
+            return false;
+        }
+
+        await _repository.DeleteAsync(existing, cancellationToken);
+
+        return true;
     }
 
 
@@ -75,17 +107,5 @@ public class TagService : ITagService
 
         return existing;
     }
-    public async Task<bool> DeleteTagAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
 
-        if (existing == null)
-        {
-            return false;
-        }
-
-        await _repository.DeleteAsync(existing, cancellationToken);
-
-        return true;
-    }
 }

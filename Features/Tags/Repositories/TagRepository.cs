@@ -9,7 +9,7 @@ namespace Ressource_API.Features.Tags.Repositories;
 
 public class TagRepository : BaseRepository<Tag>, ITagRepository
 {
-    private readonly DbContext _context;
+    private readonly ApplicationDbContext _context;
     public TagRepository(ApplicationDbContext context) : base(context)
     {
         _context = context;
@@ -19,12 +19,12 @@ public class TagRepository : BaseRepository<Tag>, ITagRepository
         TagQuery query,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Tag> tags = _context.Set<Tag>().AsQueryable();
+        var tags = _context.Tags.Select(t => t);
 
         // -------------------------
         // Filtering (SQL)
         // -------------------------
-        
+    
         tags = tags.OrderByDescending(t => t.CreationTime);
 
         if (!string.IsNullOrWhiteSpace(query.TagName))
@@ -46,11 +46,13 @@ public class TagRepository : BaseRepository<Tag>, ITagRepository
         }
 
         // -------------------------
-        // Pagination SQL
+        // Count AVANT pagination
         // -------------------------
-
         var totalCount = await tags.CountAsync(cancellationToken);
 
+        // -------------------------
+        // Pagination SQL
+        // -------------------------
         var items = await tags
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
@@ -58,5 +60,4 @@ public class TagRepository : BaseRepository<Tag>, ITagRepository
 
         return new PaginatedList<Tag>(items, query.page, query.size, totalCount);
     }
-
 }

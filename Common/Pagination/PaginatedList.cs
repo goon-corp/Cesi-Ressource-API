@@ -1,10 +1,18 @@
-﻿public class PaginatedList<T> : List<T>
+﻿namespace Ressource_API.Common.Pagination;
+
+public class PaginatedList<T> : List<T>
 {
+    public List<T> Items { get; set; }
     public int PageIndex  { get; }
     public int PageSize   { get; }
     public int TotalCount { get; }
     public int TotalPages { get; }
 
+    public PaginatedList()
+    {
+        Items = new List<T>();
+    }
+    
     public PaginatedList(
         List<T> items,
         int pageIndex,
