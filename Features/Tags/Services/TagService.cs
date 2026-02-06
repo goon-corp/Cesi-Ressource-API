@@ -2,23 +2,42 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Tags.Extensions;
 using Ressource_API.Features.Tags.Models;
-using Ressource_API.Features.Tags.TagDtos;
-using Ressource_API.Features.Tags.Repositories;
 using Ressource_API.Features.Tags.Query;
+using Ressource_API.Features.Tags.Repositories;
+using Ressource_API.Features.Tags.TagDtos;
 
 namespace Ressource_API.Features.Tags.Services;
 
 public class TagService : ITagService
 {
     private readonly ITagRepository _repository;
-    
+
     private readonly HybridCache _cache;
 
     public TagService(ITagRepository repository, HybridCache cache)
     {
         _repository = repository;
-        
+
         _cache = cache;
+    }
+
+    public async Task<PaginatedList<Tag>> TagCacheHandler(TagQuery tagQuery,Task<PaginatedList<Tag>> paginatedListTask)
+    {
+        var tags = await paginatedListTask;
+        
+        isComplete = tags.Count == tagQuery.size;
+        var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
+        foreach (var tag in tags)
+        {
+            var tagPagesCacheKey = $"invert:tags:{tag.Id}";
+
+            var invertedTagsPages = await _cache.GetOrCreateAsync(tagPagesCacheKey,
+                async _ => { return await Task.FromResult(new HashSet<string>()); });
+            invertedTagsPages.Add(cacheKey);
+            await _cache.SetAsync(tagPagesCacheKey, invertedTagsPages);
+        }
+
+        return tags;
     }
 
     public async Task<PaginatedList<Tag>> GetAllTagsAsync(
@@ -27,52 +46,38 @@ public class TagService : ITagService
     {
         var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
 
-        if ( !string.IsNullOrWhiteSpace(tagQuery.TagName) ||
-             tagQuery.CreatedAt.HasValue ||
-             tagQuery.IsDeleted.HasValue)
-        {
+        if (!string.IsNullOrWhiteSpace(tagQuery.TagName) ||
+            tagQuery.CreatedAt.HasValue ||
+            tagQuery.IsDeleted.HasValue)
             return await tagsTask;
-        }
+
+        var isComplete = true;
 
         var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
-        
-        var tags = await _cache.GetOrCreateAsync( cacheKey, async _ =>
-        {
-            var tags = await tagsTask;
+        var incompleteTags = new List<string> { "incompletePage" };
+        var completeTags = new List<string> { "completePage" };
+        var entryOptions = new HybridCacheEntryOptions();
 
-            foreach (var tag in tags)
-            { 
-                var tagPagesCacheKey = $"invert:tags:{tag.Id}";
+        var tags = await _cache.GetOrCreateAsync(cacheKey, async _ => await TagCacheHandler(tagQuery, tagsTask, isComplete),
+            entryOptions,
+            isComplete ? completeTags : incompleteTags,
+            cancellationToken);
 
-                var invertedTagsPages = await _cache.GetOrCreateAsync(tagPagesCacheKey, async _ =>
-                {
-                    return await Task.FromResult(new HashSet<string>());
-                });
-                invertedTagsPages.Add(cacheKey);
-                await _cache.SetAsync(tagPagesCacheKey, invertedTagsPages);
-            }
-            return tags;
-        });
 
-        
         return tags;
     }
-    
+
     public async Task<bool> DeleteTagAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
-        
 
-        if (existing == null)
-        {
-            return false;
-        }
+
+        if (existing == null) return false;
 
         await _repository.DeleteAsync(existing, cancellationToken);
 
         return true;
     }
-
 
 
     public async Task<Tag?> GetTagByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -92,10 +97,7 @@ public class TagService : ITagService
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
 
-        if (existing == null)
-        {
-            return null;
-        }
+        if (existing == null) return null;
 
         // Map properties from dto to existing
         existing.Label = dto.Label;
@@ -107,5 +109,4 @@ public class TagService : ITagService
 
         return existing;
     }
-
 }
