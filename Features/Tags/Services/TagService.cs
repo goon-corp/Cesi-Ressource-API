@@ -17,16 +17,11 @@ public class TagService : ITagService
     public TagService(ITagRepository repository, HybridCache cache)
     {
         _repository = repository;
-
         _cache = cache;
     }
 
-    public async Task<PaginatedList<Tag>> TagCacheHandler(TagQuery tagQuery,Task<PaginatedList<Tag>> paginatedListTask)
+    public async Task TagCacheHandler(PaginatedList<Tag> tags, TagQuery tagQuery, string cacheKey)
     {
-        var tags = await paginatedListTask;
-        
-        isComplete = tags.Count == tagQuery.size;
-        var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
         foreach (var tag in tags)
         {
             var tagPagesCacheKey = $"invert:tags:{tag.Id}";
@@ -36,8 +31,6 @@ public class TagService : ITagService
             invertedTagsPages.Add(cacheKey);
             await _cache.SetAsync(tagPagesCacheKey, invertedTagsPages);
         }
-
-        return tags;
     }
 
     public async Task<PaginatedList<Tag>> GetAllTagsAsync(
@@ -58,12 +51,19 @@ public class TagService : ITagService
         var completeTags = new List<string> { "completePage" };
         var entryOptions = new HybridCacheEntryOptions();
 
-        var tags = await _cache.GetOrCreateAsync(cacheKey, async _ => await TagCacheHandler(tagQuery, tagsTask, isComplete),
+        var tags = await _cache.GetOrCreateAsync(cacheKey, async _ =>
+            {
+                var tags = await tagsTask;
+                isComplete = tags.Count == tagQuery.size;
+                
+                await TagCacheHandler(tags, tagQuery, cacheKey);
+                
+                return tags;
+            },
             entryOptions,
             isComplete ? completeTags : incompleteTags,
             cancellationToken);
-
-
+        
         return tags;
     }
 
