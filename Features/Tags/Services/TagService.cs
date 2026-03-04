@@ -69,20 +69,24 @@ public class TagService : ITagService
 
     public async Task<bool> DeleteTagAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
+        var existing = await GetTagByIdAsync(id, cancellationToken);
 
+        existing?.DeletionTime = DateTime.UtcNow;
 
-        if (existing == null) return false;
-
-        await _repository.DeleteAsync(existing, cancellationToken);
+        if (existing != null) await _repository.SoftDeleteAsync(existing, cancellationToken);
 
         return true;
     }
 
 
-    public async Task<Tag?> GetTagByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Tag?> GetTagByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        var existing = await _cache.GetOrCreateAsync($"tags:{id}", async _ =>
+        {
+            return await _repository.FindAsync(id, cancellationToken);
+            
+        });
+    return  existing;
     }
 
     public async Task<Tag> CreateTagAsync(CreateTagDto dto, CancellationToken cancellationToken = default)
