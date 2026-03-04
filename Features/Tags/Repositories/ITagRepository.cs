@@ -11,4 +11,6 @@ public interface ITagRepository : IBaseRepository<Tag>
         TagQuery query,
         CancellationToken cancellationToken = default);
 
+    Task<Tag?> GetAsyncNoTracking(Guid id, CancellationToken cancellationToken = default);
+
 }
