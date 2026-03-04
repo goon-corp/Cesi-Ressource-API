@@ -7,7 +7,6 @@ using Ressource_API.Features.Authentifications.Services;
 
 namespace Ressource_API.Features.Authentifications;
 
-
 [ApiController]
 [Route("api/auth")]
 public class AuthentificationController : ControllerBase
@@ -37,7 +36,7 @@ public class AuthentificationController : ControllerBase
             onFailure: error => BadRequest(new { error })
         );
     }
-    
+
     [HttpPut("confirm-account/{token}")]
     public async Task<IActionResult> ConfirmAccount(string token)
     {
@@ -49,13 +48,36 @@ public class AuthentificationController : ControllerBase
         );
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    [HttpPost("login/{client}")]
+    public async Task<IActionResult> Login(
+        [FromRoute] string client,
+        [FromBody] LoginDto dto)
     {
+        var allowedClients = new[] { "web", "mobile" };
+        //shut down the request before entering login if the client type is not good
+        if (!allowedClients.Contains(client)) throw new Exception("Invalid client type");
+        
         var result = await _service.Login(dto);
 
         return result.Match<IActionResult>(
-            onSuccess: tokens => Ok(tokens),
+            onSuccess: tokens =>
+            {
+                if(client.ToLower() ==
+                    "web") //request from the backoffice OR the web app, return token in httpOnly cookie
+                {
+                    Response.Cookies.Append("refreshToken", tokens.RefreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTime.UtcNow.AddDays(15)
+                    });
+
+                    return Ok(new { accessToken = tokens.AccessToken });
+                }
+
+                return Ok(tokens); //return the token in the body of the result, for mobile apps
+            },
             onFailure: error => Unauthorized(new { error })
         );
     }
@@ -66,7 +88,8 @@ public class AuthentificationController : ControllerBase
         var result = await _service.ForgotPassword(dto);
 
         return result.Match<IActionResult>(
-            onSuccess: () => Ok(new { message = "If an account with that email exists, a password reset link has been sent." }),
+            onSuccess: () => Ok(new
+                { message = "If an account with that email exists, a password reset link has been sent." }),
             onFailure: error => BadRequest(new { error })
         );
     }
@@ -77,7 +100,8 @@ public class AuthentificationController : ControllerBase
         var result = await _service.ResetPassword(dto);
 
         return result.Match<IActionResult>(
-            onSuccess: () => Ok(new { message = "Password has been reset successfully. You can now login with your new password." }),
+            onSuccess: () => Ok(new
+                { message = "Password has been reset successfully. You can now login with your new password." }),
             onFailure: error => BadRequest(new { error })
         );
     }
