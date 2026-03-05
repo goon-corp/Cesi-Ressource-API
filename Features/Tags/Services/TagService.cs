@@ -23,7 +23,7 @@ public class TagService : ITagService
         TagQuery tagQuery,
         CancellationToken cancellationToken = default)
     {
-        var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
+             var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(tagQuery.TagName) ||
             tagQuery.CreatedAt.HasValue ||
@@ -33,8 +33,8 @@ public class TagService : ITagService
         var isComplete = true;
 
         var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
-        var incompleteTags = new List<string> { "incompletePage" };
-        var completeTags = new List<string> { "completePage" };
+        var incompleteTags = new List<string> { "tags:incompletePage" };
+        var completeTags = new List<string> { "tags:completePage" };
         var entryOptions = new HybridCacheEntryOptions();
 
         var tags = await _cache.GetOrCreateAsync(cacheKey, async _ =>
@@ -66,7 +66,6 @@ public class TagService : ITagService
         foreach (var page in existingPages)
             await _cache.RemoveAsync(page, cancellationToken);
 
-
         existing.DeletionTime = DateTime.UtcNow;
         await _repository.SoftDeleteAsync(existing, cancellationToken);
         await _cache.RemoveAsync($"tags:{id}");
@@ -90,6 +89,7 @@ public class TagService : ITagService
         await _repository.AddAsync(tag, cancellationToken);
         var tagKey = $"tags:{tag.Id}";
         await _cache.SetAsync(tagKey, tag);
+        await _cache.RemoveByTagAsync("tags:incompletePage", cancellationToken);
         return tag;
     }
 
@@ -105,7 +105,7 @@ public class TagService : ITagService
         await _repository.UpdateAsync(existing, cancellationToken);
         await _cache.SetAsync($"tags:{id}", existing);
 
-        await UpdateAffectedPages(existing);
+        await UpdateAffectedPages(existing); 
 
         return existing;
     }
@@ -135,6 +135,7 @@ public class TagService : ITagService
                 async _ => { return await Task.FromResult(new PaginatedList<Tag>()); });
 
             UpdateTagInPage(tag, page);
+            await _cache.SetAsync(pageKey, page);
         }
     }
 
@@ -143,9 +144,9 @@ public class TagService : ITagService
         foreach (var tag in page)
             if (existing.Id == tag.Id)
             {
-                existing.Label = tag.Label;
-                existing.UpdateTime = DateTime.UtcNow;
-                existing.DeletionTime = tag.DeletionTime;
+                tag.Label = existing.Label;
+                tag.UpdateTime = DateTime.UtcNow;
+                tag.DeletionTime = existing.DeletionTime;
             }
     }
 }
