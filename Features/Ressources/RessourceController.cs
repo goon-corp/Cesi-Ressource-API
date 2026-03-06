@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Ressources.Models;
+using Ressource_API.Features.Ressources.Query;
 using Ressource_API.Features.Ressources.RessourceDtos;
 using Ressource_API.Features.Ressources.Services;
 
@@ -22,12 +24,14 @@ public class RessourceController : ControllerBase
     /// Get all ressources
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Ressource>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Ressource>>> GetAllRessources(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<Ressource>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<Ressource>>> GetAllRessources(
+        [FromQuery] RessourceQuery query,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var ressources = await _service.GetAllRessourcesAsync(cancellationToken);
+            var ressources = await _service.GetAllRessourcesAsync(query, cancellationToken);
             return Ok(ressources);
         }
         catch (Exception ex)
