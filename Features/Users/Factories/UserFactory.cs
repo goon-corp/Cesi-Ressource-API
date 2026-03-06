@@ -1,47 +1,68 @@
 using Ressource_API.Features.Users.Models;
-using Ressource_API.Features.Users.UserDtos;
 using Ressource_API.Common.Data.Factories;
 
 namespace Ressource_API.Features.Users.Factories;
 
 public class UserFactory : BaseFactory<User>, IUserFactory
 {
-    /// <summary>
-    /// Creates a User from a DTO
-    /// </summary>
-    public User Create(CreateUserDto dto)
-    {
-        return CreateInstance(dto);
-    }
-
-    /// <summary>
-    /// Implementation of the abstract CreateInstance method
-    /// </summary>
     protected override User CreateInstance(params object[] parameters)
     {
+        // Création par défaut avec valeurs minimales
         if (parameters.Length == 0)
         {
-            // Create default instance
             return new User
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                FirstName = string.Empty,
+                LastName = string.Empty,
+                UserName = string.Empty,
+                IsActive = false,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = Guid.Empty
             };
         }
 
-        if (parameters[0] is CreateUserDto dto)
+        // Création avec paramètres typés
+        return parameters switch
         {
-            // Create from DTO
-            return new User
+            // Création avec userName uniquement
+            [string userName] => new User
             {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
-            };
-        }
-
-        throw new ArgumentException("Invalid parameters for User creation");
+                Id = Guid.NewGuid(),
+                UserName = userName,
+                FirstName = string.Empty,
+                LastName = string.Empty,
+                IsActive = false,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = Guid.Empty
+            },
+            
+            // Création avec userName, firstName, lastName
+            [string userName, string firstName, string lastName] => new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = userName,
+                FirstName = firstName,
+                LastName = lastName,
+                IsActive = false,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = Guid.Empty
+            },
+            
+            // Création complète avec userName, firstName, lastName, userRoleId
+            [string userName, string firstName, string lastName, Guid userRoleId] => new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = userName,
+                FirstName = firstName,
+                LastName = lastName,
+                IsActive = true,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = userRoleId
+            },
+            
+            _ => throw new ArgumentException(
+                "Paramètres invalides. Attendu : () ou (userName) ou (userName, firstName, lastName) ou (userName, firstName, lastName, userRoleId)")
+        };
     }
 }

@@ -1,47 +1,55 @@
 using Ressource_API.Features.RefreshTokens.Models;
-using Ressource_API.Features.RefreshTokens.RefreshTokenDtos;
 using Ressource_API.Common.Data.Factories;
+using Ressource_API.Features.RefreshTokens.RefreshTokenDtos;
 
 namespace Ressource_API.Features.RefreshTokens.Factories;
 
 public class RefreshTokenFactory : BaseFactory<RefreshToken>, IRefreshTokenFactory
 {
-    /// <summary>
-    /// Creates a RefreshToken from a DTO
-    /// </summary>
     public RefreshToken Create(CreateRefreshTokenDto dto)
     {
         return CreateInstance(dto);
     }
-
-    /// <summary>
-    /// Implementation of the abstract CreateInstance method
-    /// </summary>
+    
     protected override RefreshToken CreateInstance(params object[] parameters)
     {
         if (parameters.Length == 0)
         {
-            // Create default instance
             return new RefreshToken
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                Token = string.Empty,
+                IsActive = true,
+                ExpirationTime = DateTime.UtcNow.AddDays(7),
+                CreationTime = DateTime.UtcNow,
+                UserId = Guid.Empty
             };
         }
 
-        if (parameters[0] is CreateRefreshTokenDto dto)
+        return parameters switch
         {
-            // Create from DTO
-            return new RefreshToken
+            [Guid userId, string token, DateTime expiresAt] => new RefreshToken
             {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
-            };
-        }
+                Id = Guid.NewGuid(),
+                Token = token,
+                IsActive = true,
+                ExpirationTime = expiresAt,
+                UserId = userId,
+                CreationTime = DateTime.UtcNow
+            },
 
-        throw new ArgumentException("Invalid parameters for RefreshToken creation");
+            [Guid userId, string token, TimeSpan validity] => new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = token,
+                IsActive = true,
+                ExpirationTime = DateTime.UtcNow.Add(validity),
+                UserId = userId,
+                CreationTime = DateTime.UtcNow
+            },
+
+            _ => throw new ArgumentException(
+                "Paramètres invalides. Attendu : () ou (userId, token, expiresAt) ou (userId, token, validity)")
+        };
     }
 }

@@ -37,7 +37,7 @@ public class HealthCheckController : ControllerBase
 
         var result = await _healthCheckService.CheckHealthAsync(cancellationToken);
 
-        if (result.IsFailure)
+        if (!result.IsSuccess)
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable, 
@@ -49,13 +49,13 @@ public class HealthCheckController : ControllerBase
         }
 
         // Return 503 if unhealthy, else 200
-        if (result.Value?.Status == "Unhealthy")
+        if (result.Data?.Status == "Unhealthy")
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable, 
-                result.Value);
+                result.Data);
         }
 
-        return Ok(result.Value);
+        return Ok(result.Data);
     }
 }

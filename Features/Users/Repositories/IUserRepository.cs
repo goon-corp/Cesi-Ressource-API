@@ -5,4 +5,5 @@ namespace Ressource_API.Features.Users.Repositories;
 
 public interface IUserRepository : IBaseRepository<User>
 {
+    Task<User?> FindWithUserRoleAsync(Guid userId);
 }

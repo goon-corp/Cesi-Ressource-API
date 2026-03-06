@@ -28,6 +28,11 @@ public class LoginService : ILoginService
         return await _repository.FindAsync(id, cancellationToken);
     }
 
+    public async Task<Login?> GetLoginByUserId(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetLoginByUserId(id);
+    }
+
     public async Task<Login> CreateLoginAsync(CreateLoginDto dto, CancellationToken cancellationToken = default)
     {
         // Use factory to create the entity from DTO

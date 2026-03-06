@@ -622,11 +622,6 @@ namespace Ressource_API.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("password_infos_id");
 
-                    b.Property<string>("PasswordSalt")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("password_salt");
-
                     b.Property<DateTime?>("UpdateTime")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("update_time");
