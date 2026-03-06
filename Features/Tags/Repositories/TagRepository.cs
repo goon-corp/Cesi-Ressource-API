@@ -9,10 +9,8 @@ namespace Ressource_API.Features.Tags.Repositories;
 
 public class TagRepository : BaseRepository<Tag>, ITagRepository
 {
-    private readonly ApplicationDbContext _context;
     public TagRepository(ApplicationDbContext context) : base(context)
     {
-        _context = context;
     }
     
     public async Task<PaginatedList<Tag>> PaginatedListAsync(
