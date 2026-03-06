@@ -20,11 +20,18 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
         
         // Filtre SQL:
 
-        ressources = ressources.OrderByDescending(r => r.CreationTime);
+        ressources = ressources.OrderByDescending(r => r.CreationTime)
+            .Where(r => r.DeletionTime == null);
 
         if (!string.IsNullOrWhiteSpace(query.RessourceTitle))
         {
             ressources = ressources.Where(r => r.Title.Contains(query.RessourceTitle));
+        }
+        
+        // filtrage par tag
+        if (!string.IsNullOrWhiteSpace(query.RessourceTags))
+        {
+            ressources = ressources.Where(r => r.Tags.Any(t => t.Label.Contains(query.RessourceTags)));
         }
         
         if (!string.IsNullOrWhiteSpace(query.RessourceType))
