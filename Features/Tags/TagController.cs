@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Tags.Models;
+using Ressource_API.Features.Tags.Query;
 using Ressource_API.Features.Tags.TagDtos;
 using Ressource_API.Features.Tags.Services;
 
@@ -22,44 +24,31 @@ public class TagController : ControllerBase
     /// Get all tags
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Tag>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Tag>>> GetAllTags(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<Tag>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<Tag>>> GetAllTags(
+        [FromQuery] TagQuery tagQuery,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var tags = await _service.GetAllTagsAsync(cancellationToken);
-            return Ok(tags);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all tags");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving tags");
-        }
+        var tags = await _service.GetAllTagsAsync(tagQuery, cancellationToken);
+        return Ok(tags);
     }
 
     /// <summary>
     /// Get a tag by ID
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(Tag), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Tag>> GetTagById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<Tag>> GetTagById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
             var tag = await _service.GetTagByIdAsync(id, cancellationToken);
-
-            if (tag == null)
-            {
-                return NotFound($"Tag with ID {id} not found");
-            }
-
             return Ok(tag);
         }
-        catch (Exception ex)
+        catch (KeyNotFoundException ex)
         {
-            _logger.LogError(ex, "Error retrieving tag with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the tag");
+            return NotFound(ex.Message);
         }
     }
 
@@ -71,83 +60,51 @@ public class TagController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<Tag>> CreateTag([FromBody] CreateTagDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var createdTag = await _service.CreateTagAsync(dto, cancellationToken);
 
-            var createdTag = await _service.CreateTagAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetTagById),
-                new { id = createdTag.Id },
-                createdTag
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating tag");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the tag");
-        }
+        return CreatedAtAction(
+            nameof(GetTagById),
+            new { id = createdTag.Id },
+            createdTag
+        );
     }
 
     /// <summary>
     /// Update an existing tag
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(Tag), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Tag>> UpdateTag(int id, [FromBody] UpdateTagDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<Tag>> UpdateTag(Guid id, [FromBody] UpdateTagDto dto, CancellationToken cancellationToken)
     {
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var updatedTag = await _service.UpdateTagAsync(id, dto, cancellationToken);
-
-            if (updatedTag == null)
-            {
-                return NotFound($"Tag with ID {id} not found");
-            }
-
             return Ok(updatedTag);
         }
-        catch (Exception ex)
+        catch (KeyNotFoundException ex)
         {
-            _logger.LogError(ex, "Error updating tag with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the tag");
+            return NotFound(ex.Message);
         }
     }
 
     /// <summary>
     /// Delete a tag
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteTag(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteTag(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var deleted = await _service.DeleteTagAsync(id, cancellationToken);
-
-            if (!deleted)
-            {
-                return NotFound($"Tag with ID {id} not found");
-            }
-
+            await _service.DeleteTagAsync(id, cancellationToken);
             return NoContent();
         }
-        catch (Exception ex)
+        catch (KeyNotFoundException ex)
         {
-            _logger.LogError(ex, "Error deleting tag with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the tag");
+            return NotFound(ex.Message);
         }
     }
 }

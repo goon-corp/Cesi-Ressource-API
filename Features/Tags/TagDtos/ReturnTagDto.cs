@@ -1,6 +1,6 @@
 namespace Ressource_API.Features.Tags.TagDtos;
 
-public class UpdateTagDto
+public class ReturnTagDto
 {
     public DateTime CreationTime { get; set; }
 

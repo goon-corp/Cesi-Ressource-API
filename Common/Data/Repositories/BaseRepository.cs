@@ -5,10 +5,10 @@ namespace Ressource_API.Common.Data.Repositories;
 
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
-    protected readonly DbContext _context;
-    protected readonly DbSet<TEntity> _dbSet;
+    private readonly ApplicationDbContext _context;
+    private readonly DbSet<TEntity> _dbSet;
 
-    public BaseRepository(DbContext context)
+    public BaseRepository(ApplicationDbContext context)
     {
         _context = context;
         _dbSet = context.Set<TEntity>();
@@ -79,5 +79,10 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
     public virtual async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
         return await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
+    }
+
+    public virtual async Task<TEntity?> FirstOrDefaultAsyncAsNoTracking(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(predicate, cancellationToken);
     }
 }

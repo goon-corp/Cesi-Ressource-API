@@ -1,73 +1,154 @@
 using Microsoft.Extensions.Caching.Hybrid;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Features.Tags.Extensions;
 using Ressource_API.Features.Tags.Models;
-using Ressource_API.Features.Tags.TagDtos;
+using Ressource_API.Features.Tags.Query;
 using Ressource_API.Features.Tags.Repositories;
-using Ressource_API.Features.Tags.Factories;
+using Ressource_API.Features.Tags.TagDtos;
 
 namespace Ressource_API.Features.Tags.Services;
 
 public class TagService : ITagService
 {
-    private readonly ITagRepository _repository;
-    private readonly ITagFactory _factory;
     private readonly HybridCache _cache;
+    private readonly ITagRepository _repository;
+    private readonly  ILogger<TagService> _logger;
 
-    public TagService(ITagRepository repository, ITagFactory factory, HybridCache cache)
+    public TagService(ITagRepository repository, HybridCache cache,  ILogger<TagService> logger)
     {
         _repository = repository;
-        _factory = factory;
         _cache = cache;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<Tag>> GetAllTagsAsync(CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<Tag>> GetAllTagsAsync(
+        TagQuery tagQuery,
+        CancellationToken cancellationToken = default)
     {
-        var tags = await _cache.GetOrCreateAsync($"tags",
-            async token => { return await _repository.ListAsync(token); });
+             var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(tagQuery.TagName) ||
+            tagQuery.CreatedAt.HasValue ||
+            tagQuery.IsDeleted.HasValue)
+            return await tagsTask;
+
+        var isComplete = true;
+
+        var cacheKey = $"tags:p={tagQuery.page}:s={tagQuery.size}";
+        var incompleteTags = new List<string> { "tags:incompletePage" };
+        var completeTags = new List<string> { "tags:completePage" };
+        var entryOptions = new HybridCacheEntryOptions();
+
+        var tags = await _cache.GetOrCreateAsync(cacheKey, async _ =>
+            {
+                var tags = await tagsTask;
+                isComplete = tags.Count == tagQuery.size;
+
+                await TagCacheHandler(tags, tagQuery, cacheKey);
+
+                return tags;
+            },
+            entryOptions,
+            isComplete ? completeTags : incompleteTags,
+            cancellationToken);
 
         return tags;
     }
 
-    public async Task<Tag?> GetTagByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _repository.FindAsync(id, cancellationToken);
-    }
-
-    public async Task<Tag> CreateTagAsync(CreateTagDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var tag = _factory.Create(dto);
-
-        return await _repository.AddAsync(tag, cancellationToken);
-    }
-
-    public async Task<Tag?> UpdateTagAsync(int id, UpdateTagDto dto, CancellationToken cancellationToken = default)
+    public async Task DeleteTagAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
 
-        if (existing == null)
-        {
-            return null;
-        }
+        if (existing is null)
+            throw new KeyNotFoundException($"Tag with id '{id}' was not found.");
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
+        var existingPages = await _cache.GetOrCreateAsync($"invert:tags:{id}",
+            async _ => { return await Task.FromResult(new HashSet<string>()); });
 
-        await _repository.UpdateAsync(existing, cancellationToken);
+        foreach (var page in existingPages)
+            await _cache.RemoveAsync(page, cancellationToken);
+
+        existing.DeletionTime = DateTime.UtcNow;
+        await _repository.SoftDeleteAsync(existing, cancellationToken);
+        await _cache.RemoveAsync($"tags:{id}");
+        await _cache.RemoveAsync($"invert:tags:{id}");
+    }
+
+    public async Task<Tag> GetTagByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var existing = await _cache.GetOrCreateAsync($"tags:{id}", async _ =>
+            await _repository.FirstOrDefaultAsyncAsNoTracking(x => x.Id == id, cancellationToken));
+
+        if (existing is null)
+            throw new KeyNotFoundException($"Tag with id '{id}' was not found.");
 
         return existing;
     }
 
-    public async Task<bool> DeleteTagAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Tag> CreateTagAsync(CreateTagDto dto, CancellationToken cancellationToken = default)
+    {
+        var tag = dto.ToModel();
+        await _repository.AddAsync(tag, cancellationToken);
+        var tagKey = $"tags:{tag.Id}";
+        await _cache.SetAsync(tagKey, tag);
+        await _cache.RemoveByTagAsync("tags:incompletePage", cancellationToken);
+        return tag;
+    }
+
+    public async Task<Tag> UpdateTagAsync(Guid id, UpdateTagDto dto, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
+        if (existing == null) throw new KeyNotFoundException($"Tag with id '{id}' was not found.");
 
-        if (existing == null)
+        existing.Label = dto.Label;
+        existing.UpdateTime = DateTime.UtcNow;
+        existing.DeletionTime = dto.DeletionTime;
+
+        await _repository.UpdateAsync(existing, cancellationToken);
+        await _cache.SetAsync($"tags:{id}", existing);
+
+        await UpdateAffectedPages(existing); 
+
+        return existing;
+    }
+
+    public async Task TagCacheHandler(PaginatedList<Tag> tags, TagQuery tagQuery, string cacheKey)
+    {
+        foreach (var tag in tags)
         {
-            return false;
+            var tagPagesCacheKey = $"invert:tags:{tag.Id}";
+
+            var invertedTagsPages = await _cache.GetOrCreateAsync(tagPagesCacheKey,
+                async _ => { return await Task.FromResult(new HashSet<string>()); });
+            invertedTagsPages.Add(cacheKey);
+            await _cache.SetAsync(tagPagesCacheKey, invertedTagsPages);
         }
+    }
 
-        await _repository.DeleteAsync(existing, cancellationToken);
+    private async Task UpdateAffectedPages(Tag tag)
+    {
+        var affectedPagesKey = $"invert:tags:{tag.Id}";
+        var affectedPageKeys = await _cache.GetOrCreateAsync(affectedPagesKey,
+            async _ => { return await Task.FromResult(new HashSet<string>()); });
 
-        return true;
+        foreach (var pageKey in affectedPageKeys)
+        {
+            var page = await _cache.GetOrCreateAsync(pageKey,
+                async _ => { return await Task.FromResult(new PaginatedList<Tag>()); });
+
+            UpdateTagInPage(tag, page);
+            await _cache.SetAsync(pageKey, page);
+        }
+    }
+
+    private void UpdateTagInPage(Tag existing, PaginatedList<Tag> page)
+    {
+        foreach (var tag in page)
+            if (existing.Id == tag.Id)
+            {
+                tag.Label = existing.Label;
+                tag.UpdateTime = DateTime.UtcNow;
+                tag.DeletionTime = existing.DeletionTime;
+            }
     }
 }
