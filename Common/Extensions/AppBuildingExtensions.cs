@@ -20,7 +20,7 @@ public static class AppBuildingExtensions
         app.ApplyPendingMigrations();
 
         app.SeedDatabase();
-        
+
         // CORS
         app.AddCorsRules();
 
@@ -48,38 +48,48 @@ public static class AppBuildingExtensions
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var authService = scope.ServiceProvider.GetRequiredService<ISimplyAuthService>();
 
-        if (context.Logins.Any())
-            return;
-
-        var adminRole = context.UsersRoles.FirstOrDefault(r => r.RoleLabel == "Administrateur") ??
-                        throw new Exception("Administrator role does not exist");
-        var userRole = context.UsersRoles.FirstOrDefault(r => r.RoleLabel == "Utilisateur") ??
-                       throw new Exception("user role does not exist");
+        var adminRole = context.UsersRoles.FirstOrDefault(r => r.RoleLabel == "Administrateur")
+                        ?? throw new Exception("Administrator role does not exist");
+        var userRole = context.UsersRoles.FirstOrDefault(r => r.RoleLabel == "Utilisateur")
+                       ?? throw new Exception("user role does not exist");
 
         var userEmail = Environment.GetEnvironmentVariable("DEFAULT_USER_ACCOUNT_EMAIL");
         var userPassword = Environment.GetEnvironmentVariable("DEFAULT_USER_ACCOUNT_PASSWORD");
-
         var adminEmail = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_ACCOUNT_EMAIL");
         var adminPassword = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_ACCOUNT_PASSWORD");
 
-        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword) ||
+            string.IsNullOrWhiteSpace(userEmail) || string.IsNullOrWhiteSpace(userPassword))
         {
-            Console.WriteLine(
-                "Warning: No administrators exist and DEFAULT_ADMIN_ACCOUNT_EMAIL/DEFAULT_ADMIN_ACCOUNT_PASSWORD are not set. Skipping admin seeding.");
+            Console.WriteLine("Default credentials not set. Skipping seeding.");
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(userEmail) || string.IsNullOrWhiteSpace(userPassword))
+        // delete ancien default user ou login
+        var existingUsers = context.Users
+            .Include(u => u.Logins)
+            .Include(u => u.PasswordsInfos)
+            .Include(u => u.RefreshTokens)
+            .Where(u => u.UserName == "default_user" || u.UserName == "default_administrator")
+            .ToList();
+
+        if (existingUsers.Any())
         {
-            Console.WriteLine(
-                "Warning: No administrators exist and DEFAULT_USER_ACCOUNT_EMAIL/DEFAULT_USER_ACCOUNT_PASSWORD are not set. Skipping user seeding.");
-            return;
+            context.Logins.RemoveRange(
+                existingUsers
+                    .SelectMany(u => u.Logins)
+            );
+            context.PasswordsInfos.RemoveRange(
+                existingUsers
+                    .SelectMany(u => u.PasswordsInfos)
+            );
+            context.RefreshTokens.RemoveRange(existingUsers.SelectMany(u => u.RefreshTokens));
+            context.Users.RemoveRange(existingUsers);
+            context.SaveChanges();
         }
 
-
- 
-
-        var userInfos = new User()
+        // default user
+        var userInfos = new User
         {
             Id = Guid.NewGuid(),
             FirstName = "Utilisateur",
@@ -88,9 +98,10 @@ public static class AppBuildingExtensions
             IsActive = true,
             CreationTime = DateTime.UtcNow,
             UserRoleId = userRole.Id,
+            UserRole = userRole
         };
 
-        var userLogin = new Login()
+        var userLogin = new Login
         {
             Id = Guid.NewGuid(),
             Email = userEmail,
@@ -98,8 +109,8 @@ public static class AppBuildingExtensions
             CreationTime = DateTime.UtcNow,
             UserId = userInfos.Id
         };
-        
-        var userPasswordInfos = new PasswordInfo()
+
+        var userPasswordInfos = new PasswordInfo
         {
             Id = Guid.NewGuid(),
             CreationTime = DateTime.UtcNow,
@@ -107,9 +118,7 @@ public static class AppBuildingExtensions
             UserId = userInfos.Id,
         };
 
-
-
-        var adminInfos = new User()
+        var adminInfos = new User
         {
             Id = Guid.NewGuid(),
             FirstName = "Administrateur",
@@ -117,46 +126,35 @@ public static class AppBuildingExtensions
             UserName = "default_administrator",
             IsActive = true,
             CreationTime = DateTime.UtcNow,
-            UserRoleId = userRole.Id,
+            UserRoleId = adminRole.Id,
+            UserRole = adminRole
         };
-        
-        var adminLogin = new Login()
+
+        var adminLogin = new Login
         {
-            Id= Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             Email = adminEmail,
             PasswordHash = authService.HashPassword(adminPassword),
             CreationTime = DateTime.UtcNow,
-            UserId = adminInfos.Id,
+            UserId = adminInfos.Id
         };
 
-        var adminPasswordInfos = new PasswordInfo()
+        var adminPasswordInfos = new PasswordInfo
         {
             Id = Guid.NewGuid(),
             CreationTime = DateTime.UtcNow,
             User = adminInfos,
-            UserId = adminInfos.Id,
+            UserId = adminInfos.Id
         };
 
-        var devEnv = Environment.GetEnvironmentVariable("DEPLOYMENT_ENVIRONMENT");
-
-        if (devEnv == "DEV")
-        {
-            context.Logins.Add(userLogin);
-            context.Users.Add(userInfos);
-            context.PasswordsInfos.Add(userPasswordInfos);
-            Console.WriteLine($"Added default user for development environment: {userLogin.Email}");
-        }
-        
-   
-        context.Logins.Add(adminLogin);
-        context.Users.Add(adminInfos);
-        context.PasswordsInfos.Add(adminPasswordInfos);
-
+        context.Users.AddRange(userInfos, adminInfos);
+        context.Logins.AddRange(userLogin, adminLogin);
+        context.PasswordsInfos.AddRange(userPasswordInfos, adminPasswordInfos);
 
         context.SaveChanges();
 
-        Console.WriteLine($"Default user created with email: {userEmail}");
-        Console.WriteLine($"Default administrator created with email: {adminEmail}");
+        Console.WriteLine($"Default user recreated with email: {userEmail}");
+        Console.WriteLine($"Default admin recreated with email: {adminEmail}");
     }
 
     private static void AddCorsRules(this WebApplication app)

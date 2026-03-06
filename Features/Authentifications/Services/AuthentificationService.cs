@@ -132,7 +132,7 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
         }
 
-        var user = await _userRepository.FindAsync(login.UserId);
+        var user = await _userRepository.FindWithUserRoleAsync(login.UserId);
 
         if (user is null)
         {

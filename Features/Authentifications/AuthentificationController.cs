@@ -65,7 +65,7 @@ public class AuthentificationController : ControllerBase
                 if(client.ToLower() ==
                     "web") //request from the backoffice OR the web app, return token in httpOnly cookie
                 {
-                    Response.Cookies.Append("refreshToken", tokens.RefreshToken, new CookieOptions
+                    Response.Cookies.Append("refresh_token", tokens.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
                         Secure = true,
@@ -76,7 +76,7 @@ public class AuthentificationController : ControllerBase
                     return Ok(new { accessToken = tokens.AccessToken });
                 }
 
-                return Ok(tokens); //return the token in the body of the result, for mobile apps
+                return Ok(new { accessToken= tokens.AccessToken, refreshToken = tokens.RefreshToken}); //return the token in the body of the result, for mobile apps
             },
             onFailure: error => Unauthorized(new { error })
         );
