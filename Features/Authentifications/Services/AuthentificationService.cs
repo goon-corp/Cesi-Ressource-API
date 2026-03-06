@@ -266,6 +266,7 @@ public class AuthentificationService : IAuthentificationService
         {
             _logger.LogWarning("Password reset requested for non-existent email {Email}", dto.Email);
             await Task.Delay(Random.Shared.Next(100, 300));
+            // si login null return success car on ne donne pas d'info sur le mail dispo
             return Result.Success();
         }
 
@@ -274,6 +275,7 @@ public class AuthentificationService : IAuthentificationService
         if (user is null || !user.IsActive || user.ActivationCode.HasValue)
         {
             _logger.LogWarning("Password reset requested for unactivated account");
+            // Pareil que email
             return Result.Success();
         }
 
