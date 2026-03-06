@@ -120,7 +120,7 @@ public class AuthentificationService : IAuthentificationService
         return Result.Success();
     }
 
-    public async Task<Result<SimplyAuthResponse>> Login(LoginDto dto)
+    public async Task<Result<LoginResponseDTO>> Login(LoginDto dto)
     {
         _logger.LogInformation("Login attempt for email {Email}", dto.Email);
 
@@ -129,7 +129,7 @@ public class AuthentificationService : IAuthentificationService
         if (login is null)
         {
             _logger.LogWarning("Login failed: login not found for {Email}", dto.Email);
-            return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+            return Result.Failure<LoginResponseDTO>("Invalid credentials");
         }
 
         var user = await _userRepository.FindWithUserRoleAsync(login.UserId);
@@ -137,7 +137,7 @@ public class AuthentificationService : IAuthentificationService
         if (user is null)
         {
             _logger.LogError("Login failed: user not found for {UserId}", login.UserId);
-            return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+            return Result.Failure<LoginResponseDTO>("Invalid credentials");
         }
 
         var passwordInfo = await _passwordInfoRepository.FirstOrDefaultAsync(p => p.UserId == user.Id);
@@ -156,14 +156,14 @@ public class AuthentificationService : IAuthentificationService
             var remainingMinutes = (int)Math.Ceiling((lockoutEndTime.Value - DateTime.UtcNow).TotalMinutes);
             _logger.LogWarning("Login failed: account locked for {UserId}, {Minutes} minutes remaining", user.Id,
                 remainingMinutes);
-            return Result.Failure<SimplyAuthResponse>(
+            return Result.Failure<LoginResponseDTO>(
                 $"Account is locked. Please try again in {remainingMinutes} minute(s).");
         }
 
         if (!user.IsActive || user.ActivationCode.HasValue)
         {
             _logger.LogWarning("Login failed: account not activated for {UserId}", user.Id);
-            return Result.Failure<SimplyAuthResponse>("Le compte doit être activé.");
+            return Result.Failure<LoginResponseDTO>("Le compte doit être activé.");
         }
 
         var result = _simplyAuthService.VerifyPassword(dto.Password, login.PasswordHash);
@@ -183,7 +183,7 @@ public class AuthentificationService : IAuthentificationService
             await _passwordInfoRepository.UpdateAsync(passwordInfo);
             _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id,
                 passwordInfo.AttemptCount);
-            return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+            return Result.Failure<LoginResponseDTO>("Invalid credentials");
         }
 
         if (passwordInfo.AttemptCount > 0)
@@ -212,12 +212,10 @@ public class AuthentificationService : IAuthentificationService
 
         _logger.LogInformation("User logged in successfully: {UserId}", user.Id);
 
-        return Result.Success(new SimplyAuthResponse
+        return Result.Success(new LoginResponseDTO
         {
             AccessToken = tokens.AccessToken,
-            RefreshToken = tokens.RefreshToken,
-            AccessTokenExpiration = tokens.AccessTokenExpiration,
-            RefreshTokenExpiration = tokens.RefreshTokenExpiration
+            RefreshToken = tokens.RefreshToken
         });
     }
 
