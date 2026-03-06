@@ -14,12 +14,6 @@ public class TagRepository : BaseRepository<Tag>, ITagRepository
     {
         _context = context;
     }
-
-    public async Task<Tag?> GetAsyncNoTracking(Guid id, CancellationToken cancellationToken = default)
-    {
-        return await _context.Tags.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-    }
     
     public async Task<PaginatedList<Tag>> PaginatedListAsync(
         TagQuery query,

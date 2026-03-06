@@ -12,11 +12,13 @@ public class TagService : ITagService
 {
     private readonly HybridCache _cache;
     private readonly ITagRepository _repository;
+    private readonly  ILogger<TagService> _logger;
 
-    public TagService(ITagRepository repository, HybridCache cache)
+    public TagService(ITagRepository repository, HybridCache cache,  ILogger<TagService> logger)
     {
         _repository = repository;
         _cache = cache;
+        _logger = logger;
     }
 
     public async Task<PaginatedList<Tag>> GetAllTagsAsync(
@@ -75,7 +77,7 @@ public class TagService : ITagService
     public async Task<Tag> GetTagByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await _cache.GetOrCreateAsync($"tags:{id}", async _ =>
-            await _repository.GetAsyncNoTracking(id, cancellationToken));
+            await _repository.FirstOrDefaultAsyncAsNoTracking(x => x.Id == id, cancellationToken));
 
         if (existing is null)
             throw new KeyNotFoundException($"Tag with id '{id}' was not found.");

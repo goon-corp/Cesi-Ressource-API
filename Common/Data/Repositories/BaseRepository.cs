@@ -80,4 +80,9 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
     {
         return await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
     }
+
+    public virtual async Task<TEntity?> FirstOrDefaultAsyncAsNoTracking(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(predicate, cancellationToken);
+    }
 }
