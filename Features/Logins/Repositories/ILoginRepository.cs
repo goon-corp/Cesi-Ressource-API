@@ -5,4 +5,5 @@ namespace Ressource_API.Features.Logins.Repositories;
 
 public interface ILoginRepository : IBaseRepository<Login>
 {
+    Task<Login?> GetLoginByUserId(Guid userId);
 }

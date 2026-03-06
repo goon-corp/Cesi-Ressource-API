@@ -5,8 +5,8 @@ namespace Ressource_API.Common.Data.Repositories;
 
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
-    private readonly DbContext _context;
-    private readonly DbSet<TEntity> _dbSet;
+    protected readonly DbContext _context;
+    protected readonly DbSet<TEntity> _dbSet;
 
     public BaseRepository(DbContext context)
     {

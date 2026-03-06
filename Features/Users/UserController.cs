@@ -1,20 +1,25 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Features.Logins.Services;
 using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.UserDtos;
 using Ressource_API.Features.Users.Services;
 
 namespace Ressource_API.Features.Users;
 
+[Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/user")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
+    private readonly ILoginService _loginService;
     private readonly ILogger<UserController> _logger;
 
-    public UserController(IUserService service, ILogger<UserController> logger)
+    public UserController(IUserService service, ILoginService loginService, ILogger<UserController> logger)
     {
         _service = service;
+        _loginService = loginService;
         _logger = logger;
     }
 
@@ -43,7 +48,7 @@ public class UserController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<User>> GetUserById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<User>> GetUserById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
@@ -55,6 +60,36 @@ public class UserController : ControllerBase
             }
 
             return Ok(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user with ID {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user");
+        }
+    }
+    
+    /// <summary>
+    /// Get a user profile by UseId
+    /// </summary>
+    [HttpGet("profile/{id}")]
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfile>> GetUserProfile(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await _service.GetUserByIdAsync(id, cancellationToken) ?? throw new Exception("User does not exist");
+            var userLoginInfos = await _loginService.GetLoginByUserId(user.Id, cancellationToken) ?? throw new Exception("Login does not exist");
+            var userProfile = new UserProfile()
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserName = user.UserName,
+                Email = userLoginInfos.Email
+            };
+
+            return Ok(userProfile);
         }
         catch (Exception ex)
         {

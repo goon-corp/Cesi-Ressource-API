@@ -23,9 +23,9 @@ public class UserService : IUserService
         return await _repository.ListAsync(cancellationToken);
     }
 
-    public async Task<User?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        return await _repository.FindWithUserRoleAsync(id);
     }
 
     public async Task<User> CreateUserAsync(CreateUserDto dto, CancellationToken cancellationToken = default)

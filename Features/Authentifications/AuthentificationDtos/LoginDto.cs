@@ -5,10 +5,6 @@ namespace Ressource_API.Features.Authentifications.AuthentificationDtos;
 
 public class LoginDto
 {
-    [EmailAddress]
-    [Required]
-    public required string Email { get; set; }
-    [PasswordValidator]
-    [Required]
-    public string Password { get; set; }
+    [EmailAddress] [Required] public required string Email { get; set; }
+    [PasswordValidator] [Required] public string Password { get; set; }
 }

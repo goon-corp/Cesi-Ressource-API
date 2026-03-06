@@ -7,6 +7,7 @@ public interface ILoginService
 {
     Task<IEnumerable<Login>> GetAllLoginsAsync(CancellationToken cancellationToken = default);
     Task<Login?> GetLoginByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Login?> GetLoginByUserId(Guid id, CancellationToken cancellationToken = default);
     Task<Login> CreateLoginAsync(CreateLoginDto dto, CancellationToken cancellationToken = default);
     Task<Login?> UpdateLoginAsync(int id, UpdateLoginDto dto, CancellationToken cancellationToken = default);
     Task<bool> DeleteLoginAsync(int id, CancellationToken cancellationToken = default);
