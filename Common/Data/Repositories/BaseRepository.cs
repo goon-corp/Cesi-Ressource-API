@@ -5,13 +5,14 @@ namespace Ressource_API.Common.Data.Repositories;
 
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
+
     private readonly ApplicationDbContext _context;
     private readonly DbSet<TEntity> _dbSet;
+
 
     public BaseRepository(ApplicationDbContext context)
     {
         _context = context;
-        _dbSet = context.Set<TEntity>();
     }
 
     public virtual async Task<TEntity> AddAsync(TEntity model, CancellationToken cancellationToken = default)
