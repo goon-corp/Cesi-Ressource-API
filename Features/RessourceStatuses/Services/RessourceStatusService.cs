@@ -20,7 +20,7 @@ public class RessourceStatusService : IRessourceStatusService
 
     public async Task<IEnumerable<RessourceStatus>> GetAllRessourceStatussAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<RessourceStatus?> GetRessourceStatusByIdAsync(int id, CancellationToken cancellationToken = default)

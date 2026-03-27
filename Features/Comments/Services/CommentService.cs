@@ -20,7 +20,7 @@ public class CommentService : ICommentService
 
     public async Task<IEnumerable<Comment>> GetAllCommentsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Comment?> GetCommentByIdAsync(int id, CancellationToken cancellationToken = default)

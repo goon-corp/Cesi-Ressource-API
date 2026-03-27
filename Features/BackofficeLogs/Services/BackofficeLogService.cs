@@ -20,7 +20,7 @@ public class BackofficeLogService : IBackofficeLogService
 
     public async Task<IEnumerable<BackofficeLog>> GetAllBackofficeLogsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<BackofficeLog?> GetBackofficeLogByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -20,7 +20,7 @@ public class NotificationService : INotificationService
 
     public async Task<IEnumerable<Notification>> GetAllNotificationsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Notification?> GetNotificationByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -20,7 +20,7 @@ public class ReportService : IReportService
 
     public async Task<IEnumerable<Report>> GetAllReportsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Report?> GetReportByIdAsync(int id, CancellationToken cancellationToken = default)

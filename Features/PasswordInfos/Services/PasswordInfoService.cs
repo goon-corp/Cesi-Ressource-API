@@ -20,7 +20,7 @@ public class PasswordInfoService : IPasswordInfoService
 
     public async Task<IEnumerable<PasswordInfo>> GetAllPasswordInfosAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<PasswordInfo?> GetPasswordInfoByIdAsync(int id, CancellationToken cancellationToken = default)

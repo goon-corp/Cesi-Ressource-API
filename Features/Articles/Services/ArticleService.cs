@@ -20,7 +20,7 @@ public class ArticleService : IArticleService
 
     public async Task<IEnumerable<Article>> GetAllArticlesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Article?> GetArticleByIdAsync(int id, CancellationToken cancellationToken = default)

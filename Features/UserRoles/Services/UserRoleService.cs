@@ -26,9 +26,9 @@ public class UserRoleService : IUserRoleService
     {
         
         var roles = await _cache.GetOrCreateAsync($"roles",
-            async token => { return await _repository.ListAsync(token); });
+            async token => { return await _repository.ListAsync(cancellationToken: token); });
 
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<UserRole?> GetUserRoleByIdAsync(int id, CancellationToken cancellationToken = default)

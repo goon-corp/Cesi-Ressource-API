@@ -20,7 +20,7 @@ public class Citieservice : ICitieservice
 
     public async Task<IEnumerable<City>> GetAllCitiesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<City?> GetCityByIdAsync(int id, CancellationToken cancellationToken = default)

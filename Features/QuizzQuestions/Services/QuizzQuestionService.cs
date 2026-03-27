@@ -20,7 +20,7 @@ public class QuizzQuestionService : IQuizzQuestionService
 
     public async Task<IEnumerable<QuizzQuestion>> GetAllQuizzQuestionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<QuizzQuestion?> GetQuizzQuestionByIdAsync(int id, CancellationToken cancellationToken = default)

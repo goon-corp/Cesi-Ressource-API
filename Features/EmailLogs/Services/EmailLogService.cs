@@ -21,7 +21,7 @@ public class EmailLogService : IEmailLogService
 
     public async Task<IEnumerable<EmailLog>> GetAllEmailLogsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<EmailLog?> GetEmailLogByIdAsync(int id, CancellationToken cancellationToken = default)

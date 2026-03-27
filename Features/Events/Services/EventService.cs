@@ -20,7 +20,7 @@ public class EventService : IEventService
 
     public async Task<IEnumerable<Event>> GetAllEventsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Event?> GetEventByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -20,7 +20,7 @@ public class RessourceProgressionService : IRessourceProgressionService
 
     public async Task<IEnumerable<RessourceProgression>> GetAllRessourceProgressionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<RessourceProgression?> GetRessourceProgressionByIdAsync(int id, CancellationToken cancellationToken = default)

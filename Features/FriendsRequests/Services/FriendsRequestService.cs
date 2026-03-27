@@ -20,7 +20,7 @@ public class FriendsRequestService : IFriendsRequestService
 
     public async Task<IEnumerable<FriendsRequest>> GetAllFriendsRequestsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<FriendsRequest?> GetFriendsRequestByIdAsync(int id, CancellationToken cancellationToken = default)

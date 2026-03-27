@@ -20,7 +20,7 @@ public class SessionService : ISessionService
 
     public async Task<IEnumerable<Session>> GetAllSessionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Session?> GetSessionByIdAsync(int id, CancellationToken cancellationToken = default)

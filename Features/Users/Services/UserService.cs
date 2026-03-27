@@ -20,7 +20,7 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<User>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)

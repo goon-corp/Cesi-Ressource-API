@@ -20,7 +20,7 @@ public class BackofficeOperationTypeService : IBackofficeOperationTypeService
 
     public async Task<IEnumerable<BackofficeOperationType>> GetAllBackofficeOperationTypesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<BackofficeOperationType?> GetBackofficeOperationTypeByIdAsync(int id, CancellationToken cancellationToken = default)

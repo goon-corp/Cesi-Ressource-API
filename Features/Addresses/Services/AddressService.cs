@@ -20,7 +20,7 @@ public class Addresseservice : IAddresseservice
 
     public async Task<IEnumerable<Address>> GetAllAddressesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Address?> GetAddressByIdAsync(int id, CancellationToken cancellationToken = default)

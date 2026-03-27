@@ -20,7 +20,7 @@ public class LoginService : ILoginService
 
     public async Task<IEnumerable<Login>> GetAllLoginsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Login?> GetLoginByIdAsync(int id, CancellationToken cancellationToken = default)

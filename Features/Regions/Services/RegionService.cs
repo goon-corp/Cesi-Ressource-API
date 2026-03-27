@@ -20,7 +20,7 @@ public class RegionService : IRegionService
 
     public async Task<IEnumerable<Region>> GetAllRegionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Region?> GetRegionByIdAsync(int id, CancellationToken cancellationToken = default)

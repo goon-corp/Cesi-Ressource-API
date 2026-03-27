@@ -20,7 +20,7 @@ public class PollOptionService : IPollOptionService
 
     public async Task<IEnumerable<PollOption>> GetAllPollOptionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<PollOption?> GetPollOptionByIdAsync(int id, CancellationToken cancellationToken = default)

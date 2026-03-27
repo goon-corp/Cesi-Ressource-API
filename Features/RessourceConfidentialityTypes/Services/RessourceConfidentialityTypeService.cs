@@ -20,7 +20,7 @@ public class RessourceConfidentialityTypeService : IRessourceConfidentialityType
 
     public async Task<IEnumerable<RessourceConfidentialityType>> GetAllRessourceConfidentialityTypesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<RessourceConfidentialityType?> GetRessourceConfidentialityTypeByIdAsync(int id, CancellationToken cancellationToken = default)

@@ -5,8 +5,7 @@ namespace Ressource_API.Common.Data.Repositories;
 
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
-
-    private readonly ApplicationDbContext _context;
+    protected readonly ApplicationDbContext _context;
     private readonly DbSet<TEntity> _dbSet;
 
 
@@ -52,8 +51,18 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         return await _context.FindAsync<TEntity>([id], cancellationToken);
     }
 
-    public virtual async Task<List<TEntity>> ListAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<List<TEntity>> ListAsync(List<string>? includedProperties = null,
+        CancellationToken cancellationToken = default)
     {
+        IQueryable<TEntity> query = _dbSet;
+
+        if (includedProperties != null)
+        {
+            foreach (var property in includedProperties)
+            {
+                query = query.Include(property);
+            }
+        }
         return await _context.Set<TEntity>().ToListAsync(cancellationToken);
     }
 

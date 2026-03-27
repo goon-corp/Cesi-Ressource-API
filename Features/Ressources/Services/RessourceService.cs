@@ -20,7 +20,7 @@ public class RessourceService : IRessourceService
 
     public async Task<IEnumerable<Ressource>> GetAllRessourcesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Ressource?> GetRessourceByIdAsync(int id, CancellationToken cancellationToken = default)

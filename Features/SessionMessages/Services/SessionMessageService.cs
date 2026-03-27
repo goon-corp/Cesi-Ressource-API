@@ -20,7 +20,7 @@ public class SessionMessageService : ISessionMessageService
 
     public async Task<IEnumerable<SessionMessage>> GetAllSessionMessagesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<SessionMessage?> GetSessionMessageByIdAsync(int id, CancellationToken cancellationToken = default)

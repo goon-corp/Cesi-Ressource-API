@@ -20,7 +20,7 @@ public class ProfilePictureService : IProfilePictureService
 
     public async Task<IEnumerable<ProfilePicture>> GetAllProfilePicturesAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<ProfilePicture?> GetProfilePictureByIdAsync(int id, CancellationToken cancellationToken = default)

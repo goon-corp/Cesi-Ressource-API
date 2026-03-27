@@ -20,7 +20,7 @@ public class RessourceMediaService : IRessourceMediaService
 
     public async Task<IEnumerable<RessourceMedia>> GetAllRessourceMediasAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<RessourceMedia?> GetRessourceMediaByIdAsync(int id, CancellationToken cancellationToken = default)

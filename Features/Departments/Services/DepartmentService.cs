@@ -20,7 +20,7 @@ public class DepartmentService : IDepartmentService
 
     public async Task<IEnumerable<Department>> GetAllDepartmentsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.ListAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<Department?> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken = default)
