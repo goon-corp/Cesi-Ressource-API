@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Ressource_API.Common.BlobStorage.Cloudflare;
 using Ressource_API.Common.Data;
 using Ressource_API.Common.Filters;
 using Ressource_API.Common.Services;
@@ -87,7 +88,6 @@ using Ressource_API.Features.RessourceConfidentialityTypes.Services;
 using Ressource_API.Features.RessourceConfidentialityTypes.Factories;
 using Ressource_API.Features.RessourceMedias.Repositories;
 using Ressource_API.Features.RessourceMedias.Services;
-using Ressource_API.Features.RessourceMedias.Factories;
 using Ressource_API.Features.RessourceProgressions.Repositories;
 using Ressource_API.Features.RessourceProgressions.Services;
 using Ressource_API.Features.RessourceProgressions.Factories;
@@ -206,7 +206,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
         builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
         builder.Services.AddScoped<IRessourceConfidentialityTypeFactory, RessourceConfidentialityTypeFactory>();
-        builder.Services.AddScoped<IRessourceMediaFactory, RessourceMediaFactory>();
         builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
         builder.Services.AddScoped<IRessourceFactory, RessourceFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
@@ -256,6 +255,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddScoped<ICloudflareClient, CloudflareClient>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)

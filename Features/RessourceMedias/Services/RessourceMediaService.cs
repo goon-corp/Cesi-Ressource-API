@@ -1,69 +1,59 @@
+using Ressource_API.Common.BlobStorage.Cloudflare;
+using Ressource_API.Features.RessourceMedias.Dtos;
+using Ressource_API.Features.RessourceMedias.Extensions;
 using Ressource_API.Features.RessourceMedias.Models;
-using Ressource_API.Features.RessourceMedias.RessourceMediaDtos;
 using Ressource_API.Features.RessourceMedias.Repositories;
-using Ressource_API.Features.RessourceMedias.Factories;
 
 namespace Ressource_API.Features.RessourceMedias.Services;
 
 public class RessourceMediaService : IRessourceMediaService
 {
     private readonly IRessourceMediaRepository _repository;
-    private readonly IRessourceMediaFactory _factory;
+    private readonly ICloudflareClient _cloudflareClient;
 
-    public RessourceMediaService(
-        IRessourceMediaRepository repository,
-        IRessourceMediaFactory factory)
+    public RessourceMediaService(IRessourceMediaRepository repository, ICloudflareClient cloudflareClient)
     {
         _repository = repository;
-        _factory = factory;
+        _cloudflareClient = cloudflareClient;
     }
 
-    public async Task<IEnumerable<RessourceMedia>> GetAllRessourceMediasAsync(CancellationToken cancellationToken = default)
+    public async Task<ReturnRessourceMediaDto> CreateMedia(CreateRessourceMediaDto dto)
     {
-        return await _repository.ListAsync(cancellationToken);
-    }
+        var fileName = $"ressources/medias/{dto.File.FileName}";
+        await _cloudflareClient.UploadImage(dto.File, fileName);
+        var bucketUrl = Environment.GetEnvironmentVariable("CLOUDFLARE_BUCKET_URL") ??
+                        throw new NullReferenceException("CLOUDFLARE_BUCKET_URL");
+        var fileUrl = $"{bucketUrl}/{fileName}";
 
-    public async Task<RessourceMedia?> GetRessourceMediaByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _repository.FindAsync(id, cancellationToken);
-    }
-
-    public async Task<RessourceMedia> CreateRessourceMediaAsync(CreateRessourceMediaDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var ressourcemedia = _factory.Create(dto);
-        
-        return await _repository.AddAsync(ressourcemedia, cancellationToken);
-    }
-
-    public async Task<RessourceMedia?> UpdateRessourceMediaAsync(int id, UpdateRessourceMediaDto dto, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
+        var media = new RessourceMedia()
         {
-            return null;
-        }
+            Id = Guid.CreateVersion7(),
+            MediaUrl = fileUrl,
+            MimeType = dto.File.ContentType,
+        };
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
-        await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+        await _repository.AddAsync(media);
+        return media.ToReturnDto();
     }
 
-    public async Task<bool> DeleteRessourceMediaAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteMedia(Guid mediaId)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return false;
-        }
+        var media = await _repository.FindAsync(mediaId);
+        if (media is null) throw new NullReferenceException("Media not found");
+        await _repository.DeleteAsync(media);
+    }
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+    public async Task<(Stream stream, string mimeType)> GetMediaStream(Guid mediaId)
+    {
+        var media = await _repository.FindAsync(mediaId)
+                    ?? throw new NullReferenceException("Media not found");
+
+        var bucketUrl = Environment.GetEnvironmentVariable("CLOUDFLARE_BUCKET_URL")
+                        ?? throw new NullReferenceException("CLOUDFLARE_BUCKET_URL");
+
+        var key = media.MediaUrl.Replace($"{bucketUrl}/", "");
+        var stream = await _cloudflareClient.GetObject(key);
+
+        return (stream, media.MimeType);
     }
 }

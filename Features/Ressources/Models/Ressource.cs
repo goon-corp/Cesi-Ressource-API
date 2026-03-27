@@ -63,8 +63,6 @@ public partial class Ressource
 
     public virtual RessourceType RessourceType { get; set; } = null!;
 
-    public virtual ICollection<RessourceMedia> RessourcesMedia { get; set; } = new List<RessourceMedia>();
-
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 
     public virtual User User { get; set; } = null!;
