@@ -17,8 +17,4 @@ public partial class RessourceMedia
     public string MediaUrl { get; set; } = null!;
 
     public string MimeType { get; set; } = null!;
-
-    public Guid RessourceId { get; set; }
-
-    public virtual Ressource Ressource { get; set; } = null!;
 }

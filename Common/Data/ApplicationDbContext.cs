@@ -902,15 +902,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.MimeType)
                 .HasMaxLength(50)
                 .HasColumnName("mime_type");
-            entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.UpdateTime)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
-
-            entity.HasOne(d => d.Ressource).WithMany(p => p.RessourcesMedia)
-                .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("ressources_medias_ressource_id_fk");
         });
 
         modelBuilder.Entity<RessourceStatus>(entity =>
