@@ -6,12 +6,13 @@ namespace Ressource_API.Common.Data.Repositories;
 public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
     protected readonly ApplicationDbContext _context;
-    private readonly DbSet<TEntity> _dbSet;
+    protected readonly DbSet<TEntity> _dbSet;
 
 
     public BaseRepository(ApplicationDbContext context)
     {
         _context = context;
+        _dbSet = _context.Set<TEntity>();
     }
 
     public virtual async Task<TEntity> AddAsync(TEntity model, CancellationToken cancellationToken = default)
@@ -63,7 +64,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
                 query = query.Include(property);
             }
         }
-        return await _context.Set<TEntity>().ToListAsync(cancellationToken);
+        return await query.ToListAsync(cancellationToken);
     }
 
     public virtual async Task<List<TEntity>> ListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
