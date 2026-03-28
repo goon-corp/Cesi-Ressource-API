@@ -29,9 +29,6 @@ public static class TagExtensions
             {
                 Id = tagId,
                 Label = returnTagDto.Label,
-                CreationTime = returnTagDto.CreationTime,
-                UpdateTime = returnTagDto.UpdateTime,
-                DeletionTime = returnTagDto.DeletionTime
             };
         }
     }
@@ -42,10 +39,8 @@ public static class TagExtensions
         {
             return new ReturnTagDto()
             {
+                Id = tag.Id,
                 Label = tag.Label,
-                CreationTime = tag.CreationTime,
-                UpdateTime = tag.UpdateTime,
-                DeletionTime = tag.DeletionTime
             };
         }
     }
