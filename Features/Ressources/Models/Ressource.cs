@@ -33,7 +33,7 @@ public partial class Ressource
 
     public long ViewCount { get; set; }
 
-    public string ThumbnailUrl { get; set; } = null!;
+    public Guid? ThumbnailId { get; set; }
 
     public Guid RessourceConfidentialityTypeId { get; set; }
 
@@ -42,6 +42,8 @@ public partial class Ressource
     public Guid UserId { get; set; }
 
     public Guid RessourceTypeId { get; set; }
+
+    public virtual RessourceMedia? Thumbnail { get; set; }
 
     public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
 
@@ -57,7 +59,8 @@ public partial class Ressource
 
     public virtual RessourceConfidentialityType RessourceConfidentialityType { get; set; } = null!;
 
-    public virtual ICollection<RessourceProgression> RessourceProgressions { get; set; } = new List<RessourceProgression>();
+    public virtual ICollection<RessourceProgression> RessourceProgressions { get; set; } =
+        new List<RessourceProgression>();
 
     public virtual RessourceStatus RessourceStatus { get; set; } = null!;
 
