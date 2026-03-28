@@ -2,9 +2,6 @@ namespace Ressource_API.Features.RessourceConfidentialityTypes.RessourceConfiden
 
 public class RessourceConfidentialityTypeInfoDto
 {
-    public int Id { get; set; }
-    // TODO: Add properties to return in responses
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public DateTime CreatedAt { get; set; }
+    public Guid Id { get; set; }
+    public string Label { get; set; } = null!;
 }
