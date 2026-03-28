@@ -11,7 +11,7 @@ public class RessourceQuery : PagedQueryParameters
     
     public string? RessourceType {get; set;}
     
-    public string? RessourceTags {get; set;}
+    public List<Guid>? RessourceTags { get; set; }
     
     public DateTime? CreatedAt { get; set; }
 }
