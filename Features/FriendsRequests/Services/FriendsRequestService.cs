@@ -1,7 +1,10 @@
+using Ressource_API.Common.Pagination;
+using Ressource_API.Features.FriendsRequests.Extensions;
 using Ressource_API.Features.FriendsRequests.Models;
 using Ressource_API.Features.FriendsRequests.FriendsRequestDtos;
 using Ressource_API.Features.FriendsRequests.Repositories;
 using Ressource_API.Features.FriendsRequests.Factories;
+using Ressource_API.Features.FriendsRequests.Query;
 
 namespace Ressource_API.Features.FriendsRequests.Services;
 
@@ -18,52 +21,68 @@ public class FriendsRequestService : IFriendsRequestService
         _factory = factory;
     }
 
-    public async Task<IEnumerable<FriendsRequest>> GetAllFriendsRequestsAsync(CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<FriendsRequestInfoDto>> GetPaginatedFriendsRequestsAsync(
+        FriendsRequestQuery query,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        return await _repository.PaginatedFriendsRequestsAsync(query, cancellationToken);
     }
 
-    public async Task<FriendsRequest?> GetFriendsRequestByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<FriendsRequestInfoDto?> GetFriendsRequestByIdsAsync(
+        Guid userSenderId,
+        Guid userReceiverId,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        var existing = await _repository.FindByUsersAsync(userSenderId, userReceiverId, cancellationToken);
+
+        return existing?.ToInfoDto();
     }
 
-    public async Task<FriendsRequest> CreateFriendsRequestAsync(CreateFriendsRequestDto dto, CancellationToken cancellationToken = default)
+    public async Task<FriendsRequestInfoDto> CreateFriendsRequestAsync(
+        CreateFriendsRequestDto dto,
+        Guid userSenderId,
+        CancellationToken cancellationToken = default)
     {
-        // Use factory to create the entity from DTO
-        var friendsrequest = _factory.Create(dto);
-        
-        return await _repository.AddAsync(friendsrequest, cancellationToken);
+        var friendsRequest = _factory.Create(dto, userSenderId);
+
+        var created = await _repository.AddAsync(friendsRequest, cancellationToken);
+
+        return created.ToInfoDto();
     }
 
-    public async Task<FriendsRequest?> UpdateFriendsRequestAsync(int id, UpdateFriendsRequestDto dto, CancellationToken cancellationToken = default)
+    public async Task<FriendsRequestInfoDto?> UpdateFriendsRequestAsync(
+        Guid userSenderId,
+        Guid userReceiverId,
+        UpdateFriendsRequestDto dto,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
+        var existing = await _repository.FindByUsersAsync(userSenderId, userReceiverId, cancellationToken);
+
         if (existing == null)
-        {
             return null;
-        }
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
+        existing.RequestStatus = dto.RequestStatus;
+        existing.UpdateTime = DateTime.UtcNow;
+
         await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+
+        return existing.ToInfoDto();
     }
 
-    public async Task<bool> DeleteFriendsRequestAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteFriendsRequestAsync(
+        Guid userSenderId,
+        Guid userReceiverId,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return false;
-        }
+        var existing = await _repository.FindByUsersAsync(userSenderId, userReceiverId, cancellationToken);
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
+        if (existing == null)
+            return false;
+
+        existing.DeletionTime = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(existing, cancellationToken);
+
         return true;
     }
 }

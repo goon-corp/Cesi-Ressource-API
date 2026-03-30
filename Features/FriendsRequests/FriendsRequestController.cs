@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.FriendsRequests.Models;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.FriendsRequests.FriendsRequestDtos;
+using Ressource_API.Features.FriendsRequests.Query;
 using Ressource_API.Features.FriendsRequests.Services;
 
 namespace Ressource_API.Features.FriendsRequests;
@@ -19,46 +20,49 @@ public class FriendsRequestController : ControllerBase
     }
 
     /// <summary>
-    /// Get all friendsrequests
+    /// Get all friendsrequests (paginated)
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<FriendsRequest>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<FriendsRequest>>> GetAllFriendsRequests(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<FriendsRequestInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<FriendsRequestInfoDto>>> GetPaginatedFriendsRequests(
+        [FromQuery] FriendsRequestQuery query,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var friendsrequests = await _service.GetAllFriendsRequestsAsync(cancellationToken);
-            return Ok(friendsrequests);
+            var result = await _service.GetPaginatedFriendsRequestsAsync(query, cancellationToken);
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all friendsrequests");
+            _logger.LogError(ex, "Error retrieving paginated friendsrequests");
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving friendsrequests");
         }
     }
 
     /// <summary>
-    /// Get a friendsrequest by ID
+    /// Get a friendsrequest by sender and receiver IDs
     /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(FriendsRequest), StatusCodes.Status200OK)]
+    [HttpGet("{userSenderId:guid}/{userReceiverId:guid}")]
+    [ProducesResponseType(typeof(FriendsRequestInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<FriendsRequest>> GetFriendsRequestById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<FriendsRequestInfoDto>> GetFriendsRequestByIds(
+        Guid userSenderId,
+        Guid userReceiverId,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var friendsrequest = await _service.GetFriendsRequestByIdAsync(id, cancellationToken);
+            var friendsRequest = await _service.GetFriendsRequestByIdsAsync(userSenderId, userReceiverId, cancellationToken);
 
-            if (friendsrequest == null)
-            {
-                return NotFound($"FriendsRequest with ID {id} not found");
-            }
+            if (friendsRequest == null)
+                return NotFound($"FriendsRequest between {userSenderId} and {userReceiverId} not found");
 
-            return Ok(friendsrequest);
+            return Ok(friendsRequest);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving friendsrequest with ID {Id}", id);
+            _logger.LogError(ex, "Error retrieving friendsrequest between {UserSenderId} and {UserReceiverId}", userSenderId, userReceiverId);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the friendsrequest");
         }
     }
@@ -67,24 +71,26 @@ public class FriendsRequestController : ControllerBase
     /// Create a new friendsrequest
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(FriendsRequest), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(FriendsRequestInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<FriendsRequest>> CreateFriendsRequest([FromBody] CreateFriendsRequestDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<FriendsRequestInfoDto>> CreateFriendsRequest(
+        [FromBody] CreateFriendsRequestDto dto,
+        CancellationToken cancellationToken)
     {
         try
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            var createdFriendsRequest = await _service.CreateFriendsRequestAsync(dto, cancellationToken);
+            // TODO: Remplacer par l'extraction depuis le token JWT (ex: User.GetUserId())
+            var userSenderId = Guid.Parse(User.FindFirst("sub")?.Value ?? throw new InvalidOperationException("User not authenticated"));
+
+            var created = await _service.CreateFriendsRequestAsync(dto, userSenderId, cancellationToken);
 
             return CreatedAtAction(
-                nameof(GetFriendsRequestById),
-                new { id = createdFriendsRequest.UserSenderId },
-                createdFriendsRequest
-            );
+                nameof(GetFriendsRequestByIds),
+                new { userSenderId = created.UserSenderId, userReceiverId = created.UserReceiverId },
+                created);
         }
         catch (Exception ex)
         {
@@ -94,59 +100,60 @@ public class FriendsRequestController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing friendsrequest
+    /// Update the status of an existing friendsrequest
     /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(FriendsRequest), StatusCodes.Status200OK)]
+    [HttpPut("{userSenderId:guid}/{userReceiverId:guid}")]
+    [ProducesResponseType(typeof(FriendsRequestInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<FriendsRequest>> UpdateFriendsRequest(int id, [FromBody] UpdateFriendsRequestDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<FriendsRequestInfoDto>> UpdateFriendsRequest(
+        Guid userSenderId,
+        Guid userReceiverId,
+        [FromBody] UpdateFriendsRequestDto dto,
+        CancellationToken cancellationToken)
     {
         try
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            var updatedFriendsRequest = await _service.UpdateFriendsRequestAsync(id, dto, cancellationToken);
+            var updated = await _service.UpdateFriendsRequestAsync(userSenderId, userReceiverId, dto, cancellationToken);
 
-            if (updatedFriendsRequest == null)
-            {
-                return NotFound($"FriendsRequest with ID {id} not found");
-            }
+            if (updated == null)
+                return NotFound($"FriendsRequest between {userSenderId} and {userReceiverId} not found");
 
-            return Ok(updatedFriendsRequest);
+            return Ok(updated);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating friendsrequest with ID {Id}", id);
+            _logger.LogError(ex, "Error updating friendsrequest between {UserSenderId} and {UserReceiverId}", userSenderId, userReceiverId);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the friendsrequest");
         }
     }
 
     /// <summary>
-    /// Delete a friendsrequest
+    /// Soft delete a friendsrequest
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{userSenderId:guid}/{userReceiverId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteFriendsRequest(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteFriendsRequest(
+        Guid userSenderId,
+        Guid userReceiverId,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var deleted = await _service.DeleteFriendsRequestAsync(id, cancellationToken);
+            var deleted = await _service.DeleteFriendsRequestAsync(userSenderId, userReceiverId, cancellationToken);
 
             if (!deleted)
-            {
-                return NotFound($"FriendsRequest with ID {id} not found");
-            }
+                return NotFound($"FriendsRequest between {userSenderId} and {userReceiverId} not found");
 
             return NoContent();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting friendsrequest with ID {Id}", id);
+            _logger.LogError(ex, "Error deleting friendsrequest between {UserSenderId} and {UserReceiverId}", userSenderId, userReceiverId);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the friendsrequest");
         }
     }
