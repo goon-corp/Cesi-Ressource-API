@@ -14,7 +14,7 @@ public interface IRessourceService
     Task<ReturnRessourceDto> CreateRessourceAsync(CreateRessourceDto dto, ClaimsPrincipal context,
         CancellationToken token = default);
 
-    Task<ReturnRessourceDto?> UpdateRessourceAsync(Guid id, UpdateRessourceDto dto,
+    Task<ReturnRessourceDto> UpdateRessourceAsync(Guid id, UpdateRessourceDto dto,
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteRessourceAsync(Guid id, CancellationToken cancellationToken = default);

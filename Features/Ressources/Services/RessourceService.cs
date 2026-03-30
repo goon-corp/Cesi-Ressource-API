@@ -135,11 +135,11 @@ public class RessourceService : IRessourceService
         return ressource.ToReturnDto();
     }
 
-    public async Task<ReturnRessourceDto?> UpdateRessourceAsync(Guid id, UpdateRessourceDto dto,
+    public async Task<ReturnRessourceDto> UpdateRessourceAsync(Guid id, UpdateRessourceDto dto,
         CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
-        if (existing is null) return null;
+        if (existing is null) throw new KeyNotFoundException("Cannot found Ressource");
 
         var tags = dto.Tags.Any()
             ? await _tagRepository.ListAsync(t => dto.Tags.Contains(t.Id), cancellationToken)

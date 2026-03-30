@@ -42,7 +42,6 @@ using Ressource_API.Features.EmailLogs.Services;
 using Ressource_API.Features.EmailLogs.Factories;
 using Ressource_API.Features.Events.Repositories;
 using Ressource_API.Features.Events.Services;
-using Ressource_API.Features.Events.Factories;
 using Ressource_API.Features.FriendsRequests.Repositories;
 using Ressource_API.Features.FriendsRequests.Services;
 using Ressource_API.Features.FriendsRequests.Factories;
@@ -189,7 +188,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ICommentFactory, CommentFactory>();
         builder.Services.AddScoped<IDepartmentFactory, DepartmentFactory>();
         builder.Services.AddScoped<IEmailLogFactory, EmailLogFactory>();
-        builder.Services.AddScoped<IEventFactory, EventFactory>();
         builder.Services.AddScoped<IFriendsRequestFactory, FriendsRequestFactory>();
         builder.Services.AddScoped<ILoginFactory, LoginFactory>();
         builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
