@@ -97,7 +97,6 @@ using Ressource_API.Features.RessourceStatuses.Services;
 using Ressource_API.Features.RessourceStatuses.Factories;
 using Ressource_API.Features.RessourceTypes.Repositories;
 using Ressource_API.Features.RessourceTypes.Services;
-using Ressource_API.Features.RessourceTypes.Factories;
 using Ressource_API.Features.SessionMessages.Repositories;
 using Ressource_API.Features.SessionMessages.Services;
 using Ressource_API.Features.SessionMessages.Factories;
@@ -206,7 +205,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
         builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
-        builder.Services.AddScoped<IRessourceTypeFactory, RessourceTypeFactory>();
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
         builder.Services.AddScoped<ISessionFactory, SessionFactory>();
         builder.Services.AddScoped<ITagFactory, TagFactory>();

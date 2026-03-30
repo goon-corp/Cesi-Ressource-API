@@ -7,7 +7,7 @@ namespace Ressource_API.Features.Authentifications.Services;
 
 public interface IAuthentificationService
 {
-    Task<Result<SimplyAuthResponse>> Login(LoginDto dto);
+    Task<Result<LoginResponseDTO>> Login(LoginDto dto);
     Task<Result> ConfirmAccount(string token);
     Task<Result> RegisterUser(RegisterDto dto, string roleName = "Utilisateur");
     Task<Result> ForgotPassword(ForgotPasswordDto dto);

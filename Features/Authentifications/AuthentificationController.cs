@@ -76,7 +76,7 @@ public class AuthentificationController : ControllerBase
                     return Ok(new { accessToken = tokens.AccessToken });
                 }
 
-                return Ok(new { accessToken= tokens.AccessToken, refreshToken = tokens.RefreshToken}); //return the token in the body of the result, for mobile apps
+                return Ok(result); //return the token in the body of the result, for mobile apps
             },
             onFailure: error => Unauthorized(new { error })
         );
