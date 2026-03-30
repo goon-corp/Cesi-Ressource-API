@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Ressource_API.Common.Middlewares;
 
 
@@ -32,7 +34,12 @@ public class ApiKeyMiddleware
         var endpoint = context.GetEndpoint();
         var isPublic = context.Request.Path.ToString().ToLower().Contains("public");
         var isSwagger = context.Request.Path.ToString().ToLower().Contains("swagger");
-        if (isSwagger || isPublic)
+        var isResourceMedia = Regex.IsMatch(
+            context.Request.Path.ToString(),
+            @"api/ressource-medias/.+",
+            RegexOptions.IgnoreCase
+        );
+        if (isSwagger || isPublic || isResourceMedia)
         {
             await _next(context);
             return;

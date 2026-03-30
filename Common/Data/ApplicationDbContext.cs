@@ -661,7 +661,7 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<RefreshToken>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("refresh_tokens_pk");
-            
+
             entity.HasIndex(e => e.Token, "token_hash_IDX");
 
             entity.ToTable("refresh_tokens");
@@ -784,7 +784,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.RessourceConfidentialityTypeId).HasColumnName("ressource_confidentiality_type_id");
             entity.Property(e => e.RessourceStatusId).HasColumnName("ressource_status_id");
             entity.Property(e => e.RessourceTypeId).HasColumnName("ressource_type_id");
-            entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
+            entity.Property(e => e.ThumbnailId).HasColumnName("thumbnail_id");
             entity.Property(e => e.Title)
                 .HasMaxLength(255)
                 .HasColumnName("title");
@@ -794,17 +794,17 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.ViewCount).HasColumnName("view_count");
 
-            entity.HasOne(d => d.RessourceConfidentialityType).WithMany(p => p.Ressources)
+            entity.HasOne(d => d.RessourceConfidentialityType).WithMany()
                 .HasForeignKey(d => d.RessourceConfidentialityTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ressources_ressource_confidentiality_type_id_fk");
 
-            entity.HasOne(d => d.RessourceStatus).WithMany(p => p.Ressources)
+            entity.HasOne(d => d.RessourceStatus).WithMany()
                 .HasForeignKey(d => d.RessourceStatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ressources_ressource_status_id_fk");
 
-            entity.HasOne(d => d.RessourceType).WithMany(p => p.Ressources)
+            entity.HasOne(d => d.RessourceType).WithMany()
                 .HasForeignKey(d => d.RessourceTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ressources_ressource_type_id_fk");
@@ -813,6 +813,11 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ressources_user_id_fk");
+
+            entity.HasOne(d => d.Thumbnail).WithMany()
+                .HasForeignKey(d => d.ThumbnailId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("ressources_thumbnail_id_fk");
         });
 
         modelBuilder.Entity<RessourceProgression>(entity =>
@@ -902,15 +907,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.MimeType)
                 .HasMaxLength(50)
                 .HasColumnName("mime_type");
-            entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.UpdateTime)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
-
-            entity.HasOne(d => d.Ressource).WithMany(p => p.RessourcesMedia)
-                .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("ressources_medias_ressource_id_fk");
         });
 
         modelBuilder.Entity<RessourceStatus>(entity =>
@@ -1014,7 +1013,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("update_time");
 
-            entity.HasMany(d => d.Ressources).WithMany(p => p.Tags)
+            entity.HasMany<Ressource>().WithMany(p => p.Tags)
                 .UsingEntity<Dictionary<string, object>>(
                     "RessourceTag",
                     r => r.HasOne<Ressource>().WithMany()

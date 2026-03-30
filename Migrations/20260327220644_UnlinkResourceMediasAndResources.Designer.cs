@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ressource_API.Common.Data;
@@ -11,9 +12,11 @@ using Ressource_API.Common.Data;
 namespace Ressource_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327220644_UnlinkResourceMediasAndResources")]
+    partial class UnlinkResourceMediasAndResources
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1163,9 +1166,10 @@ namespace Ressource_API.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("ressource_type_id");
 
-                    b.Property<Guid?>("ThumbnailId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("thumbnail_id");
+                    b.Property<string>("ThumbnailUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("thumbnail_url");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -1193,8 +1197,6 @@ namespace Ressource_API.Migrations
                     b.HasIndex("RessourceStatusId");
 
                     b.HasIndex("RessourceTypeId");
-
-                    b.HasIndex("ThumbnailId");
 
                     b.HasIndex("UserId");
 
@@ -1775,12 +1777,6 @@ namespace Ressource_API.Migrations
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_type_id_fk");
 
-                    b.HasOne("Ressource_API.Features.RessourceMedias.Models.RessourceMedia", "Thumbnail")
-                        .WithMany()
-                        .HasForeignKey("ThumbnailId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("ressources_thumbnail_id_fk");
-
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("AuthoredRessources")
                         .HasForeignKey("UserId")
@@ -1792,8 +1788,6 @@ namespace Ressource_API.Migrations
                     b.Navigation("RessourceStatus");
 
                     b.Navigation("RessourceType");
-
-                    b.Navigation("Thumbnail");
 
                     b.Navigation("User");
                 });

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Ressource_API.Common.BlobStorage.Cloudflare;
 using Ressource_API.Common.Data;
 using Ressource_API.Common.Filters;
 using Ressource_API.Common.Services;
@@ -84,16 +85,13 @@ using Ressource_API.Features.ReportTypes.Services;
 using Ressource_API.Features.ReportTypes.Factories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Repositories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Services;
-using Ressource_API.Features.RessourceConfidentialityTypes.Factories;
 using Ressource_API.Features.RessourceMedias.Repositories;
 using Ressource_API.Features.RessourceMedias.Services;
-using Ressource_API.Features.RessourceMedias.Factories;
 using Ressource_API.Features.RessourceProgressions.Repositories;
 using Ressource_API.Features.RessourceProgressions.Services;
 using Ressource_API.Features.RessourceProgressions.Factories;
 using Ressource_API.Features.Ressources.Repositories;
 using Ressource_API.Features.Ressources.Services;
-using Ressource_API.Features.Ressources.Factories;
 using Ressource_API.Features.RessourceStatuses.Repositories;
 using Ressource_API.Features.RessourceStatuses.Services;
 using Ressource_API.Features.RessourceStatuses.Factories;
@@ -125,15 +123,16 @@ public static class DependenciesExtensions
 {
     public static void InjectDependencies(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers( options => 
-            options.Filters.Add<ValidationFilter>())//Applique le result pattern pour les exceptions de validators
+        builder.Services.AddControllers(options =>
+                options.Filters.Add<ValidationFilter>()) //Applique le result pattern pour les exceptions de validators
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
             }); // Force le snake cae sur le retour des formats JSON
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {
-            options.SuppressModelStateInvalidFilter = true; // Désactive le comportement par défaut des erreurs de validation
+            options.SuppressModelStateInvalidFilter =
+                true; // Désactive le comportement par défaut des erreurs de validation
         });
         builder.Services.AddHttpContextAccessor();
         builder.AddSimply(65536, 3, 4, "ressource-api", "ressource-front");
@@ -204,10 +203,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
         builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
-        builder.Services.AddScoped<IRessourceConfidentialityTypeFactory, RessourceConfidentialityTypeFactory>();
-        builder.Services.AddScoped<IRessourceMediaFactory, RessourceMediaFactory>();
         builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
-        builder.Services.AddScoped<IRessourceFactory, RessourceFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
         builder.Services.AddScoped<ISessionFactory, SessionFactory>();
@@ -254,6 +250,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddScoped<ICloudflareClient, CloudflareClient>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
@@ -336,9 +333,21 @@ public static class DependenciesExtensions
                 Name = "x-api-key",
             });
 
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer"
+            });
+
             options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 [new OpenApiSecuritySchemeReference("api-key", document)] = []
+            });
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
             });
         });
     }
@@ -348,7 +357,7 @@ public static class DependenciesExtensions
         var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
                                ?? throw new InvalidOperationException(
                                    "Connection string 'DATABASE_CONNECTION_STRING' not found.");
-        
+
         var poolSize = Int32.Parse(Environment.GetEnvironmentVariable("DBCONTEXT_POOL_SIZE") ?? "1024");
 
         builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
