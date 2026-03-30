@@ -63,6 +63,7 @@ public class FriendsRequestController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(FriendsRequestInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FriendsRequestInfoDto>> CreateFriendsRequest(
         [FromBody] CreateFriendsRequestDto dto,
@@ -71,11 +72,7 @@ public class FriendsRequestController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        // TODO: Remplacer par l'extraction depuis le token JWT (ex: User.GetUserId())
-        var userSenderId = Guid.Parse(User.FindFirst("sub")?.Value
-            ?? throw new InvalidOperationException("User not authenticated"));
-
-        var result = await _service.CreateFriendsRequestAsync(dto, userSenderId, cancellationToken);
+        var result = await _service.CreateFriendsRequestAsync(dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => CreatedAtAction(
@@ -84,7 +81,6 @@ public class FriendsRequestController : ControllerBase
                 data),
             onFailure: error => Conflict(error));
     }
-
     /// <summary>
     /// Update the status of an existing friendsrequest
     /// </summary>

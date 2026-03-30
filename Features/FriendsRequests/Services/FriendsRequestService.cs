@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.FriendsRequests.Extensions;
@@ -44,15 +45,20 @@ public class FriendsRequestService : IFriendsRequestService
 
     public async Task<Result<FriendsRequestInfoDto>> CreateFriendsRequestAsync(
         CreateFriendsRequestDto dto,
-        Guid userSenderId,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken = default)
     {
-        var alreadyExists = await _repository.FindByUsersAsync(userSenderId, dto.UserReceiverId, cancellationToken);
+        var currentUserIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var currentUserId))
+            return Result.Failure<FriendsRequestInfoDto>("User not authenticated or invalid user ID");
+
+        var alreadyExists = await _repository.FindByUsersAsync(currentUserId, dto.UserReceiverId, cancellationToken);
 
         if (alreadyExists != null)
             return Result.Failure<FriendsRequestInfoDto>("A friends request already exists between these users");
 
-        var friendsRequest = _factory.Create(dto, userSenderId);
+        var friendsRequest = _factory.Create(dto, currentUserId);
         var created = await _repository.AddAsync(friendsRequest, cancellationToken);
 
         return Result.Success(created.ToInfoDto());

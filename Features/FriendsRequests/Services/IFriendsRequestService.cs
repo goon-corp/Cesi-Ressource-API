@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.FriendsRequests.FriendsRequestDtos;
@@ -18,7 +19,8 @@ public interface IFriendsRequestService
 
     Task<Result<FriendsRequestInfoDto>> CreateFriendsRequestAsync(
         CreateFriendsRequestDto dto,
-        Guid userSenderId,
+        // Guid userSenderId,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result<FriendsRequestInfoDto>> UpdateFriendsRequestAsync(
