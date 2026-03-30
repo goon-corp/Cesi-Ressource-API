@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Ressource_API.Features.Ressources.Models;
-
-namespace Ressource_API.Features.Tags.Models;
+﻿namespace Ressource_API.Features.Tags.Models;
 
 public partial class Tag
 {
@@ -16,5 +12,4 @@ public partial class Tag
 
     public string Label { get; set; } = null!;
 
-    public virtual ICollection<Ressource> Ressources { get; set; } = new List<Ressource>();
 }

@@ -1,7 +1,3 @@
-﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using Ressource_API.Features.Ressources.Models;
-
 namespace Ressource_API.Features.RessourceStatuses.Models;
 
 public partial class RessourceStatus
@@ -15,7 +11,4 @@ public partial class RessourceStatus
     public DateTime? DeletionTime { get; set; }
 
     public string Label { get; set; } = null!;
-
-    [JsonIgnore]
-    public virtual ICollection<Ressource> Ressources { get; set; } = new List<Ressource>();
 }
