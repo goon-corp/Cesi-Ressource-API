@@ -61,7 +61,7 @@ public class RessourceController : ControllerBase
                 return BadRequest(ModelState);
             }
 
-            var createdRessource = await _service.CreateRessource(dto, User, cancellationToken);
+            var createdRessource = await _service.CreateRessourceAsync(dto, User, cancellationToken);
 
             return CreatedAtAction(
                 nameof(CreateRessource),

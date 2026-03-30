@@ -91,7 +91,7 @@ public class RessourceService : IRessourceService
         }
     }
 
-    public async Task<ReturnRessourceDto> CreateRessource(CreateRessourceDto dto, ClaimsPrincipal context,
+    public async Task<ReturnRessourceDto> CreateRessourceAsync(CreateRessourceDto dto, ClaimsPrincipal context,
         CancellationToken token = default)
     {
         var authorId = context.FindFirstValue(ClaimTypes.NameIdentifier);

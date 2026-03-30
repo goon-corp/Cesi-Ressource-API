@@ -11,7 +11,7 @@ public interface IRessourceService
     Task<PaginatedList<ReturnRessourceDto>> GetAllRessourcesAsync(RessourceQuery ressourceQuery,
         CancellationToken cancellationToken = default);
 
-    Task<ReturnRessourceDto> CreateRessource(CreateRessourceDto dto, ClaimsPrincipal context,
+    Task<ReturnRessourceDto> CreateRessourceAsync(CreateRessourceDto dto, ClaimsPrincipal context,
         CancellationToken token = default);
 
     Task<ReturnRessourceDto?> UpdateRessourceAsync(Guid id, UpdateRessourceDto dto,
