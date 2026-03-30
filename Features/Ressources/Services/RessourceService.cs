@@ -66,7 +66,7 @@ public class RessourceService : IRessourceService
                 var ressources = await ressourcesTask;
                 isComplete = ressources.Count == ressourceQuery.size;
 
-                await TagCacheHandler(ressources, ressourceQuery, cacheKey);
+                await RessourceCacheHandler(ressources, ressourceQuery, cacheKey);
 
                 return ressources;
             },
@@ -77,7 +77,7 @@ public class RessourceService : IRessourceService
         return ressources;
     }
 
-    public async Task TagCacheHandler(PaginatedList<ReturnRessourceDto> ressources, RessourceQuery ressourceQuery,
+    public async Task RessourceCacheHandler(PaginatedList<ReturnRessourceDto> ressources, RessourceQuery ressourceQuery,
         string cacheKey)
     {
         foreach (var ressource in ressources)
