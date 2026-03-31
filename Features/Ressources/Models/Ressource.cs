@@ -49,7 +49,7 @@ public partial class Ressource
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
-    public virtual ICollection<Event> Events { get; set; } = new List<Event>();
+    // public virtual ICollection<Event> Events { get; set; } = new List<Event>();
 
     // public virtual ICollection<Poll> Polls { get; set; } = new List<Poll>();
 
