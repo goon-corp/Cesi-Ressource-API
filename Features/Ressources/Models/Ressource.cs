@@ -51,7 +51,7 @@ public partial class Ressource
 
     public virtual ICollection<Event> Events { get; set; } = new List<Event>();
 
-    public virtual ICollection<Poll> Polls { get; set; } = new List<Poll>();
+    // public virtual ICollection<Poll> Polls { get; set; } = new List<Poll>();
 
     public virtual ICollection<Quizz> Quizzes { get; set; } = new List<Quizz>();
 

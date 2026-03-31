@@ -7,7 +7,7 @@ using Ressource_API.Features.Polls.Services;
 namespace Ressource_API.Features.Polls;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/polls")]
 public class PollController : ControllerBase
 {
     private readonly IPollService _service;
