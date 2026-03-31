@@ -18,7 +18,6 @@ using Ressource_API.Features.Addresses.Repositories;
 using Ressource_API.Features.Addresses.Factories;
 using Ressource_API.Features.Articles.Repositories;
 using Ressource_API.Features.Articles.Services;
-using Ressource_API.Features.Articles.Factories;
 using Ressource_API.Features.Authentifications.Services;
 using Ressource_API.Features.BackofficeLogLevels.Repositories;
 using Ressource_API.Features.BackofficeLogLevels.Services;
@@ -180,7 +179,6 @@ public static class DependenciesExtensions
     private static void AddFactories(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IAddressFactory, AddressFactory>();
-        builder.Services.AddScoped<IArticleFactory, ArticleFactory>();
         builder.Services.AddScoped<IBackofficeLogFactory, BackofficeLogFactory>();
         builder.Services.AddScoped<IBackofficeLogLevelFactory, BackofficeLogLevelFactory>();
         builder.Services.AddScoped<IBackofficeOperationTypeFactory, BackofficeOperationTypeFactory>();

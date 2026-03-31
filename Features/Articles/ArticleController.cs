@@ -1,12 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Features.Articles.Models;
-using Ressource_API.Features.Articles.ArticleDtos;
+using Ressource_API.Features.Articles.Dtos;
 using Ressource_API.Features.Articles.Services;
 
 namespace Ressource_API.Features.Articles;
 
 [ApiController]
-[Route("api/[controller]")]
+[Authorize]
+[Route("api/articles")]
 public class ArticleController : ControllerBase
 {
     private readonly IArticleService _service;
@@ -19,135 +21,66 @@ public class ArticleController : ControllerBase
     }
 
     /// <summary>
-    /// Get all articles
+    /// Get a article by ressource ID
     /// </summary>
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Article>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Article>>> GetAllArticles(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var articles = await _service.GetAllArticlesAsync(cancellationToken);
-            return Ok(articles);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all articles");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving articles");
-        }
-    }
-
-    /// <summary>
-    /// Get a article by ID
-    /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{ressourceId:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Article), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Article>> GetArticleById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<Article>> GetArticleById(Guid ressourceId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var article = await _service.GetArticleByIdAsync(id, cancellationToken);
+        var result = await _service.GetArticleByRessourceIdAsync(ressourceId, cancellationToken);
 
-            if (article == null)
-            {
-                return NotFound($"Article with ID {id} not found");
-            }
-
-            return Ok(article);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving article with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the article");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Create a new article
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(Article), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ReturnArticleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Article>> CreateArticle([FromBody] CreateArticleDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ReturnArticleDto>> CreateArticle([FromForm] CreateArticleDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.CreateArticleAsync(dto, User, cancellationToken);
 
-            var createdArticle = await _service.CreateArticleAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetArticleById),
-                new { id = createdArticle.Id },
-                createdArticle
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating article");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the article");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Created("article", data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Update an existing article
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(Article), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Article>> UpdateArticle(int id, [FromBody] UpdateArticleDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<Article>> UpdateArticle(Guid id, [FromBody] UpdateArticleDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.UpdateArticleAsync(id, dto, User, cancellationToken);
 
-            var updatedArticle = await _service.UpdateArticleAsync(id, dto, cancellationToken);
-
-            if (updatedArticle == null)
-            {
-                return NotFound($"Article with ID {id} not found");
-            }
-
-            return Ok(updatedArticle);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating article with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the article");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Delete a article
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteArticle(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteArticle(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteArticleAsync(id, cancellationToken);
+        var result = await _service.DeleteArticleAsync(id, User, cancellationToken);
 
-            if (!deleted)
-            {
-                return NotFound($"Article with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting article with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the article");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }

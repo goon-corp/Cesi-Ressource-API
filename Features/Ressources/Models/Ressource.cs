@@ -45,8 +45,6 @@ public partial class Ressource
 
     public virtual RessourceMedia? Thumbnail { get; set; }
 
-    public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
-
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     // public virtual ICollection<Event> Events { get; set; } = new List<Event>();
