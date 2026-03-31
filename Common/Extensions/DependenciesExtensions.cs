@@ -87,7 +87,6 @@ using Ressource_API.Features.RessourceMedias.Repositories;
 using Ressource_API.Features.RessourceMedias.Services;
 using Ressource_API.Features.RessourceProgressions.Repositories;
 using Ressource_API.Features.RessourceProgressions.Services;
-using Ressource_API.Features.RessourceProgressions.Factories;
 using Ressource_API.Features.Ressources.Repositories;
 using Ressource_API.Features.Ressources.Services;
 using Ressource_API.Features.RessourceStatuses.Repositories;
@@ -198,7 +197,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
-        builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
         builder.Services.AddScoped<ISessionFactory, SessionFactory>();
