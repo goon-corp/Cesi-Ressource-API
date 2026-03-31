@@ -543,7 +543,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
             entity.Property(e => e.VoteCount).HasColumnName("vote_count");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Polls)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("polls_ressource_id_fk");
