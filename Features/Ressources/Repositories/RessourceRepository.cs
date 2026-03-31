@@ -15,6 +15,13 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
     {
     }
 
+    public async Task<Ressource?> FindWithTagsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Ressources
+            .Include(r => r.Tags)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
     public async Task<PaginatedList<ReturnRessourceDto>> PaginatedRessourcesAsync(RessourceQuery query,
         CancellationToken cancellationToken = default)
     {
