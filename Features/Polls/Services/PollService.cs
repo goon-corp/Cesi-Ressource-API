@@ -1,7 +1,10 @@
-using Ressource_API.Features.Polls.Models;
-using Ressource_API.Features.Polls.PollDtos;
-using Ressource_API.Features.Polls.Repositories;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.Polls.Dtos;
+using Ressource_API.Features.Polls.Extensions;
 using Ressource_API.Features.Polls.Factories;
+using Ressource_API.Features.Polls.Query;
+using Ressource_API.Features.Polls.Repositories;
 
 namespace Ressource_API.Features.Polls.Services;
 
@@ -10,60 +13,70 @@ public class PollService : IPollService
     private readonly IPollRepository _repository;
     private readonly IPollFactory _factory;
 
-    public PollService(
-        IPollRepository repository,
-        IPollFactory factory)
+    public PollService(IPollRepository repository, IPollFactory factory)
     {
         _repository = repository;
         _factory = factory;
     }
 
-    public async Task<IEnumerable<Poll>> GetAllPollsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<PaginatedList<PollInfoDto>>> GetPaginatedPollsAsync(
+        PollQuery query,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var result = await _repository.PaginatedPollsAsync(query, cancellationToken);
+        return Result.Success(result);
     }
 
-    public async Task<Poll?> GetPollByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<PollInfoDto>> GetPollByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        var poll = await _repository.FindByIdAsync(id, cancellationToken);
+
+        if (poll == null)
+            return Result.Failure<PollInfoDto>("Poll not found");
+
+        return Result.Success(poll.ToInfoDto());
     }
 
-    public async Task<Poll> CreatePollAsync(CreatePollDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<PollInfoDto>> CreatePollAsync(
+        CreatePollDto dto,
+        CancellationToken cancellationToken = default)
     {
-        // Use factory to create the entity from DTO
         var poll = _factory.Create(dto);
-        
-        return await _repository.AddAsync(poll, cancellationToken);
+        var created = await _repository.AddAsync(poll, cancellationToken);
+
+        return Result.Success(created.ToInfoDto());
     }
 
-    public async Task<Poll?> UpdatePollAsync(int id, UpdatePollDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<PollInfoDto>> UpdatePollAsync(
+        Guid id,
+        UpdatePollDto dto,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return null;
-        }
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
+        if (existing == null)
+            return Result.Failure<PollInfoDto>("Poll not found");
+
+        existing.VoteCount = dto.VoteCount;
+
         await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+
+        return Result.Success(existing.ToInfoDto());
     }
 
-    public async Task<bool> DeletePollAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeletePollAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
+
         if (existing == null)
-        {
-            return false;
-        }
+            return Result.Failure("Poll not found");
 
         await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+
+        return Result.Success();
     }
 }

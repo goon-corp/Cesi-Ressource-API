@@ -1,10 +1,8 @@
-namespace Ressource_API.Features.Polls.PollDtos;
+namespace Ressource_API.Features.Polls.Dtos;
 
 public class PollInfoDto
 {
-    public int Id { get; set; }
-    // TODO: Add properties to return in responses
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public DateTime CreatedAt { get; set; }
+    public Guid Id { get; set; }
+    public long VoteCount { get; set; }
+    public Guid RessourceId { get; set; }
 }
