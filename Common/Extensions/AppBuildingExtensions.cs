@@ -65,91 +65,144 @@ public static class AppBuildingExtensions
             return;
         }
 
-        // delete ancien default user ou login
         var existingUsers = context.Users
             .Include(u => u.Logins)
             .Include(u => u.PasswordsInfos)
-            .Include(u => u.RefreshTokens)
             .Where(u => u.UserName == "default_user" || u.UserName == "default_administrator")
             .ToList();
 
-        if (existingUsers.Any())
-        {
-            context.Logins.RemoveRange(
-                existingUsers
-                    .SelectMany(u => u.Logins)
-            );
-            context.PasswordsInfos.RemoveRange(
-                existingUsers
-                    .SelectMany(u => u.PasswordsInfos)
-            );
-            context.RefreshTokens.RemoveRange(existingUsers.SelectMany(u => u.RefreshTokens));
-            context.Users.RemoveRange(existingUsers);
-            context.SaveChanges();
-        }
+        var existingDefaultUser = existingUsers.FirstOrDefault(u => u.UserName == "default_user");
+        var existingAdminUser = existingUsers.FirstOrDefault(u => u.UserName == "default_administrator");
 
         // default user
-        var userInfos = new User
+        if (existingDefaultUser != null)
         {
-            Id = Guid.NewGuid(),
-            FirstName = "Utilisateur",
-            LastName = "Défaut",
-            UserName = "default_user",
-            IsActive = true,
-            CreationTime = DateTime.UtcNow,
-            UserRoleId = userRole.Id,
-            UserRole = userRole
-        };
+            existingDefaultUser.UserRoleId = userRole.Id;
+            existingDefaultUser.IsActive = true;
+            existingDefaultUser.UpdateTime = DateTime.UtcNow;
 
-        var userLogin = new Login
+            var existingUserLogin = existingDefaultUser.Logins.FirstOrDefault();
+            if (existingUserLogin != null)
+            {
+                existingUserLogin.Email = userEmail;
+                existingUserLogin.PasswordHash = authService.HashPassword(userPassword);
+                existingUserLogin.UpdateTime = DateTime.UtcNow;
+            }
+            else
+            {
+                context.Logins.Add(new Login
+                {
+                    Id = Guid.NewGuid(),
+                    Email = userEmail,
+                    PasswordHash = authService.HashPassword(userPassword),
+                    CreationTime = DateTime.UtcNow,
+                    UserId = existingDefaultUser.Id
+                });
+            }
+
+            if (!existingDefaultUser.PasswordsInfos.Any())
+            {
+                context.PasswordsInfos.Add(new PasswordInfo
+                {
+                    Id = Guid.NewGuid(),
+                    CreationTime = DateTime.UtcNow,
+                    UserId = existingDefaultUser.Id
+                });
+            }
+        }
+        else
         {
-            Id = Guid.NewGuid(),
-            Email = userEmail,
-            PasswordHash = authService.HashPassword(userPassword),
-            CreationTime = DateTime.UtcNow,
-            UserId = userInfos.Id
-        };
+            var userInfos = new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Utilisateur",
+                LastName = "Défaut",
+                UserName = "default_user",
+                IsActive = true,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = userRole.Id
+            };
+            context.Users.Add(userInfos);
+            context.Logins.Add(new Login
+            {
+                Id = Guid.NewGuid(),
+                Email = userEmail,
+                PasswordHash = authService.HashPassword(userPassword),
+                CreationTime = DateTime.UtcNow,
+                UserId = userInfos.Id
+            });
+            context.PasswordsInfos.Add(new PasswordInfo
+            {
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                UserId = userInfos.Id
+            });
+        }
 
-        var userPasswordInfos = new PasswordInfo
+        // default admin
+        if (existingAdminUser != null)
         {
-            Id = Guid.NewGuid(),
-            CreationTime = DateTime.UtcNow,
-            User = userInfos,
-            UserId = userInfos.Id,
-        };
+            existingAdminUser.UserRoleId = adminRole.Id;
+            existingAdminUser.IsActive = true;
+            existingAdminUser.UpdateTime = DateTime.UtcNow;
 
-        var adminInfos = new User
+            var existingAdminLogin = existingAdminUser.Logins.FirstOrDefault();
+            if (existingAdminLogin != null)
+            {
+                existingAdminLogin.Email = adminEmail;
+                existingAdminLogin.PasswordHash = authService.HashPassword(adminPassword);
+                existingAdminLogin.UpdateTime = DateTime.UtcNow;
+            }
+            else
+            {
+                context.Logins.Add(new Login
+                {
+                    Id = Guid.NewGuid(),
+                    Email = adminEmail,
+                    PasswordHash = authService.HashPassword(adminPassword),
+                    CreationTime = DateTime.UtcNow,
+                    UserId = existingAdminUser.Id
+                });
+            }
+
+            if (!existingAdminUser.PasswordsInfos.Any())
+            {
+                context.PasswordsInfos.Add(new PasswordInfo
+                {
+                    Id = Guid.NewGuid(),
+                    CreationTime = DateTime.UtcNow,
+                    UserId = existingAdminUser.Id
+                });
+            }
+        }
+        else
         {
-            Id = Guid.NewGuid(),
-            FirstName = "Administrateur",
-            LastName = "Défaut",
-            UserName = "default_administrator",
-            IsActive = true,
-            CreationTime = DateTime.UtcNow,
-            UserRoleId = adminRole.Id,
-            UserRole = adminRole
-        };
-
-        var adminLogin = new Login
-        {
-            Id = Guid.NewGuid(),
-            Email = adminEmail,
-            PasswordHash = authService.HashPassword(adminPassword),
-            CreationTime = DateTime.UtcNow,
-            UserId = adminInfos.Id
-        };
-
-        var adminPasswordInfos = new PasswordInfo
-        {
-            Id = Guid.NewGuid(),
-            CreationTime = DateTime.UtcNow,
-            User = adminInfos,
-            UserId = adminInfos.Id
-        };
-
-        context.Users.AddRange(userInfos, adminInfos);
-        context.Logins.AddRange(userLogin, adminLogin);
-        context.PasswordsInfos.AddRange(userPasswordInfos, adminPasswordInfos);
+            var adminInfos = new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Administrateur",
+                LastName = "Défaut",
+                UserName = "default_administrator",
+                IsActive = true,
+                CreationTime = DateTime.UtcNow,
+                UserRoleId = adminRole.Id
+            };
+            context.Users.Add(adminInfos);
+            context.Logins.Add(new Login
+            {
+                Id = Guid.NewGuid(),
+                Email = adminEmail,
+                PasswordHash = authService.HashPassword(adminPassword),
+                CreationTime = DateTime.UtcNow,
+                UserId = adminInfos.Id
+            });
+            context.PasswordsInfos.Add(new PasswordInfo
+            {
+                Id = Guid.NewGuid(),
+                CreationTime = DateTime.UtcNow,
+                UserId = adminInfos.Id
+            });
+        }
 
         context.SaveChanges();
 
