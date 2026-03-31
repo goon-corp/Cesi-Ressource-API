@@ -11,7 +11,7 @@ public interface IEventRepository : IBaseRepository<Event>
     Task<Event?> GetByRessourceIdWithIncludesAsync(Guid ressourceId, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithMembersAsync(Guid eventId, CancellationToken cancellationToken = default);
     Task<Event?> GetByIdWithRessourceAsync(Guid eventId, CancellationToken cancellationToken = default);
-    Task<PaginatedList<EventMemberDto>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken cancellationToken = default);
+    Task<PaginatedList<ReturnEventMemberDto>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken cancellationToken = default);
     Task<bool> IsMemberOfEventAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default);
     Task AddMemberAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default);
     Task RemoveMemberAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default);

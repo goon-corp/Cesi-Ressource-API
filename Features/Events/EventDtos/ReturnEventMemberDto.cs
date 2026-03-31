@@ -1,6 +1,6 @@
 namespace Ressource_API.Features.Events.EventDtos;
 
-public class EventMemberDto
+public class ReturnEventMemberDto
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = null!;

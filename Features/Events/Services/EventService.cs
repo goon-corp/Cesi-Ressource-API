@@ -90,11 +90,11 @@ public class EventService : IEventService
         return Result.Success();
     }
 
-    public async Task<Result<PaginatedList<EventMemberDto>>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken token = default)
+    public async Task<Result<PaginatedList<ReturnEventMemberDto>>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken token = default)
     {
         var eventExists = await _eventRepository.FindAsync(eventId, token);
         if (eventExists is null)
-            return Result.Failure<PaginatedList<EventMemberDto>>("Event not found");
+            return Result.Failure<PaginatedList<ReturnEventMemberDto>>("Event not found");
 
         var members = await _eventRepository.GetEventMembersAsync(eventId, query, token);
         return Result.Success(members);

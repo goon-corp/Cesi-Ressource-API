@@ -13,7 +13,7 @@ public interface IEventService
     Task<Result<ReturnEventDto>> GetEventAsync(Guid ressourceId, CancellationToken token = default);
     Task<Result> DeleteEventAsync(Guid eventId, CancellationToken token = default);
 
-    Task<Result<PaginatedList<EventMemberDto>>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken token = default);
+    Task<Result<PaginatedList<ReturnEventMemberDto>>> GetEventMembersAsync(Guid eventId, EventMemberQuery query, CancellationToken token = default);
     Task<Result> AddMemberAsync(Guid eventId, Guid userId, ClaimsPrincipal context, CancellationToken token = default);
     Task<Result> RemoveMemberAsync(Guid eventId, Guid userId, ClaimsPrincipal context, CancellationToken token = default);
     Task<Result> JoinEventAsync(Guid eventId, ClaimsPrincipal context, CancellationToken token = default);

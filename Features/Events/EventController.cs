@@ -78,7 +78,7 @@ public class EventController : ControllerBase
     }
 
     [HttpGet("{eventId}/members")]
-    public async Task<ActionResult<PaginatedList<EventMemberDto>>> GetEventMembers(
+    public async Task<ActionResult<PaginatedList<ReturnEventMemberDto>>> GetEventMembers(
         [FromRoute] Guid eventId,
         [FromQuery] EventMemberQuery query)
     {

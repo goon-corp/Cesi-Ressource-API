@@ -378,7 +378,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("location");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Events)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("events_ressource_id_fk");
