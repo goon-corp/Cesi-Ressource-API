@@ -1,44 +1,30 @@
-using Ressource_API.Features.Reports.Models;
-using Ressource_API.Features.Reports.ReportDtos;
 using Ressource_API.Common.Data.Factories;
+using Ressource_API.Features.Reports.Dtos;
+using Ressource_API.Features.Reports.Models;
 
 namespace Ressource_API.Features.Reports.Factories;
 
 public class ReportFactory : BaseFactory<Report>, IReportFactory
 {
-    /// <summary>
-    /// Creates a Report from a DTO
-    /// </summary>
-    public Report Create(CreateReportDto dto)
+    public Report Create(CreateReportDto dto, Guid userId)
     {
-        return CreateInstance(dto);
+        return CreateInstance(dto, userId);
     }
 
-    /// <summary>
-    /// Implementation of the abstract CreateInstance method
-    /// </summary>
     protected override Report CreateInstance(params object[] parameters)
     {
-        if (parameters.Length == 0)
+        if (parameters.Length >= 2
+            && parameters[0] is CreateReportDto dto
+            && parameters[1] is Guid userId)
         {
-            // Create default instance
             return new Report
             {
-                // TODO: Set default values
-                // Example: CreatedAt = DateTime.UtcNow
-            };
-        }
-
-        if (parameters[0] is CreateReportDto dto)
-        {
-            // Create from DTO
-            return new Report
-            {
-                // TODO: Map DTO properties to entity
-                // Example:
-                // Name = dto.Name,
-                // Description = dto.Description,
-                // CreatedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                ReportTypeId = dto.ReportTypeId,
+                RessourceId = dto.RessourceId,
+                UserId = userId,
+                IsCheckedByModerator = false,
+                CreationTime = DateTime.UtcNow
             };
         }
 
