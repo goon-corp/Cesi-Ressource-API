@@ -85,12 +85,13 @@ public class PollOptionController : ControllerBase
     public async Task<ActionResult<PollOptionInfoDto>> UpdatePollOption(
         Guid id,
         [FromBody] UpdatePollOptionDto dto,
+        [FromRoute] Guid userId,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.UpdatePollOptionAsync(id, dto, cancellationToken);
+        var result = await _service.UpdatePollOptionAsync(id, userId, dto, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),

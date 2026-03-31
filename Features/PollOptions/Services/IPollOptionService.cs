@@ -19,8 +19,8 @@ public interface IPollOptionService
         CreatePollOptionDto dto,
         CancellationToken cancellationToken = default);
 
-    Task<Result<PollOptionInfoDto>> UpdatePollOptionAsync(
-        Guid id,
+    Task<Result<PollOptionInfoDto>> UpdatePollOptionAsync(Guid id,
+        Guid userId,
         UpdatePollOptionDto dto,
         CancellationToken cancellationToken = default);
 
