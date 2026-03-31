@@ -5,7 +5,7 @@ using Ressource_API.Features.Users.Models;
 
 namespace Ressource_API.Features.Events.Models;
 
-public partial class Event
+public class Event
 {
     public Guid Id { get; set; }
 

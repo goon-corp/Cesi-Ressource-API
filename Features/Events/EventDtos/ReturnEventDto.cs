@@ -2,7 +2,7 @@ using Ressource_API.Features.Ressources.Dtos;
 
 namespace Ressource_API.Features.Events.EventDtos;
 
-public class UpdateEventDto
+public class ReturnEventDto
 {
     public Guid Id { get; set; }
 
@@ -15,6 +15,6 @@ public class UpdateEventDto
     public string? EventLink { get; set; }
 
     public string Location { get; set; } = null!;
-    public required Guid RessourceId { get; set; }
-    public UpdateRessourceDto Ressource { get; set; } = null!;
+    
+    public ReturnRessourceDto Ressource { get; set; } = null!;
 }

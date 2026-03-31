@@ -1,9 +1,14 @@
+using Ressource_API.Features.Ressources.Dtos;
+
 namespace Ressource_API.Features.Events.EventDtos;
 
 public class CreateEventDto
 {
-    // TODO: Add properties needed to create a Event
-    // Example:
-    // public string Name { get; set; } = string.Empty;
-    // public string Description { get; set; } = string.Empty;
+    public required CreateRessourceDto RessourceInfos { get; set; }
+    public required bool IsVirtual { get; set; }
+    public required DateTime DateStart { get; set; }
+    public required DateTime DateEnd { get; set; }
+    public required string? EventLink { get; set; }
+    public required string Location { get; set; }
+    public Guid? RessourceId { get; set; }
 }

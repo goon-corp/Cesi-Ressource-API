@@ -1,153 +1,170 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.Events.Models;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Events.EventDtos;
+using Ressource_API.Features.Events.Query;
 using Ressource_API.Features.Events.Services;
 
 namespace Ressource_API.Features.Events;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/events")]
 public class EventController : ControllerBase
 {
-    private readonly IEventService _service;
+    private readonly IEventService _eventService;
     private readonly ILogger<EventController> _logger;
 
-    public EventController(IEventService service, ILogger<EventController> logger)
+    public EventController(IEventService eventService, ILogger<EventController> logger)
     {
-        _service = service;
+        _eventService = eventService;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all events
-    /// </summary>
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Event>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Event>>> GetAllEvents(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var events = await _service.GetAllEventsAsync(cancellationToken);
-            return Ok(events);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all events");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving events");
-        }
-    }
-
-    /// <summary>
-    /// Get a evt by ID
-    /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Event>> GetEventById(int id, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var evt = await _service.GetEventByIdAsync(id, cancellationToken);
-
-            if (evt == null)
-            {
-                return NotFound($"Event with ID {id} not found");
-            }
-
-            return Ok(evt);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving evt with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the evt");
-        }
-    }
-
-    /// <summary>
-    /// Create a new evt
-    /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Event>> CreateEvent([FromBody] CreateEventDto dto, CancellationToken cancellationToken)
+    [Authorize]
+    public async Task<ActionResult<ReturnEventDto>> CreateEvent([FromForm] CreateEventDto createEventDto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var createdEvent = await _service.CreateEventAsync(dto, cancellationToken);
+        var result = await _eventService.CreateEventAsync(createEventDto, User);
 
-            return CreatedAtAction(
-                nameof(GetEventById),
-                new { id = createdEvent.Id },
-                createdEvent
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating evt");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the evt");
-        }
+        if (!result.IsSuccess)
+            return BadRequest(result.Error);
+
+        _logger.LogInformation("Created event and linked ressource");
+        return Ok(result.Data);
     }
 
-    /// <summary>
-    /// Update an existing evt
-    /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Event>> UpdateEvent(int id, [FromBody] UpdateEventDto dto, CancellationToken cancellationToken)
+    [HttpPut("{eventId}")]
+    [Authorize]
+    public async Task<ActionResult<ReturnEventDto>> UpdateEvent([FromRoute] Guid eventId, [FromBody] UpdateEventDto dto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var updatedEvent = await _service.UpdateEventAsync(id, dto, cancellationToken);
+        var result = await _eventService.UpdateEventAsync(eventId, dto);
 
-            if (updatedEvent == null)
-            {
-                return NotFound($"Event with ID {id} not found");
-            }
+        if (!result.IsSuccess)
+            return BadRequest(result.Error);
 
-            return Ok(updatedEvent);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating evt with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the evt");
-        }
+        _logger.LogInformation("Updated event and its linked ressource");
+        return Ok(result.Data);
     }
 
-    /// <summary>
-    /// Delete a evt
-    /// </summary>
-    [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteEvent(int id, CancellationToken cancellationToken)
+    [HttpGet("{ressourceId}")]
+    public async Task<ActionResult<ReturnEventDto>> GetEvent([FromRoute] Guid ressourceId)
     {
-        try
-        {
-            var deleted = await _service.DeleteEventAsync(id, cancellationToken);
+        var result = await _eventService.GetEventAsync(ressourceId);
 
-            if (!deleted)
-            {
-                return NotFound($"Event with ID {id} not found");
-            }
+        if (!result.IsSuccess)
+            return NotFound(result.Error);
 
-            return NoContent();
-        }
-        catch (Exception ex)
+        _logger.LogInformation("Fetched event and its linked ressource");
+        return Ok(result.Data);
+    }
+
+    [HttpDelete("{eventId}")]
+    [Authorize]
+    public async Task<ActionResult> DeleteEvent([FromRoute] Guid eventId)
+    {
+        var result = await _eventService.DeleteEventAsync(eventId);
+
+        if (!result.IsSuccess)
+            return BadRequest(result.Error);
+
+        _logger.LogInformation("Deleted event and its linked ressource");
+        return NoContent();
+    }
+
+    [HttpGet("{eventId}/members")]
+    public async Task<ActionResult<PaginatedList<ReturnEventMemberDto>>> GetEventMembers(
+        [FromRoute] Guid eventId,
+        [FromQuery] EventMemberQuery query)
+    {
+        var result = await _eventService.GetEventMembersAsync(eventId, query);
+
+        if (!result.IsSuccess)
+            return NotFound(result.Error);
+
+        return Ok(result.Data);
+    }
+
+    [HttpPost("{eventId}/members/{userId}")]
+    [Authorize]
+    public async Task<ActionResult> AddMember([FromRoute] Guid eventId, [FromRoute] Guid userId)
+    {
+        var result = await _eventService.AddMemberAsync(eventId, userId, User);
+
+        if (!result.IsSuccess)
         {
-            _logger.LogError(ex, "Error deleting evt with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the evt");
+            if (result.Error == "Event not found" || result.Error == "User not found")
+                return NotFound(result.Error);
+
+            if (result.Error == "You are not authorized to perform this action")
+                return Forbid();
+
+            return BadRequest(result.Error);
         }
+
+        _logger.LogInformation("Added member {UserId} to event {EventId}", userId, eventId);
+        return NoContent();
+    }
+
+    [HttpDelete("{eventId}/members/{userId}")]
+    [Authorize]
+    public async Task<ActionResult> RemoveMember([FromRoute] Guid eventId, [FromRoute] Guid userId)
+    {
+        var result = await _eventService.RemoveMemberAsync(eventId, userId, User);
+
+        if (!result.IsSuccess)
+        {
+            if (result.Error == "Event not found")
+                return NotFound(result.Error);
+
+            if (result.Error == "You are not authorized to perform this action")
+                return Forbid();
+
+            return BadRequest(result.Error);
+        }
+
+        _logger.LogInformation("Removed member {UserId} from event {EventId}", userId, eventId);
+        return NoContent();
+    }
+
+    [HttpPost("{eventId}/members/join")]
+    [Authorize]
+    public async Task<ActionResult> JoinEvent([FromRoute] Guid eventId)
+    {
+        var result = await _eventService.JoinEventAsync(eventId, User);
+
+        if (!result.IsSuccess)
+        {
+            if (result.Error == "Event not found")
+                return NotFound(result.Error);
+
+            return BadRequest(result.Error);
+        }
+
+        _logger.LogInformation("User joined event {EventId}", eventId);
+        return NoContent();
+    }
+
+    [HttpDelete("{eventId}/members/leave")]
+    [Authorize]
+    public async Task<ActionResult> LeaveEvent([FromRoute] Guid eventId)
+    {
+        var result = await _eventService.LeaveEventAsync(eventId, User);
+
+        if (!result.IsSuccess)
+        {
+            if (result.Error == "Event not found")
+                return NotFound(result.Error);
+
+            return BadRequest(result.Error);
+        }
+
+        _logger.LogInformation("User left event {EventId}", eventId);
+        return NoContent();
     }
 }
