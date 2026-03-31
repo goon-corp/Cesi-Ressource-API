@@ -1,13 +1,30 @@
-using Ressource_API.Features.PollOptions.Models;
-using Ressource_API.Features.PollOptions.PollOptionDtos;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.PollOptions.Dtos;
+using Ressource_API.Features.PollOptions.Query;
 
 namespace Ressource_API.Features.PollOptions.Services;
 
 public interface IPollOptionService
 {
-    Task<IEnumerable<PollOption>> GetAllPollOptionsAsync(CancellationToken cancellationToken = default);
-    Task<PollOption?> GetPollOptionByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<PollOption> CreatePollOptionAsync(CreatePollOptionDto dto, CancellationToken cancellationToken = default);
-    Task<PollOption?> UpdatePollOptionAsync(int id, UpdatePollOptionDto dto, CancellationToken cancellationToken = default);
-    Task<bool> DeletePollOptionAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<PaginatedList<PollOptionInfoDto>>> GetPaginatedPollOptionsAsync(
+        PollOptionQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PollOptionInfoDto>> GetPollOptionByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PollOptionInfoDto>> CreatePollOptionAsync(
+        CreatePollOptionDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PollOptionInfoDto>> UpdatePollOptionAsync(
+        Guid id,
+        UpdatePollOptionDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeletePollOptionAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }

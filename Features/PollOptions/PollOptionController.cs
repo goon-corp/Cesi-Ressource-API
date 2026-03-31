@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.PollOptions.Models;
-using Ressource_API.Features.PollOptions.PollOptionDtos;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Features.PollOptions.Dtos;
+using Ressource_API.Features.PollOptions.Query;
 using Ressource_API.Features.PollOptions.Services;
 
 namespace Ressource_API.Features.PollOptions;
@@ -19,135 +20,97 @@ public class PollOptionController : ControllerBase
     }
 
     /// <summary>
-    /// Get all polloptions
+    /// Get all poll options (paginated)
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<PollOption>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<PollOption>>> GetAllPollOptions(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<PollOptionInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<PollOptionInfoDto>>> GetPaginatedPollOptions(
+        [FromQuery] PollOptionQuery query,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var polloptions = await _service.GetAllPollOptionsAsync(cancellationToken);
-            return Ok(polloptions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all polloptions");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving polloptions");
-        }
+        var result = await _service.GetPaginatedPollOptionsAsync(query, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
-    /// Get a polloption by ID
+    /// Get a poll option by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(PollOption), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(PollOptionInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PollOption>> GetPollOptionById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<PollOptionInfoDto>> GetPollOptionById(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var polloption = await _service.GetPollOptionByIdAsync(id, cancellationToken);
+        var result = await _service.GetPollOptionByIdAsync(id, cancellationToken);
 
-            if (polloption == null)
-            {
-                return NotFound($"PollOption with ID {id} not found");
-            }
-
-            return Ok(polloption);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving polloption with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the polloption");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
-    /// Create a new polloption
+    /// Create a new poll option
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(PollOption), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(PollOptionInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PollOption>> CreatePollOption([FromBody] CreatePollOptionDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<PollOptionInfoDto>> CreatePollOption(
+        [FromBody] CreatePollOptionDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var createdPollOption = await _service.CreatePollOptionAsync(dto, cancellationToken);
+        var result = await _service.CreatePollOptionAsync(dto, cancellationToken);
 
-            return CreatedAtAction(
+        return result.Match<ActionResult>(
+            onSuccess: data => CreatedAtAction(
                 nameof(GetPollOptionById),
-                new { id = createdPollOption.Id },
-                createdPollOption
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating polloption");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the polloption");
-        }
+                new { id = data.Id },
+                data),
+            onFailure: error => BadRequest(error));
     }
 
     /// <summary>
-    /// Update an existing polloption
+    /// Update a poll option
     /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(PollOption), StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(PollOptionInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PollOption>> UpdatePollOption(int id, [FromBody] UpdatePollOptionDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<PollOptionInfoDto>> UpdatePollOption(
+        Guid id,
+        [FromBody] UpdatePollOptionDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var updatedPollOption = await _service.UpdatePollOptionAsync(id, dto, cancellationToken);
+        var result = await _service.UpdatePollOptionAsync(id, dto, cancellationToken);
 
-            if (updatedPollOption == null)
-            {
-                return NotFound($"PollOption with ID {id} not found");
-            }
-
-            return Ok(updatedPollOption);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating polloption with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the polloption");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
-    /// Delete a polloption
+    /// Soft delete a poll option
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeletePollOption(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeletePollOption(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeletePollOptionAsync(id, cancellationToken);
+        var result = await _service.DeletePollOptionAsync(id, cancellationToken);
 
-            if (!deleted)
-            {
-                return NotFound($"PollOption with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting polloption with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the polloption");
-        }
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }
