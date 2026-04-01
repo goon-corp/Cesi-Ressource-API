@@ -1,69 +1,78 @@
+using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Comments.Models;
 using Ressource_API.Features.Comments.CommentDtos;
 using Ressource_API.Features.Comments.Repositories;
-using Ressource_API.Features.Comments.Factories;
+using Result = Ressource_API.Common.ResultPattern.Result;
 
 namespace Ressource_API.Features.Comments.Services;
 
 public class CommentService : ICommentService
 {
     private readonly ICommentRepository _repository;
-    private readonly ICommentFactory _factory;
 
-    public CommentService(
-        ICommentRepository repository,
-        ICommentFactory factory)
+    public CommentService(ICommentRepository repository)
     {
         _repository = repository;
-        _factory = factory;
     }
 
-    public async Task<IEnumerable<Comment>> GetAllCommentsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<List<Comment>>> GetAllCommentsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var result = await _repository.ListAsync(cancellationToken);
+        return Result.Success(result);
     }
 
-    public async Task<Comment?> GetCommentByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<Comment?>> GetCommentByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
-    }
+        var comment = await _repository.FindAsync(id, cancellationToken);
 
-    public async Task<Comment> CreateCommentAsync(CreateCommentDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var comment = _factory.Create(dto);
-        
-        return await _repository.AddAsync(comment, cancellationToken);
-    }
-
-    public async Task<Comment?> UpdateCommentAsync(int id, UpdateCommentDto dto, CancellationToken cancellationToken = default)
-    {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
+        if (comment == null)
         {
-            return null;
+            return Result.Failure<Comment?>("Comment not found.");
         }
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
-        await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+        return Result<Comment?>.Success(comment);
     }
 
-    public async Task<bool> DeleteCommentAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<Comment>> CreateCommentAsync(CreateCommentDto dto, CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
+        var comment = new Comment
         {
-            return false;
+            Content = dto.Content,
+            UserId = dto.UserId,
+            RessourceId = dto.RessourceId,
+            CommentId = dto.CommentId
+        };
+
+        var created = await _repository.AddAsync(comment, cancellationToken);
+        return Result.Success(created);
+    }
+
+    public async Task<Result<Comment?>> UpdateCommentAsync(Guid id, UpdateCommentDto dto, CancellationToken cancellationToken = default)
+    {
+        var existingResult = await GetCommentByIdAsync(id, cancellationToken);
+
+        if (!existingResult.IsSuccess)
+        {
+            return Result.Failure<Comment?>("Comment not found.");
         }
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+        var entity = existingResult.Data;
+        entity.Content = dto.Content;
+
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return Result.Success(entity);
+    }
+
+    public async Task<Result> DeleteCommentAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var existingResult = await GetCommentByIdAsync(id, cancellationToken);
+
+        if (!existingResult.IsSuccess)
+        {
+            return Result.Failure(existingResult.Error);
+        }
+
+        await _repository.DeleteAsync(existingResult.Data, cancellationToken);
+        return Result.Success();
     }
 }
