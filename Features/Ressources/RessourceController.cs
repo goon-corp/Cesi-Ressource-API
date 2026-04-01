@@ -26,8 +26,8 @@ public class RessourceController : ControllerBase
     /// Get all ressources
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(PaginatedList<Ressource>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<PaginatedList<Ressource>>> GetAllRessources(
+    [ProducesResponseType(typeof(PaginatedList<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<ReturnRessourceDto>>> GetAllRessources(
         [FromQuery] RessourceQuery query,
         CancellationToken cancellationToken)
     {

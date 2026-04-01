@@ -617,7 +617,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.ParticipationCount).HasColumnName("participation_count");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Quizzes)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("quizzes_ressource_id_fk");
