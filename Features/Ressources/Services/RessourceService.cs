@@ -46,13 +46,12 @@ public class RessourceService : IRessourceService
     public async Task<PaginatedList<ReturnRessourceDto>> GetAllRessourcesAsync(RessourceQuery ressourceQuery,
         CancellationToken cancellationToken = default)
     {
-        var ressourcesTask = _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
         if (!string.IsNullOrWhiteSpace(ressourceQuery.RessourceType) ||
             ressourceQuery.RessourceTags is { Count: > 0 } ||
             ressourceQuery.CreatedAt.HasValue ||
             ressourceQuery.IsDeleted.HasValue ||
             ressourceQuery.RessourceTitle is not null)
-            return await ressourcesTask;
+            return await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
 
         var isComplete = true;
 
@@ -63,7 +62,7 @@ public class RessourceService : IRessourceService
 
         var ressources = await _cache.GetOrCreateAsync(cacheKey, async _ =>
             {
-                var ressources = await ressourcesTask;
+                var ressources = await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
                 isComplete = ressources.Count == ressourceQuery.size;
 
                 await RessourceCacheHandler(ressources, ressourceQuery, cacheKey);
