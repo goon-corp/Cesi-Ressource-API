@@ -7,7 +7,7 @@ using Ressource_API.Features.Quizzes.Services;
 namespace Ressource_API.Features.Quizzes;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/quizzes")]
 public class QuizzController : ControllerBase
 {
     private readonly IQuizzService _service;
@@ -42,7 +42,7 @@ public class QuizzController : ControllerBase
     [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuizzInfoDto>> GetQuizzById(
-        Guid id,
+        [FromRoute]Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.GetQuizzByIdAsync(id, cancellationToken);
@@ -83,7 +83,7 @@ public class QuizzController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzInfoDto>> UpdateQuizz(
-        Guid id,
+        [FromRoute]Guid id,
         // [FromBody] UpdateQuizzDto dto,
         CancellationToken cancellationToken)
     {
@@ -104,7 +104,7 @@ public class QuizzController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteQuizz(
-        Guid id,
+        [FromRoute]Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.DeleteQuizzAsync(id, cancellationToken);

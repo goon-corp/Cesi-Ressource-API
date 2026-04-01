@@ -7,7 +7,7 @@ using Ressource_API.Features.QuizzQuestions.Services;
 namespace Ressource_API.Features.QuizzQuestions;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/quizzes-questions")]
 public class QuizzQuestionController : ControllerBase
 {
     private readonly IQuizzQuestionService _service;
@@ -42,7 +42,7 @@ public class QuizzQuestionController : ControllerBase
     [ProducesResponseType(typeof(QuizzQuestionInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuizzQuestionInfoDto>> GetQuizzQuestionById(
-        Guid id,
+        [FromRoute]Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.GetQuizzQuestionByIdAsync(id, cancellationToken);
@@ -83,7 +83,7 @@ public class QuizzQuestionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzQuestionInfoDto>> UpdateQuizzQuestion(
-        Guid id,
+        [FromRoute]Guid id,
         [FromBody] UpdateQuizzQuestionDto dto,
         CancellationToken cancellationToken)
     {
@@ -105,7 +105,7 @@ public class QuizzQuestionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzQuestionInfoDto>> UpdateQuizzQuestionParticipation(
-        Guid id,
+        [FromRoute]Guid id,
         
         CancellationToken cancellationToken)
     {
@@ -126,7 +126,7 @@ public class QuizzQuestionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteQuizzQuestion(
-        Guid id,
+        [FromRoute]Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.DeleteQuizzQuestionAsync(id, cancellationToken);
