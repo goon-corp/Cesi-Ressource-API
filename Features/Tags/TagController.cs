@@ -8,7 +8,7 @@ using Ressource_API.Features.Tags.Services;
 namespace Ressource_API.Features.Tags;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tags")]
 public class TagController : ControllerBase
 {
     private readonly ITagService _service;
