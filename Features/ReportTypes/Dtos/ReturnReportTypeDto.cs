@@ -1,6 +1,6 @@
-namespace Ressource_API.Features.ReportTypes.ReportTypeDtos;
+namespace Ressource_API.Features.ReportTypes.Dtos;
 
-public class ReportTypeInfoDto
+public class ReturnReportTypeDto
 {
     public int Id { get; set; }
     // TODO: Add properties to return in responses
