@@ -1,13 +1,35 @@
-using Ressource_API.Features.QuizzQuestions.Models;
-using Ressource_API.Features.QuizzQuestions.QuizzQuestionDtos;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.QuizzQuestions.Dtos;
+using Ressource_API.Features.QuizzQuestions.Query;
 
 namespace Ressource_API.Features.QuizzQuestions.Services;
 
 public interface IQuizzQuestionService
 {
-    Task<IEnumerable<QuizzQuestion>> GetAllQuizzQuestionsAsync(CancellationToken cancellationToken = default);
-    Task<QuizzQuestion?> GetQuizzQuestionByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<QuizzQuestion> CreateQuizzQuestionAsync(CreateQuizzQuestionDto dto, CancellationToken cancellationToken = default);
-    Task<QuizzQuestion?> UpdateQuizzQuestionAsync(int id, UpdateQuizzQuestionDto dto, CancellationToken cancellationToken = default);
-    Task<bool> DeleteQuizzQuestionAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<PaginatedList<QuizzQuestionInfoDto>>> GetPaginatedQuizzQuestionsAsync(
+        QuizzQuestionQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<QuizzQuestionInfoDto>> GetQuizzQuestionByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<QuizzQuestionInfoDto>> CreateQuizzQuestionAsync(
+        CreateQuizzQuestionDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<QuizzQuestionInfoDto>> UpdateQuizzQuestionAsync(
+        Guid id,
+        UpdateQuizzQuestionDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeleteQuizzQuestionAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<QuizzQuestionInfoDto>> UpdateQuizzQuestionAsyncPlayer(
+        Guid id,
+        // UpdateQuizzQuestionDto dto,
+        CancellationToken cancellationToken = default);
 }

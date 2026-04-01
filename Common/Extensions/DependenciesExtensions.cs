@@ -66,6 +66,7 @@ using Ressource_API.Features.ProfilePictures.Services;
 using Ressource_API.Features.ProfilePictures.Factories;
 using Ressource_API.Features.Quizzes.Repositories;
 using Ressource_API.Features.Quizzes.Factories;
+using Ressource_API.Features.Quizzes.Services;
 using Ressource_API.Features.QuizzQuestions.Factories;
 using Ressource_API.Features.QuizzQuestions.Repositories;
 using Ressource_API.Features.QuizzQuestions.Services;
@@ -224,6 +225,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPollOptionService, PollOptionService>();
         builder.Services.AddScoped<IPollService, PollService>();
         builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
+        builder.Services.AddScoped<IQuizzService, QuizzService>();
         builder.Services.AddScoped<IQuizzQuestionService, QuizzQuestionService>();
         builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         builder.Services.AddScoped<IRegionService, RegionService>();

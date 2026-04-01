@@ -51,7 +51,7 @@ public partial class Ressource
 
     // public virtual ICollection<Poll> Polls { get; set; } = new List<Poll>();
 
-    public virtual ICollection<Quizz> Quizzes { get; set; } = new List<Quizz>();
+    // public virtual ICollection<Quizz> Quizzes { get; set; } = new List<Quizz>();
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
