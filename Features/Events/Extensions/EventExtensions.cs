@@ -12,6 +12,7 @@ public static class EventExtensions
         {
             return new Event()
             {
+                Id = Guid.CreateVersion7(),
                 IsVirtual = eventToCreate.IsVirtual,
                 DateStart = eventToCreate.DateStart,
                 DateEnd = eventToCreate.DateEnd,
