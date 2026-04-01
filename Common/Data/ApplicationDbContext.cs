@@ -176,7 +176,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Articles)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articles_ressource_id_fk");

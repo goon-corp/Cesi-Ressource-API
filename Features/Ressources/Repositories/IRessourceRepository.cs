@@ -10,4 +10,6 @@ public interface IRessourceRepository : IBaseRepository<Ressource>
 {
     Task<PaginatedList<ReturnRessourceDto>> PaginatedRessourcesAsync(RessourceQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<Ressource?> FindWithTagsAsync(Guid id, CancellationToken cancellationToken = default);
 }
