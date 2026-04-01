@@ -726,7 +726,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.ReportType).WithMany(p => p.Reports)
+            entity.HasOne(d => d.ReportType).WithMany()
                 .HasForeignKey(d => d.ReportTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reports_report_type_id_fk");

@@ -80,7 +80,6 @@ using Ressource_API.Features.Reports.Services;
 using Ressource_API.Features.Reports.Factories;
 using Ressource_API.Features.ReportTypes.Repositories;
 using Ressource_API.Features.ReportTypes.Services;
-using Ressource_API.Features.ReportTypes.Factories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Repositories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Services;
 using Ressource_API.Features.RessourceMedias.Repositories;
@@ -198,7 +197,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
-        builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
         builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
