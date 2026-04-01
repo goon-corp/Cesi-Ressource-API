@@ -6,13 +6,14 @@ using Ressource_API.Features.RessourceProgressions.Services;
 namespace Ressource_API.Features.RessourceProgressions;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/ressource-progressions")]
 public class RessourceProgressionController : ControllerBase
 {
     private readonly IRessourceProgressionService _service;
     private readonly ILogger<RessourceProgressionController> _logger;
 
-    public RessourceProgressionController(IRessourceProgressionService service, ILogger<RessourceProgressionController> logger)
+    public RessourceProgressionController(IRessourceProgressionService service,
+        ILogger<RessourceProgressionController> logger)
     {
         _service = service;
         _logger = logger;
@@ -22,45 +23,30 @@ public class RessourceProgressionController : ControllerBase
     /// Get all ressourceprogressions
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<RessourceProgression>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<RessourceProgression>>> GetAllRessourceProgressions(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(List<RessourceProgression>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetAllRessourceProgressions(CancellationToken cancellationToken)
     {
-        try
-        {
-            var ressourceprogressions = await _service.GetAllRessourceProgressionsAsync(cancellationToken);
-            return Ok(ressourceprogressions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all ressourceprogressions");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving ressourceprogressions");
-        }
+        var result = await _service.GetAllRessourceProgressionsAsync(cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
-    /// Get a ressourceprogression by ID
+    /// Get a ressourceprogression by IDs
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("ressources/{ressourceId}/users/{userId}")]
     [ProducesResponseType(typeof(RessourceProgression), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RessourceProgression>> GetRessourceProgressionById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetRessourceProgressionById([FromRoute] Guid ressourceId, [FromRoute] Guid userId,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var ressourceprogression = await _service.GetRessourceProgressionByIdAsync(id, cancellationToken);
+        var result = await _service.GetRessourceProgressionByIdAsync(ressourceId, userId, cancellationToken);
 
-            if (ressourceprogression == null)
-            {
-                return NotFound($"RessourceProgression with ID {id} not found");
-            }
-
-            return Ok(ressourceprogression);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving ressourceprogression with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the ressourceprogression");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
@@ -69,85 +55,51 @@ public class RessourceProgressionController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(RessourceProgression), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<RessourceProgression>> CreateRessourceProgression([FromBody] CreateRessourceProgressionDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult> CreateRessourceProgression(
+        [FromBody] CreateRessourceProgressionDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.CreateRessourceProgressionAsync(dto, cancellationToken);
 
-            var createdRessourceProgression = await _service.CreateRessourceProgressionAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
+        return result.Match<ActionResult>(
+            onSuccess: data => CreatedAtAction(
                 nameof(GetRessourceProgressionById),
-                new { id = createdRessourceProgression.RessourceId },
-                createdRessourceProgression
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating ressourceprogression");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the ressourceprogression");
-        }
+                new { ressourceId = data.RessourceId, userId = data.UserId },
+                data),
+            onFailure: error => BadRequest(error));
     }
 
     /// <summary>
     /// Update an existing ressourceprogression
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("ressources/{ressourceId}/users/{userId}")] // Changé en HttpPut
     [ProducesResponseType(typeof(RessourceProgression), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<RessourceProgression>> UpdateRessourceProgression(int id, [FromBody] UpdateRessourceProgressionDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult> UpdateRessourceProgression([FromRoute] Guid ressourceId, [FromRoute] Guid userId,
+        [FromBody] UpdateRessourceProgressionDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.UpdateRessourceProgressionAsync(ressourceId, userId, dto, cancellationToken);
 
-            var updatedRessourceProgression = await _service.UpdateRessourceProgressionAsync(id, dto, cancellationToken);
-
-            if (updatedRessourceProgression == null)
-            {
-                return NotFound($"RessourceProgression with ID {id} not found");
-            }
-
-            return Ok(updatedRessourceProgression);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating ressourceprogression with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the ressourceprogression");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
     /// Delete a ressourceprogression
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("ressources/{ressourceId}/users/{userId}")] // Changé en HttpDelete
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteRessourceProgression(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteRessourceProgression([FromRoute] Guid ressourceId, [FromRoute] Guid userId,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteRessourceProgressionAsync(id, cancellationToken);
+        var result = await _service.DeleteRessourceProgressionAsync(ressourceId, userId, cancellationToken);
 
-            if (!deleted)
-            {
-                return NotFound($"RessourceProgression with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
+        if (!result.IsSuccess)
         {
-            _logger.LogError(ex, "Error deleting ressourceprogression with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the ressourceprogression");
+            return NotFound(result.Error);
         }
+
+        return NoContent();
     }
 }
