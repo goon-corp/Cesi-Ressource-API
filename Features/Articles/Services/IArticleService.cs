@@ -1,13 +1,19 @@
+using System.Security.Claims;
+using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Articles.Models;
-using Ressource_API.Features.Articles.ArticleDtos;
+using Ressource_API.Features.Articles.Dtos;
 
 namespace Ressource_API.Features.Articles.Services;
 
 public interface IArticleService
 {
-    Task<IEnumerable<Article>> GetAllArticlesAsync(CancellationToken cancellationToken = default);
-    Task<Article?> GetArticleByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<Article> CreateArticleAsync(CreateArticleDto dto, CancellationToken cancellationToken = default);
-    Task<Article?> UpdateArticleAsync(int id, UpdateArticleDto dto, CancellationToken cancellationToken = default);
-    Task<bool> DeleteArticleAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<ReturnArticleDto>> GetArticleByRessourceIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Result<ReturnArticleDto>> CreateArticleAsync(CreateArticleDto dto, ClaimsPrincipal context,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ReturnArticleDto>> UpdateArticleAsync(Guid id, UpdateArticleDto dto, ClaimsPrincipal context,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeleteArticleAsync(Guid id, ClaimsPrincipal context, CancellationToken cancellationToken = default);
 }

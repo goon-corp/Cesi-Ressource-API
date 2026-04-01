@@ -18,7 +18,6 @@ using Ressource_API.Features.Addresses.Repositories;
 using Ressource_API.Features.Addresses.Factories;
 using Ressource_API.Features.Articles.Repositories;
 using Ressource_API.Features.Articles.Services;
-using Ressource_API.Features.Articles.Factories;
 using Ressource_API.Features.Authentifications.Services;
 using Ressource_API.Features.BackofficeLogLevels.Repositories;
 using Ressource_API.Features.BackofficeLogLevels.Services;
@@ -67,6 +66,7 @@ using Ressource_API.Features.ProfilePictures.Services;
 using Ressource_API.Features.ProfilePictures.Factories;
 using Ressource_API.Features.Quizzes.Repositories;
 using Ressource_API.Features.Quizzes.Factories;
+using Ressource_API.Features.Quizzes.Services;
 using Ressource_API.Features.QuizzQuestions.Factories;
 using Ressource_API.Features.QuizzQuestions.Repositories;
 using Ressource_API.Features.QuizzQuestions.Services;
@@ -81,7 +81,6 @@ using Ressource_API.Features.Reports.Services;
 using Ressource_API.Features.Reports.Factories;
 using Ressource_API.Features.ReportTypes.Repositories;
 using Ressource_API.Features.ReportTypes.Services;
-using Ressource_API.Features.ReportTypes.Factories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Repositories;
 using Ressource_API.Features.RessourceConfidentialityTypes.Services;
 using Ressource_API.Features.RessourceMedias.Repositories;
@@ -180,7 +179,6 @@ public static class DependenciesExtensions
     private static void AddFactories(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IAddressFactory, AddressFactory>();
-        builder.Services.AddScoped<IArticleFactory, ArticleFactory>();
         builder.Services.AddScoped<IBackofficeLogFactory, BackofficeLogFactory>();
         builder.Services.AddScoped<IBackofficeLogLevelFactory, BackofficeLogLevelFactory>();
         builder.Services.AddScoped<IBackofficeOperationTypeFactory, BackofficeOperationTypeFactory>();
@@ -200,7 +198,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
-        builder.Services.AddScoped<IReportTypeFactory, ReportTypeFactory>();
         builder.Services.AddScoped<IRessourceProgressionFactory, RessourceProgressionFactory>();
         builder.Services.AddScoped<IRessourceStatusFactory, RessourceStatusFactory>();
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
@@ -228,6 +225,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPollOptionService, PollOptionService>();
         builder.Services.AddScoped<IPollService, PollService>();
         builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
+        builder.Services.AddScoped<IQuizzService, QuizzService>();
         builder.Services.AddScoped<IQuizzQuestionService, QuizzQuestionService>();
         builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         builder.Services.AddScoped<IRegionService, RegionService>();

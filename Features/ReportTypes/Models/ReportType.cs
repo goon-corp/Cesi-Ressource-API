@@ -15,6 +15,4 @@ public partial class ReportType
     public DateTime? DeletionTime { get; set; }
 
     public string Label { get; set; } = null!;
-
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 }

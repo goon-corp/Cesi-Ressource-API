@@ -1,10 +1,9 @@
+using Ressource_API.Features.Quizzes.Dtos;
 using Ressource_API.Features.Quizzes.Models;
-using Ressource_API.Features.Quizzes.QuizzDtos;
-using Ressource_API.Common.Data.Factories;
 
 namespace Ressource_API.Features.Quizzes.Factories;
 
-public interface IQuizzFactory : IBaseFactory<Quizz>
+public interface IQuizzFactory
 {
     Quizz Create(CreateQuizzDto dto);
 }

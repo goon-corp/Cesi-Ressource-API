@@ -176,7 +176,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Articles)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articles_ressource_id_fk");
@@ -617,7 +617,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.ParticipationCount).HasColumnName("participation_count");
             entity.Property(e => e.RessourceId).HasColumnName("ressource_id");
 
-            entity.HasOne(d => d.Ressource).WithMany(p => p.Quizzes)
+            entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("quizzes_ressource_id_fk");
@@ -726,7 +726,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("update_time");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.ReportType).WithMany(p => p.Reports)
+            entity.HasOne(d => d.ReportType).WithMany()
                 .HasForeignKey(d => d.ReportTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reports_report_type_id_fk");

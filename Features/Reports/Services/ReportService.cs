@@ -1,7 +1,11 @@
-using Ressource_API.Features.Reports.Models;
-using Ressource_API.Features.Reports.ReportDtos;
-using Ressource_API.Features.Reports.Repositories;
+using System.Security.Claims;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.Reports.Dtos;
+using Ressource_API.Features.Reports.Extensions;
 using Ressource_API.Features.Reports.Factories;
+using Ressource_API.Features.Reports.Query;
+using Ressource_API.Features.Reports.Repositories;
 
 namespace Ressource_API.Features.Reports.Services;
 
@@ -10,60 +14,77 @@ public class ReportService : IReportService
     private readonly IReportRepository _repository;
     private readonly IReportFactory _factory;
 
-    public ReportService(
-        IReportRepository repository,
-        IReportFactory factory)
+    public ReportService(IReportRepository repository, IReportFactory factory)
     {
         _repository = repository;
         _factory = factory;
     }
 
-    public async Task<IEnumerable<Report>> GetAllReportsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<PaginatedList<ReportInfoDto>>> GetPaginatedReportsAsync(
+        ReportQuery query,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var result = await _repository.PaginatedReportsAsync(query, cancellationToken);
+        return Result.Success(result);
     }
 
-    public async Task<Report?> GetReportByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<ReportInfoDto>> GetReportByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        var report = await _repository.FindByIdAsync(id, cancellationToken);
+
+        if (report == null)
+            return Result.Failure<ReportInfoDto>("Report not found");
+
+        return Result.Success(report.ToInfoDto());
     }
 
-    public async Task<Report> CreateReportAsync(CreateReportDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<ReportInfoDto>> CreateReportAsync(
+        CreateReportDto dto,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken = default)
     {
-        // Use factory to create the entity from DTO
-        var report = _factory.Create(dto);
-        
-        return await _repository.AddAsync(report, cancellationToken);
+        var currentUserIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
+            return Result.Failure<ReportInfoDto>("User not authenticated or invalid user ID");
+
+        var report = _factory.Create(dto, userId);
+        var created = await _repository.AddAsync(report, cancellationToken);
+
+        return Result.Success(created.ToInfoDto());
     }
 
-    public async Task<Report?> UpdateReportAsync(int id, UpdateReportDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<ReportInfoDto>> UpdateReportAsync(
+        Guid id,
+        UpdateReportDto dto,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
+
         if (existing == null)
-        {
-            return null;
-        }
+            return Result.Failure<ReportInfoDto>("Report not found");
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
+        existing.IsCheckedByModerator = dto.IsCheckedByModerator;
+        existing.UpdateTime = DateTime.UtcNow;
+
         await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+
+        return Result.Success(existing.ToInfoDto());
     }
 
-    public async Task<bool> DeleteReportAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteReportAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
+
         if (existing == null)
-        {
-            return false;
-        }
+            return Result.Failure("Report not found");
 
         await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+
+        return Result.Success();
     }
 }

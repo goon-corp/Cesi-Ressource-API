@@ -1,153 +1,116 @@
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.Quizzes.Models;
-using Ressource_API.Features.Quizzes.QuizzDtos;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Features.Quizzes.Dtos;
+using Ressource_API.Features.Quizzes.Query;
 using Ressource_API.Features.Quizzes.Services;
 
 namespace Ressource_API.Features.Quizzes;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/quizzes")]
 public class QuizzController : ControllerBase
 {
-    private readonly IQuizzeservice _service;
+    private readonly IQuizzService _service;
     private readonly ILogger<QuizzController> _logger;
 
-    public QuizzController(IQuizzeservice service, ILogger<QuizzController> logger)
+    public QuizzController(IQuizzService service, ILogger<QuizzController> logger)
     {
         _service = service;
         _logger = logger;
     }
 
     /// <summary>
-    /// Get all Quizzes
+    /// Get all quizzes (paginated)
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Quizz>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Quizz>>> GetAllQuizzes(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PaginatedList<QuizzInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<QuizzInfoDto>>> GetPaginatedQuizzes(
+        [FromQuery] QuizzQuery query,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var Quizzes = await _service.GetAllQuizzesAsync(cancellationToken);
-            return Ok(Quizzes);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all Quizzes");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving Quizzes");
-        }
+        var result = await _service.GetPaginatedQuizzesAsync(query, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Get a quizz by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Quizz), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Quizz>> GetQuizzById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<QuizzInfoDto>> GetQuizzById(
+        [FromRoute]Guid id,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var quizz = await _service.GetQuizzByIdAsync(id, cancellationToken);
+        var result = await _service.GetQuizzByIdAsync(id, cancellationToken);
 
-            if (quizz == null)
-            {
-                return NotFound($"Quizz with ID {id} not found");
-            }
-
-            return Ok(quizz);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving quizz with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the quizz");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
     /// Create a new quizz
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(Quizz), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Quizz>> CreateQuizz([FromBody] CreateQuizzDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<QuizzInfoDto>> CreateQuizz(
+        [FromBody] CreateQuizzDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var createdQuizz = await _service.CreateQuizzAsync(dto, cancellationToken);
+        var result = await _service.CreateQuizzAsync(dto, cancellationToken);
 
-            return CreatedAtAction(
+        return result.Match<ActionResult>(
+            onSuccess: data => CreatedAtAction(
                 nameof(GetQuizzById),
-                new { id = createdQuizz.Id },
-                createdQuizz
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating quizz");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the quizz");
-        }
+                new { id = data.Id },
+                data),
+            onFailure: error => BadRequest(error));
     }
 
     /// <summary>
-    /// Update an existing quizz
+    /// Incremente participation for a quizz
     /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Quizz), StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}/participate")]
+    [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Quizz>> UpdateQuizz(int id, [FromBody] UpdateQuizzDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<QuizzInfoDto>> UpdateQuizz(
+        [FromRoute]Guid id,
+        // [FromBody] UpdateQuizzDto dto,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var updatedQuizz = await _service.UpdateQuizzAsync(id, dto, cancellationToken);
+        var result = await _service.UpdateQuizzAsync(id, cancellationToken);
 
-            if (updatedQuizz == null)
-            {
-                return NotFound($"Quizz with ID {id} not found");
-            }
-
-            return Ok(updatedQuizz);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating quizz with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the quizz");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
     /// Delete a quizz
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteQuizz(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteQuizz(
+        [FromRoute]Guid id,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteQuizzAsync(id, cancellationToken);
+        var result = await _service.DeleteQuizzAsync(id, cancellationToken);
 
-            if (!deleted)
-            {
-                return NotFound($"Quizz with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting quizz with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the quizz");
-        }
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }
