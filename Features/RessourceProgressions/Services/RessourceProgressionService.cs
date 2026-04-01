@@ -1,6 +1,9 @@
+using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.RessourceProgressions.Models;
 using Ressource_API.Features.RessourceProgressions.RessourceProgressionDtos;
 using Ressource_API.Features.RessourceProgressions.Repositories;
+using Sprache;
+using Result = Ressource_API.Common.ResultPattern.Result;
 
 namespace Ressource_API.Features.RessourceProgressions.Services;
 
@@ -13,20 +16,29 @@ public class RessourceProgressionService : IRessourceProgressionService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<RessourceProgression>> GetAllRessourceProgressionsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<List<RessourceProgression>>> GetAllRessourceProgressionsAsync(
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var result = await _repository.ListAsync(cancellationToken);
+        return Result.Success(result);
     }
 
-    public async Task<RessourceProgression?> GetRessourceProgressionByIdAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default)
+    public async Task<Result<RessourceProgression?>>GetRessourceProgressionByIdAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default)
     {
-        return await _repository.FirstOrDefaultAsync(
+        var progression = await _repository.FirstOrDefaultAsync(
             rp => rp.RessourceId == ressourceId && rp.UserId == userId,
             cancellationToken
         );
+
+        if (progression == null)
+        {
+            return Result.Failure<RessourceProgression?>("Progression not found.");
+        }
+
+        return Result<RessourceProgression>.Success(progression);
     }
 
-    public async Task<RessourceProgression> CreateRessourceProgressionAsync(CreateRessourceProgressionDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<RessourceProgression>> CreateRessourceProgressionAsync(CreateRessourceProgressionDto dto, CancellationToken cancellationToken = default)
     {
         var ressourceprogression = new RessourceProgression 
         { 
@@ -35,29 +47,38 @@ public class RessourceProgressionService : IRessourceProgressionService
             IsAside = dto.IsAside, 
             IsExploited = dto.IsExploited 
         };
-        return await _repository.AddAsync(ressourceprogression, cancellationToken);
+
+        var created = await _repository.AddAsync(ressourceprogression, cancellationToken);
+        return Result.Success(created);
     }
 
-    public async Task<RessourceProgression?> UpdateRessourceProgressionAsync(Guid ressourceId, Guid userId, UpdateRessourceProgressionDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<RessourceProgression?>> UpdateRessourceProgressionAsync(Guid ressourceId, Guid userId, UpdateRessourceProgressionDto dto, CancellationToken cancellationToken = default)
     {
-        var existing = await GetRessourceProgressionByIdAsync(ressourceId, userId, cancellationToken);
+        var existingResult = await GetRessourceProgressionByIdAsync(ressourceId, userId, cancellationToken);
         
-        if (existing == null) return null;
+        if (!existingResult.IsSuccess) 
+        {
+            return Result.Failure<RessourceProgression?>("Progression not found.");
+        }
 
-        existing.IsAside = dto.IsAside;
-        existing.IsExploited = dto.IsExploited;
+        var entity = existingResult.Data;
+        entity.IsAside = dto.IsAside;
+        entity.IsExploited = dto.IsExploited;
         
-        await _repository.UpdateAsync(existing, cancellationToken);
-        return existing;
+        await _repository.UpdateAsync(entity, cancellationToken);
+        return Result.Success(entity);
     }
 
-    public async Task<bool> DeleteRessourceProgressionAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteRessourceProgressionAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var existing = await GetRessourceProgressionByIdAsync(ressourceId, userId, cancellationToken);
+        var existingResult = await GetRessourceProgressionByIdAsync(ressourceId, userId, cancellationToken);
         
-        if (existing == null) return false;
+        if (!existingResult.IsSuccess)
+        {
+            return Result.Failure(existingResult.Error);
+        }
 
-        await _repository.DeleteAsync(existing, cancellationToken);
-        return true;
+        await _repository.DeleteAsync(existingResult.Data, cancellationToken);
+        return Result.Success();
     }
 }
