@@ -1,20 +1,24 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.Sessions.Models;
-using Ressource_API.Features.Sessions.SessionDtos;
+using Ressource_API.Features.SessionMessages.Dtos;
+using Ressource_API.Features.SessionMessages.Services;
+using Ressource_API.Features.Sessions.Dtos;
 using Ressource_API.Features.Sessions.Services;
 
 namespace Ressource_API.Features.Sessions;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/sessions")]
 public class SessionController : ControllerBase
 {
     private readonly ISessionService _service;
+    private readonly ISessionMessageService _messageService;
     private readonly ILogger<SessionController> _logger;
 
-    public SessionController(ISessionService service, ILogger<SessionController> logger)
+    public SessionController(ISessionService service, ISessionMessageService messageService, ILogger<SessionController> logger)
     {
         _service = service;
+        _messageService = messageService;
         _logger = logger;
     }
 
@@ -22,132 +26,94 @@ public class SessionController : ControllerBase
     /// Get all sessions
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Session>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Session>>> GetAllSessions(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(IEnumerable<ReturnSessionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllSessions(CancellationToken cancellationToken)
     {
-        try
-        {
-            var sessions = await _service.GetAllSessionsAsync(cancellationToken);
-            return Ok(sessions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all sessions");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving sessions");
-        }
+        var result = await _service.GetAllSessionsAsync(cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: Ok,
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Get a session by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Session), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ReturnSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Session>> GetSessionById(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetSessionById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var session = await _service.GetSessionByIdAsync(id, cancellationToken);
+        var result = await _service.GetSessionByIdAsync(id, cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: Ok,
+            onFailure: NotFound);
+    }
 
-            if (session == null)
-            {
-                return NotFound($"Session with ID {id} not found");
-            }
+    /// <summary>
+    /// Get all messages for a session (poll for updates)
+    /// </summary>
+    [HttpGet("{id:guid}/messages")]
+    [Authorize]
+    [ProducesResponseType(typeof(IEnumerable<ReturnSessionMessageDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSessionMessages([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var sessionResult = await _service.GetSessionByIdAsync(id, cancellationToken);
+        if (!sessionResult.IsSuccess) return NotFound(sessionResult.Error);
 
-            return Ok(session);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving session with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the session");
-        }
+        var result = await _messageService.GetBySessionIdAsync(id, cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: Ok,
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Create a new session
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(Session), StatusCodes.Status201Created)]
+    [Authorize]
+    [ProducesResponseType(typeof(ReturnSessionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Session>> CreateSession([FromBody] CreateSessionDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateSession([FromBody] CreateSessionDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var createdSession = await _service.CreateSessionAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetSessionById),
-                new { id = createdSession.Id },
-                createdSession
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating session");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the session");
-        }
+        var result = await _service.CreateSessionAsync(dto, cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: created => CreatedAtAction(nameof(GetSessionById), new { id = created.Id }, created),
+            onFailure: BadRequest);
     }
 
     /// <summary>
-    /// Update an existing session
+    /// Update session status
     /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Session), StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(ReturnSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Session>> UpdateSession(int id, [FromBody] UpdateSessionDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateSession([FromRoute] Guid id, [FromBody] UpdateSessionDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updatedSession = await _service.UpdateSessionAsync(id, dto, cancellationToken);
-
-            if (updatedSession == null)
-            {
-                return NotFound($"Session with ID {id} not found");
-            }
-
-            return Ok(updatedSession);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating session with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the session");
-        }
+        var result = await _service.UpdateSessionAsync(id, dto, cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: Ok,
+            onFailure: NotFound);
     }
 
     /// <summary>
     /// Delete a session
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteSession(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteSession([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteSessionAsync(id, cancellationToken);
-
-            if (!deleted)
-            {
-                return NotFound($"Session with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting session with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the session");
-        }
+        var result = await _service.DeleteSessionAsync(id, cancellationToken);
+        return result.Match<IActionResult>(
+            onSuccess: NoContent,
+            onFailure: NotFound);
     }
 }

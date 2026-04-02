@@ -1,13 +1,14 @@
-using Ressource_API.Features.SessionMessages.Models;
-using Ressource_API.Features.SessionMessages.SessionMessageDtos;
+using System.Security.Claims;
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.SessionMessages.Dtos;
 
 namespace Ressource_API.Features.SessionMessages.Services;
 
 public interface ISessionMessageService
 {
-    Task<IEnumerable<SessionMessage>> GetAllSessionMessagesAsync(CancellationToken cancellationToken = default);
-    Task<SessionMessage?> GetSessionMessageByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<SessionMessage> CreateSessionMessageAsync(CreateSessionMessageDto dto, CancellationToken cancellationToken = default);
-    Task<SessionMessage?> UpdateSessionMessageAsync(int id, UpdateSessionMessageDto dto, CancellationToken cancellationToken = default);
-    Task<bool> DeleteSessionMessageAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<List<ReturnSessionMessageDto>>> GetBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task<Result<ReturnSessionMessageDto>> GetSessionMessageByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<ReturnSessionMessageDto>> CreateSessionMessageAsync(CreateSessionMessageDto dto, ClaimsPrincipal user, CancellationToken cancellationToken = default);
+    Task<Result<ReturnSessionMessageDto>> UpdateSessionMessageAsync(Guid id, UpdateSessionMessageDto dto, CancellationToken cancellationToken = default);
+    Task<Result> DeleteSessionMessageAsync(Guid id, CancellationToken cancellationToken = default);
 }

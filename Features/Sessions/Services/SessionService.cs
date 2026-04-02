@@ -1,69 +1,96 @@
+using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.Sessions.Dtos;
 using Ressource_API.Features.Sessions.Models;
-using Ressource_API.Features.Sessions.SessionDtos;
 using Ressource_API.Features.Sessions.Repositories;
-using Ressource_API.Features.Sessions.Factories;
 
 namespace Ressource_API.Features.Sessions.Services;
 
 public class SessionService : ISessionService
 {
     private readonly ISessionRepository _repository;
-    private readonly ISessionFactory _factory;
 
-    public SessionService(
-        ISessionRepository repository,
-        ISessionFactory factory)
+    public SessionService(ISessionRepository repository)
     {
         _repository = repository;
-        _factory = factory;
     }
 
-    public async Task<IEnumerable<Session>> GetAllSessionsAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ReturnSessionDto>>> GetAllSessionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var sessions = await _repository.ListAsync(cancellationToken);
+        return Result.Success<IEnumerable<ReturnSessionDto>>(sessions.Select(s => new ReturnSessionDto
+        {
+            Id = s.Id,
+            CreationTime = s.CreationTime,
+            UpdateTime = s.UpdateTime,
+            Status = s.Status,
+            RessourceId = s.RessourceId,
+        }));
     }
 
-    public async Task<Session?> GetSessionByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<ReturnSessionDto>> GetSessionByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _repository.FindAsync(id, cancellationToken);
+        var session = await _repository.FindAsync(id, cancellationToken);
+        if (session is null) return Result.Failure<ReturnSessionDto>("Session not found");
+
+        return Result.Success(new ReturnSessionDto
+        {
+            Id = session.Id,
+            CreationTime = session.CreationTime,
+            UpdateTime = session.UpdateTime,
+            Status = session.Status,
+            RessourceId = session.RessourceId,
+        });
     }
 
-    public async Task<Session> CreateSessionAsync(CreateSessionDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<ReturnSessionDto>> CreateSessionAsync(CreateSessionDto dto, CancellationToken cancellationToken = default)
     {
-        // Use factory to create the entity from DTO
-        var session = _factory.Create(dto);
-        
-        return await _repository.AddAsync(session, cancellationToken);
+        var session = new Session
+        {
+            Id = Guid.CreateVersion7(),
+            CreationTime = DateTime.UtcNow,
+            Status = dto.Status,
+            IdWs = string.Empty,
+            RessourceId = dto.RessourceId,
+        };
+
+        await _repository.AddAsync(session, cancellationToken);
+
+        return Result.Success(new ReturnSessionDto
+        {
+            Id = session.Id,
+            CreationTime = session.CreationTime,
+            UpdateTime = session.UpdateTime,
+            Status = session.Status,
+            RessourceId = session.RessourceId,
+        });
     }
 
-    public async Task<Session?> UpdateSessionAsync(int id, UpdateSessionDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result<ReturnSessionDto>> UpdateSessionAsync(Guid id, UpdateSessionDto dto, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return null;
-        }
+        if (existing is null) return Result.Failure<ReturnSessionDto>("Session not found");
 
-        // TODO: Map properties from dto to existing
-        // Example: existing.Name = dto.Name;
-        
+        existing.Status = dto.Status;
+        existing.UpdateTime = DateTime.UtcNow;
+
         await _repository.UpdateAsync(existing, cancellationToken);
-        
-        return existing;
+
+        return Result.Success(new ReturnSessionDto
+        {
+            Id = existing.Id,
+            CreationTime = existing.CreationTime,
+            UpdateTime = existing.UpdateTime,
+            Status = existing.Status,
+            RessourceId = existing.RessourceId,
+        });
     }
 
-    public async Task<bool> DeleteSessionAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteSessionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return false;
-        }
+        if (existing is null) return Result.Failure("Session not found");
 
         await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return true;
+        return Result.Success();
     }
 }
