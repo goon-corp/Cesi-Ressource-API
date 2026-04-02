@@ -28,8 +28,9 @@ public interface IQuizzQuestionService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<Result<QuizzQuestionInfoDto>> UpdateQuizzQuestionAsyncPlayer(
-        Guid id,
+    Task<Result<QuizzQuestionInfoDto>> UpdateQuizzQuestionAsyncPlayer(Guid id,
+        Guid userId,
         // UpdateQuizzQuestionDto dto,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

@@ -14,6 +14,7 @@ public class QuizzQuestionRepository : BaseRepository<QuizzQuestion>, IQuizzQues
     public QuizzQuestionRepository(ApplicationDbContext context) : base(context)
     {
     }
+    
 
     public async Task<PaginatedList<QuizzQuestionInfoDto>> PaginatedQuizzQuestionsAsync(
         QuizzQuestionQuery query,
