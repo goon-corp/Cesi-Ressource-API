@@ -16,4 +16,5 @@ public class ReturnRessourceDto
     public RessourceTypeInfoDto? Type { get; set; }
     public IEnumerable<ReturnTagDto> Tags { get; set; } = [];
     public int LikeCount { get; set; }
+    public int FavoriteCount { get; set; }
 }

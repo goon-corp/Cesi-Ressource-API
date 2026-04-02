@@ -196,6 +196,17 @@ public class RessourceService : IRessourceService
         return Result.Success();
     }
 
+    public async Task<Result> FavoriteRessource(Guid id, ClaimsPrincipal user)
+    {
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null) return Result.Failure("User not authenticated");
+
+        var toggled = await _repository.ToggleFavoriteAsync(id, Guid.Parse(userId));
+        if (toggled is null) return Result.Failure("Ressource not found");
+
+        return Result.Success();
+    }
+
     private async Task UpdateAffectedPages(Ressource ressource, CancellationToken cancellationToken = default)
     {
         var updated = ressource.ToReturnDto();

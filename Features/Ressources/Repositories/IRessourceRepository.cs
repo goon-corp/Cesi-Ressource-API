@@ -15,4 +15,7 @@ public interface IRessourceRepository : IBaseRepository<Ressource>
 
     // Returns true = now liked, false = now unliked, null = ressource or user not found
     Task<bool?> ToggleLikeAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default);
+
+    // Returns true = now favorited, false = now unfavorited, null = ressource or user not found
+    Task<bool?> ToggleFavoriteAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default);
 }
