@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Ressource_API.Features.QuizzAnswer.Models;
 using Ressource_API.Features.Quizzes.Models;
-using Ressource_API.Features.Users.Models;
+using User = Ressource_API.Features.Users.Models.User;
 
 namespace Ressource_API.Features.QuizzQuestions.Models;
 
@@ -26,4 +27,5 @@ public partial class QuizzQuestion
     public virtual Quizz Quizz { get; set; } = null!;
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual ICollection<QuestionAnswer> QuestionAnswers { get; set; } = new List<QuestionAnswer>();
 }
