@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Ressource_API.Common.Pagination;
+using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Ressources.Dtos;
 using Ressource_API.Features.Ressources.Models;
 using Ressource_API.Features.Ressources.Query;
@@ -18,4 +19,5 @@ public interface IRessourceService
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteRessourceAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result> LikeRessource(Guid id, ClaimsPrincipal user);
 }

@@ -76,4 +76,17 @@ public class RessourceController : ControllerBase
                 "An error occurred while creating the ressource");
         }
     }
+
+    [HttpPost("{id:guid}/like")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LikeRessource([FromRoute] Guid id)
+    {
+        var result = await _service.LikeRessource(id, User);
+
+        return result.Match<IActionResult>(
+            onSuccess: NoContent,
+            onFailure: NotFound);
+    }
 }
