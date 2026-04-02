@@ -28,11 +28,14 @@ public class QuestionAnswerService : IQuestionAnswerService
         return Result.Success(result);
     }
 
-    public async Task<Result<QuestionAnswerInfoDto>> GetQuestionAnswerAsync(
-        Guid userId,
+    public async Task<Result<QuestionAnswerInfoDto>> GetQuestionAnswerAsync(ClaimsPrincipal user,
         Guid quizzQuestionId,
         CancellationToken cancellationToken = default)
     {
+        var currentUserIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
+            return Result.Failure<QuestionAnswerInfoDto>("User not authenticated or invalid user ID");
         var answer = await _repository.FindByUsersAndQuestionAsync(userId, quizzQuestionId, cancellationToken);
 
         if (answer == null)
@@ -62,12 +65,15 @@ public class QuestionAnswerService : IQuestionAnswerService
         return Result.Success(created.ToInfoDto());
     }
 
-    public async Task<Result<QuestionAnswerInfoDto>> UpdateQuestionAnswerAsync(
-        Guid userId,
+    public async Task<Result<QuestionAnswerInfoDto>> UpdateQuestionAnswerAsync(ClaimsPrincipal user,
         Guid quizzQuestionId,
         UpdateQuestionAnswerDto dto,
         CancellationToken cancellationToken = default)
     {
+        var currentUserIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
+            return Result.Failure<QuestionAnswerInfoDto>("User not authenticated or invalid user ID");
         var existing = await _repository.FindByUsersAndQuestionAsync(userId, quizzQuestionId, cancellationToken);
 
         if (existing == null)
@@ -80,11 +86,14 @@ public class QuestionAnswerService : IQuestionAnswerService
         return Result.Success(existing.ToInfoDto());
     }
 
-    public async Task<Result> DeleteQuestionAnswerAsync(
-        Guid userId,
+    public async Task<Result> DeleteQuestionAnswerAsync(ClaimsPrincipal user,
         Guid quizzQuestionId,
         CancellationToken cancellationToken = default)
     {
+        var currentUserIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
+            return Result.Failure<QuestionAnswerInfoDto>("User not authenticated or invalid user ID");
         var existing = await _repository.FindByUsersAndQuestionAsync(userId, quizzQuestionId, cancellationToken);
 
         if (existing == null)

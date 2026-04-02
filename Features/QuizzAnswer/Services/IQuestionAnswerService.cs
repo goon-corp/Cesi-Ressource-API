@@ -13,7 +13,7 @@ public interface IQuestionAnswerService
         CancellationToken cancellationToken = default);
 
     Task<Result<QuestionAnswerInfoDto>> GetQuestionAnswerAsync(
-        Guid userId,
+        ClaimsPrincipal user,
         Guid quizzQuestionId,
         CancellationToken cancellationToken = default);
 
@@ -23,13 +23,13 @@ public interface IQuestionAnswerService
         CancellationToken cancellationToken = default);
 
     Task<Result<QuestionAnswerInfoDto>> UpdateQuestionAnswerAsync(
-        Guid userId,
+        ClaimsPrincipal user,
         Guid quizzQuestionId,
         UpdateQuestionAnswerDto dto,
         CancellationToken cancellationToken = default);
 
     Task<Result> DeleteQuestionAnswerAsync(
-        Guid userId,
+        ClaimsPrincipal user,
         Guid quizzQuestionId,
         CancellationToken cancellationToken = default);
 }

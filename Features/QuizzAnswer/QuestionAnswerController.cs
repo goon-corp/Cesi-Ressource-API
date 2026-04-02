@@ -7,7 +7,7 @@ using Ressource_API.Features.QuizzAnswer.Services;
 namespace Ressource_API.Features.QuizzAnswer;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/question-answers")]
 public class QuestionAnswerController : ControllerBase
 {
     private readonly IQuestionAnswerService _service;
@@ -42,11 +42,11 @@ public class QuestionAnswerController : ControllerBase
     [ProducesResponseType(typeof(QuestionAnswerInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuestionAnswerInfoDto>> GetQuestionAnswer(
-        Guid userId,
-        Guid quizzQuestionId,
+        
+        [FromRoute]Guid quizzQuestionId,
         CancellationToken cancellationToken)
     {
-        var result = await _service.GetQuestionAnswerAsync(userId, quizzQuestionId, cancellationToken);
+        var result = await _service.GetQuestionAnswerAsync(User, quizzQuestionId, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),
@@ -86,15 +86,15 @@ public class QuestionAnswerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuestionAnswerInfoDto>> UpdateQuestionAnswer(
-        Guid userId,
-        Guid quizzQuestionId,
+        [FromRoute]Guid userId,
+        [FromRoute]Guid quizzQuestionId,
         [FromBody] UpdateQuestionAnswerDto dto,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.UpdateQuestionAnswerAsync(userId, quizzQuestionId, dto, cancellationToken);
+        var result = await _service.UpdateQuestionAnswerAsync(User, quizzQuestionId, dto, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),
@@ -108,11 +108,11 @@ public class QuestionAnswerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteQuestionAnswer(
-        Guid userId,
-        Guid quizzQuestionId,
+        [FromRoute]Guid userId,
+        [FromRoute]Guid quizzQuestionId,
         CancellationToken cancellationToken)
     {
-        var result = await _service.DeleteQuestionAnswerAsync(userId, quizzQuestionId, cancellationToken);
+        var result = await _service.DeleteQuestionAnswerAsync(User, quizzQuestionId, cancellationToken);
 
         return result.Match<IActionResult>(
             onSuccess: () => NoContent(),
