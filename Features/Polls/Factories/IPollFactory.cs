@@ -5,5 +5,5 @@ namespace Ressource_API.Features.Polls.Factories;
 
 public interface IPollFactory
 {
-    Poll Create(CreatePollDto dto);
+    Poll Create(CreatePollDto dto, Guid ressourceId);
 }

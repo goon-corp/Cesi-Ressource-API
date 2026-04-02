@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Quizzes.Dtos;
@@ -17,6 +18,7 @@ public interface IQuizzService
 
     Task<Result<QuizzInfoDto>> CreateQuizzAsync(
         CreateQuizzDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result<QuizzInfoDto>> UpdateQuizzAsync(Guid id,

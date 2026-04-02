@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Polls.Dtos;
@@ -5,6 +6,7 @@ using Ressource_API.Features.Polls.Extensions;
 using Ressource_API.Features.Polls.Factories;
 using Ressource_API.Features.Polls.Query;
 using Ressource_API.Features.Polls.Repositories;
+using Ressource_API.Features.Ressources.Services;
 
 namespace Ressource_API.Features.Polls.Services;
 
@@ -12,11 +14,13 @@ public class PollService : IPollService
 {
     private readonly IPollRepository _repository;
     private readonly IPollFactory _factory;
+    private readonly IRessourceService _ressourceService;
 
-    public PollService(IPollRepository repository, IPollFactory factory)
+    public PollService(IPollRepository repository, IPollFactory factory, IRessourceService ressourceService)
     {
         _repository = repository;
         _factory = factory;
+        _ressourceService = ressourceService;
     }
 
     public async Task<Result<PaginatedList<PollInfoDto>>> GetPaginatedPollsAsync(
@@ -41,9 +45,12 @@ public class PollService : IPollService
 
     public async Task<Result<PollInfoDto>> CreatePollAsync(
         CreatePollDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default)
     {
-        var poll = _factory.Create(dto);
+        var ressource = await _ressourceService.CreateRessourceAsync(dto.Ressource, context, cancellationToken);
+
+        var poll = _factory.Create(dto, ressource.Id);
         var created = await _repository.AddAsync(poll, cancellationToken);
 
         return Result.Success(created.ToInfoDto());

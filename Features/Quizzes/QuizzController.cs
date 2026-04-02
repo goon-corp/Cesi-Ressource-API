@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Quizzes.Dtos;
@@ -7,6 +8,7 @@ using Ressource_API.Features.Quizzes.Services;
 namespace Ressource_API.Features.Quizzes;
 
 [ApiController]
+[Authorize]
 [Route("api/quizzes")]
 public class QuizzController : ControllerBase
 {
@@ -23,6 +25,7 @@ public class QuizzController : ControllerBase
     /// Get all quizzes (paginated)
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedList<QuizzInfoDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PaginatedList<QuizzInfoDto>>> GetPaginatedQuizzes(
         [FromQuery] QuizzQuery query,
@@ -39,6 +42,7 @@ public class QuizzController : ControllerBase
     /// Get a quizz by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<QuizzInfoDto>> GetQuizzById(
@@ -59,13 +63,13 @@ public class QuizzController : ControllerBase
     [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzInfoDto>> CreateQuizz(
-        [FromBody] CreateQuizzDto dto,
+        [FromForm] CreateQuizzDto dto,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.CreateQuizzAsync(dto, cancellationToken);
+        var result = await _service.CreateQuizzAsync(dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => CreatedAtAction(

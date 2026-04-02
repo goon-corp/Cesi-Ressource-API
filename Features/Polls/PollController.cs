@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Polls.Dtos;
@@ -7,6 +8,7 @@ using Ressource_API.Features.Polls.Services;
 namespace Ressource_API.Features.Polls;
 
 [ApiController]
+[Authorize]
 [Route("api/polls")]
 public class PollController : ControllerBase
 {
@@ -23,6 +25,7 @@ public class PollController : ControllerBase
     /// Get all polls (paginated)
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedList<PollInfoDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PaginatedList<PollInfoDto>>> GetPaginatedPolls(
         [FromQuery] PollQuery query,
@@ -39,6 +42,7 @@ public class PollController : ControllerBase
     /// Get a poll by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PollInfoDto>> GetPollById(
@@ -59,13 +63,13 @@ public class PollController : ControllerBase
     [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PollInfoDto>> CreatePoll(
-        [FromBody] CreatePollDto dto,
+        [FromForm] CreatePollDto dto,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.CreatePollAsync(dto, cancellationToken);
+        var result = await _service.CreatePollAsync(dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => CreatedAtAction(
