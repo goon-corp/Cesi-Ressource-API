@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.Extensions.Caching.Hybrid;
+using Ressource_API.Common.ResultPattern;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.RessourceMedias.Dtos;
 using Ressource_API.Features.RessourceMedias.Services;
@@ -182,6 +183,17 @@ public class RessourceService : IRessourceService
         await _cache.RemoveAsync($"invert:ressources:{id}", cancellationToken);
 
         return true;
+    }
+
+    public async Task<Result> LikeRessource(Guid id, ClaimsPrincipal user)
+    {
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null) return Result.Failure("User not authenticated");
+
+        var toggled = await _repository.ToggleLikeAsync(id, Guid.Parse(userId));
+        if (toggled is null) return Result.Failure("Ressource not found");
+
+        return Result.Success();
     }
 
     private async Task UpdateAffectedPages(Ressource ressource, CancellationToken cancellationToken = default)

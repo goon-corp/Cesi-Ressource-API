@@ -12,4 +12,7 @@ public interface IRessourceRepository : IBaseRepository<Ressource>
         CancellationToken cancellationToken = default);
 
     Task<Ressource?> FindWithTagsAsync(Guid id, CancellationToken cancellationToken = default);
+
+    // Returns true = now liked, false = now unliked, null = ressource or user not found
+    Task<bool?> ToggleLikeAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default);
 }

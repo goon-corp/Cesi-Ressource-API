@@ -3,9 +3,12 @@ using Ressource_API.Common.Data;
 using Ressource_API.Features.Ressources.Models;
 using Ressource_API.Common.Data.Repositories;
 using Ressource_API.Common.Pagination;
+using Ressource_API.Features.RessourceConfidentialityTypes.RessourceConfidentialityTypeDtos;
 using Ressource_API.Features.Ressources.Dtos;
-using Ressource_API.Features.Ressources.Extensions;
 using Ressource_API.Features.Ressources.Query;
+using Ressource_API.Features.RessourceStatuses.RessourceStatusDtos;
+using Ressource_API.Features.RessourceTypes.RessourceTypeDtos;
+using Ressource_API.Features.Tags.TagDtos;
 
 namespace Ressource_API.Features.Ressources.Repositories;
 
@@ -20,6 +23,34 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
         return await _context.Ressources
             .Include(r => r.Tags)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
+    public async Task<bool?> ToggleLikeAsync(Guid ressourceId, Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        // Single query: check existence + whether user already liked it
+        var projection = await _context.Ressources
+            .Where(r => r.Id == ressourceId)
+            .Select(r => new { AlreadyLiked = r.LikedByUsers.Any(u => u.Id == userId) })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (projection is null) return null;
+
+        if (projection.AlreadyLiked)
+        {
+            await _context.Database.ExecuteSqlAsync(
+                $"DELETE FROM ressource_like WHERE ressource_id = {ressourceId} AND user_id = {userId}",
+                cancellationToken);
+            return false;
+        }
+
+        var userExists = await _context.Users.AnyAsync(u => u.Id == userId, cancellationToken);
+        if (!userExists) return null;
+
+        await _context.Database.ExecuteSqlAsync(
+            $"INSERT INTO ressource_like (ressource_id, user_id) VALUES ({ressourceId}, {userId})",
+            cancellationToken);
+        return true;
     }
 
     public async Task<PaginatedList<ReturnRessourceDto>> PaginatedRessourcesAsync(RessourceQuery query,
@@ -66,17 +97,23 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
         // -------------------------
         // Pagination SQL
         // -------------------------
-        var entities = await ressources
-            .Include(r => r.RessourceStatus)
-            .Include(r => r.RessourceConfidentialityType)
-            .Include(r => r.RessourceType)
-            .Include(r => r.Tags)
+        var dtos = await ressources
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
+            .Select(r => new ReturnRessourceDto
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                ThumbnailId = r.ThumbnailId,
+                Status = new RessourceStatusInfoDto { Id = r.RessourceStatus.Id, Label = r.RessourceStatus.Label },
+                ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
+                Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
+                Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
+                LikeCount = r.LikedByUsers.Count()
+            })
             .ToListAsync(cancellationToken);
 
-        return new PaginatedList<ReturnRessourceDto>(
-            entities.Select(r => r.ToReturnDto()).ToList(),
-            query.page, query.size, totalCount);
+        return new PaginatedList<ReturnRessourceDto>(dtos, query.page, query.size, totalCount);
     }
 }
