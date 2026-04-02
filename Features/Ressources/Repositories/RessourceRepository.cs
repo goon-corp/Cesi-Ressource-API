@@ -53,6 +53,33 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
         return true;
     }
 
+    public async Task<bool?> ToggleFavoriteAsync(Guid ressourceId, Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var projection = await _context.Ressources
+            .Where(r => r.Id == ressourceId)
+            .Select(r => new { AlreadyFavorited = r.FavoritedByUsers.Any(u => u.Id == userId) })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (projection is null) return null;
+
+        if (projection.AlreadyFavorited)
+        {
+            await _context.Database.ExecuteSqlAsync(
+                $"DELETE FROM ressource_favorite WHERE ressource_id = {ressourceId} AND user_id = {userId}",
+                cancellationToken);
+            return false;
+        }
+
+        var userExists = await _context.Users.AnyAsync(u => u.Id == userId, cancellationToken);
+        if (!userExists) return null;
+
+        await _context.Database.ExecuteSqlAsync(
+            $"INSERT INTO ressource_favorite (ressource_id, user_id) VALUES ({ressourceId}, {userId})",
+            cancellationToken);
+        return true;
+    }
+
     public async Task<PaginatedList<ReturnRessourceDto>> PaginatedRessourcesAsync(RessourceQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -110,7 +137,8 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
                 ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
                 Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
                 Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
-                LikeCount = r.LikedByUsers.Count()
+                LikeCount = r.LikedByUsers.Count(),
+                FavoriteCount = r.FavoritedByUsers.Count()
             })
             .ToListAsync(cancellationToken);
 

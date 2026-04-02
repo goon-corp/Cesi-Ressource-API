@@ -89,4 +89,17 @@ public class RessourceController : ControllerBase
             onSuccess: NoContent,
             onFailure: NotFound);
     }
+
+    [HttpPost("{id:guid}/favorite")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> FavoriteRessource([FromRoute] Guid id)
+    {
+        var result = await _service.FavoriteRessource(id, User);
+
+        return result.Match<IActionResult>(
+            onSuccess: NoContent,
+            onFailure: NotFound);
+    }
 }
