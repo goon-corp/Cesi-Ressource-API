@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using Ressource_API.Features.Addresses.Models;
-using Ressource_API.Features.Comments.Models;
-using Ressource_API.Features.Events.Models;
-using Ressource_API.Features.FriendsRequests.Models;
-using Ressource_API.Features.Logins.Models;
-using Ressource_API.Features.Notifications.Models;
 using Ressource_API.Features.PasswordInfos.Models;
 using Ressource_API.Features.PollOptions.Models;
 using Ressource_API.Features.ProfilePictures.Models;
+using Ressource_API.Features.QuizzAnswer.Models;
 using Ressource_API.Features.QuizzQuestions.Models;
-using Ressource_API.Features.RefreshTokens.Models;
-using Ressource_API.Features.Reports.Models;
-using Ressource_API.Features.RessourceProgressions.Models;
-using Ressource_API.Features.Ressources.Models;
 using Ressource_API.Features.SessionMessages.Models;
 using Ressource_API.Features.UserRoles.Models;
+using Address = Ressource_API.Features.Addresses.Models.Address;
+using Comment = Ressource_API.Features.Comments.Models.Comment;
+using Event = Ressource_API.Features.Events.Models.Event;
+using FriendsRequest = Ressource_API.Features.FriendsRequests.Models.FriendsRequest;
+using Login = Ressource_API.Features.Logins.Models.Login;
+using Notification = Ressource_API.Features.Notifications.Models.Notification;
+using RefreshToken = Ressource_API.Features.RefreshTokens.Models.RefreshToken;
+using Report = Ressource_API.Features.Reports.Models.Report;
+using Ressource = Ressource_API.Features.Ressources.Models.Ressource;
+using RessourceProgression = Ressource_API.Features.RessourceProgressions.Models.RessourceProgression;
 
 namespace Ressource_API.Features.Users.Models;
 
@@ -66,7 +67,7 @@ public partial class User
     public virtual ICollection<Ressource> AuthoredRessources { get; set; } = new List<Ressource>();
 
     public virtual ICollection<SessionMessage> SessionsMessages { get; set; } = new List<SessionMessage>();
-
+    public virtual ICollection<QuestionAnswer> QuestionAnswers { get; set; } = new List<QuestionAnswer>();
     public virtual UserRole UserRole { get; set; } = null!;
 
     public virtual ICollection<Event> Events { get; set; } = new List<Event>();

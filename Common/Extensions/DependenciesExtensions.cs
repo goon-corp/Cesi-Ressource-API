@@ -64,6 +64,9 @@ using Ressource_API.Features.Polls.Factories;
 using Ressource_API.Features.ProfilePictures.Repositories;
 using Ressource_API.Features.ProfilePictures.Services;
 using Ressource_API.Features.ProfilePictures.Factories;
+using Ressource_API.Features.QuizzAnswer.Factories;
+using Ressource_API.Features.QuizzAnswer.Repositories;
+using Ressource_API.Features.QuizzAnswer.Services;
 using Ressource_API.Features.Quizzes.Repositories;
 using Ressource_API.Features.Quizzes.Factories;
 using Ressource_API.Features.Quizzes.Services;
@@ -194,6 +197,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPasswordInfoFactory, PasswordInfoFactory>();
         builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
         builder.Services.AddScoped<IQuizzQuestionFactory, QuizzQuestionFactory>();
+        builder.Services.AddScoped<IQuestionAnswerFactory, QuestionAnswerFactory>();
         builder.Services.AddScoped<IRefreshTokenFactory, RefreshTokenFactory>();
         builder.Services.AddScoped<IRegionFactory, RegionFactory>();
         builder.Services.AddScoped<IReportFactory, ReportFactory>();
@@ -225,6 +229,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IProfilePictureService, ProfilePictureService>();
         builder.Services.AddScoped<IQuizzService, QuizzService>();
         builder.Services.AddScoped<IQuizzQuestionService, QuizzQuestionService>();
+        builder.Services.AddScoped<IQuestionAnswerService, QuestionAnswerService>();
         builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         builder.Services.AddScoped<IRegionService, RegionService>();
         builder.Services.AddScoped<IReportService, ReportService>();
@@ -268,6 +273,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IPollRepository, PollRepository>();
         builder.Services.AddScoped<IProfilePictureRepository, ProfilePictureRepository>();
         builder.Services.AddScoped<IQuizzRepository, QuizzRepository>();
+        builder.Services.AddScoped<IQuestionAnswerRepository, QuestionAnswerRepository>();
         builder.Services.AddScoped<IQuizzQuestionRepository, QuizzQuestionRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         builder.Services.AddScoped<IRegionRepository, RegionRepository>();

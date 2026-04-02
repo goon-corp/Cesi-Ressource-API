@@ -6,20 +6,23 @@ using Ressource_API.Features.QuizzQuestions.Extensions;
 using Ressource_API.Features.QuizzQuestions.Factories;
 using Ressource_API.Features.QuizzQuestions.Query;
 using Ressource_API.Features.QuizzQuestions.Repositories;
+using Ressource_API.Features.Users.Repositories;
 
 namespace Ressource_API.Features.QuizzQuestions.Services;
 
 public class QuizzQuestionService : IQuizzQuestionService
 {
     private readonly IQuizzQuestionRepository _repository;
+    private readonly IUserRepository _userRepository;
     private readonly IQuizzQuestionFactory _factory;
     private readonly IQuizzService _quizzService;
 
-    public QuizzQuestionService(IQuizzQuestionRepository repository, IQuizzQuestionFactory factory, IQuizzService quizzService)
+    public QuizzQuestionService(IQuizzQuestionRepository repository, IQuizzQuestionFactory factory, IQuizzService quizzService, IUserRepository userRepository)
     {
         _repository = repository;
         _factory = factory;
         _quizzService = quizzService;
+        _userRepository = userRepository;
     }
 
     public async Task<Result<PaginatedList<QuizzQuestionInfoDto>>> GetPaginatedQuizzQuestionsAsync(
@@ -74,9 +77,11 @@ public class QuizzQuestionService : IQuizzQuestionService
     
     public async Task<Result<QuizzQuestionInfoDto>> UpdateQuizzQuestionAsyncPlayer(
         Guid id,
+        Guid userId,
         // UpdateQuizzQuestionDto dto,
         CancellationToken cancellationToken = default)
     {
+        var existingUser = await _userRepository.FindAsync(userId, cancellationToken);
         var existing = await _repository.FindByIdAsync(id, cancellationToken);
 
         if (existing == null)
@@ -85,6 +90,8 @@ public class QuizzQuestionService : IQuizzQuestionService
         // existing.Question = dto.Question;
         // existing.PossibleAnswers = dto.PossibleAnswers;
         // existing.CorrectAnswer = dto.CorrectAnswer;
+        if (existingUser != null && existing.Users.Contains(existingUser)) return Result.Failure<QuizzQuestionInfoDto>("L'utilisateur a deja participé");
+        if (existingUser != null) existing.Users.Add(existingUser);
         existing.Quizz.ParticipationCount++;
         existing.UpdateTime = DateTime.UtcNow;
 

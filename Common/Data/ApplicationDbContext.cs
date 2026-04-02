@@ -17,6 +17,7 @@ using Ressource_API.Features.PasswordInfos.Models;
 using Ressource_API.Features.PollOptions.Models;
 using Ressource_API.Features.Polls.Models;
 using Ressource_API.Features.ProfilePictures.Models;
+using Ressource_API.Features.QuizzAnswer.Models;
 using Ressource_API.Features.Quizzes.Models;
 using Ressource_API.Features.QuizzQuestions.Models;
 using Ressource_API.Features.RefreshTokens.Models;
@@ -55,6 +56,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<BackofficeLog> BackofficeLogs { get; set; }
 
     public virtual DbSet<BackofficeLogLevel> BackofficeLogLevels { get; set; }
+    
+    public virtual DbSet<QuestionAnswer> QuestionAnswers { get; set; }
 
     public virtual DbSet<BackofficeOperationType> BackofficeOperationTypes { get; set; }
 
@@ -657,6 +660,29 @@ public partial class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("quizzes_questions_quizz_id_fk");
         });
+        
+        modelBuilder.Entity<QuestionAnswer>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.QuizzQuestionId }).HasName("question_answer_pk");
+        
+            entity.ToTable("question_answer");
+        
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.QuizzQuestionId).HasColumnName("quizz_question_id");
+            entity.Property(e => e.Answer)
+                .HasMaxLength(1)
+                .HasColumnName("answer");
+        
+            entity.HasOne(d => d.QuizzQuestion).WithMany(p => p.QuestionAnswers)
+                .HasForeignKey(d => d.QuizzQuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("question_answer_quizz_question_id_fk");
+        
+            entity.HasOne(d => d.User).WithMany(p => p.QuestionAnswers)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("question_answer_user_id_fk");
+        });
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
@@ -1107,24 +1133,24 @@ public partial class ApplicationDbContext : DbContext
                         j.IndexerProperty<Guid>("PollOptionId").HasColumnName("poll_option_id");
                     });
 
-            entity.HasMany(d => d.QuizzQuestions).WithMany(p => p.Users)
-                .UsingEntity<Dictionary<string, object>>(
-                    "QuestionAnswer",
-                    r => r.HasOne<QuizzQuestion>().WithMany()
-                        .HasForeignKey("QuizzQuestionId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("question_answer_quizz_question_id_fk"),
-                    l => l.HasOne<User>().WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("question_answer_user_id_fk"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "QuizzQuestionId").HasName("question_answer_pk");
-                        j.ToTable("question_answer");
-                        j.IndexerProperty<Guid>("UserId").HasColumnName("user_id");
-                        j.IndexerProperty<Guid>("QuizzQuestionId").HasColumnName("quizz_question_id");
-                    });
+            // entity.HasMany(d => d.QuizzQuestions).WithMany(p => p.Users)
+            //     .UsingEntity<Dictionary<string, object>>(
+            //         "QuestionAnswer",
+            //         r => r.HasOne<QuizzQuestion>().WithMany()
+            //             .HasForeignKey("QuizzQuestionId")
+            //             .OnDelete(DeleteBehavior.ClientSetNull)
+            //             .HasConstraintName("question_answer_quizz_question_id_fk"),
+            //         l => l.HasOne<User>().WithMany()
+            //             .HasForeignKey("UserId")
+            //             .OnDelete(DeleteBehavior.ClientSetNull)
+            //             .HasConstraintName("question_answer_user_id_fk"),
+            //         j =>
+            //         {
+            //             j.HasKey("UserId", "QuizzQuestionId").HasName("question_answer_pk");
+            //             j.ToTable("question_answer");
+            //             j.IndexerProperty<Guid>("UserId").HasColumnName("user_id");
+            //             j.IndexerProperty<Guid>("QuizzQuestionId").HasColumnName("quizz_question_id");
+            //         });
 
             entity.HasMany(d => d.LikedRessources).WithMany(p => p.LikedByUsers)
                 .UsingEntity<Dictionary<string, object>>(

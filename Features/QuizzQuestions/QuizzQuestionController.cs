@@ -100,19 +100,19 @@ public class QuizzQuestionController : ControllerBase
     /// <summary>
     /// Update a quizz count for player
     /// </summary>
-    [HttpPut("{id:guid}/participate")]
+    [HttpPut("{id:guid}/participate/{userId:guid}")]
     [ProducesResponseType(typeof(QuizzQuestionInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzQuestionInfoDto>> UpdateQuizzQuestionParticipation(
         [FromRoute]Guid id,
-        
+        [FromRoute]Guid userId,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.UpdateQuizzQuestionAsyncPlayer(id, cancellationToken);
+        var result = await _service.UpdateQuizzQuestionAsyncPlayer(id, userId, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),

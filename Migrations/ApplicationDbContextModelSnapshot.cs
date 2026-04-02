@@ -58,22 +58,19 @@ namespace Ressource_API.Migrations
                     b.ToTable("poll_vote", (string)null);
                 });
 
-            modelBuilder.Entity("QuestionAnswer", b =>
+            modelBuilder.Entity("QuizzQuestionUser", b =>
                 {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
+                    b.Property<Guid>("QuizzQuestionsId")
+                        .HasColumnType("uuid");
 
-                    b.Property<Guid>("QuizzQuestionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("quizz_question_id");
+                    b.Property<Guid>("UsersId")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("UserId", "QuizzQuestionId")
-                        .HasName("question_answer_pk");
+                    b.HasKey("QuizzQuestionsId", "UsersId");
 
-                    b.HasIndex("QuizzQuestionId");
+                    b.HasIndex("UsersId");
 
-                    b.ToTable("question_answer", (string)null);
+                    b.ToTable("QuizzQuestionUser");
                 });
 
             modelBuilder.Entity("RessourceFavorite", b =>
@@ -769,6 +766,30 @@ namespace Ressource_API.Migrations
                     b.ToTable("profiles_pictures", (string)null);
                 });
 
+            modelBuilder.Entity("Ressource_API.Features.QuizzAnswer.Models.QuestionAnswer", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("QuizzQuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("quizz_question_id");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("answer");
+
+                    b.HasKey("UserId", "QuizzQuestionId")
+                        .HasName("question_answer_pk");
+
+                    b.HasIndex("QuizzQuestionId");
+
+                    b.ToTable("question_answer", (string)null);
+                });
+
             modelBuilder.Entity("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1418,19 +1439,19 @@ namespace Ressource_API.Migrations
                         .HasConstraintName("poll_vote_user_id_fk");
                 });
 
-            modelBuilder.Entity("QuestionAnswer", b =>
+            modelBuilder.Entity("QuizzQuestionUser", b =>
                 {
                     b.HasOne("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", null)
                         .WithMany()
-                        .HasForeignKey("QuizzQuestionId")
-                        .IsRequired()
-                        .HasConstraintName("question_answer_quizz_question_id_fk");
+                        .HasForeignKey("QuizzQuestionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("question_answer_user_id_fk");
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RessourceFavorite", b =>
@@ -1572,7 +1593,7 @@ namespace Ressource_API.Migrations
             modelBuilder.Entity("Ressource_API.Features.Events.Models.Event", b =>
                 {
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
-                        .WithMany("Events")
+                        .WithMany()
                         .HasForeignKey("RessourceId")
                         .IsRequired()
                         .HasConstraintName("events_ressource_id_fk");
@@ -1657,7 +1678,7 @@ namespace Ressource_API.Migrations
             modelBuilder.Entity("Ressource_API.Features.Polls.Models.Poll", b =>
                 {
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
-                        .WithMany("Polls")
+                        .WithMany()
                         .HasForeignKey("RessourceId")
                         .IsRequired()
                         .HasConstraintName("polls_ressource_id_fk");
@@ -1676,6 +1697,25 @@ namespace Ressource_API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ressource_API.Features.QuizzAnswer.Models.QuestionAnswer", b =>
+                {
+                    b.HasOne("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", "QuizzQuestion")
+                        .WithMany("QuestionAnswers")
+                        .HasForeignKey("QuizzQuestionId")
+                        .IsRequired()
+                        .HasConstraintName("question_answer_quizz_question_id_fk");
+
+                    b.HasOne("Ressource_API.Features.Users.Models.User", "User")
+                        .WithMany("QuestionAnswers")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("question_answer_user_id_fk");
+
+                    b.Navigation("QuizzQuestion");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", b =>
                 {
                     b.HasOne("Ressource_API.Features.Quizzes.Models.Quizz", "Quizz")
@@ -1690,7 +1730,7 @@ namespace Ressource_API.Migrations
             modelBuilder.Entity("Ressource_API.Features.Quizzes.Models.Quizz", b =>
                 {
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
-                        .WithMany("Quizzes")
+                        .WithMany()
                         .HasForeignKey("RessourceId")
                         .IsRequired()
                         .HasConstraintName("quizzes_ressource_id_fk");
@@ -1758,19 +1798,19 @@ namespace Ressource_API.Migrations
             modelBuilder.Entity("Ressource_API.Features.Ressources.Models.Ressource", b =>
                 {
                     b.HasOne("Ressource_API.Features.RessourceConfidentialityTypes.Models.RessourceConfidentialityType", "RessourceConfidentialityType")
-                        .WithMany("Ressources")
+                        .WithMany()
                         .HasForeignKey("RessourceConfidentialityTypeId")
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_confidentiality_type_id_fk");
 
                     b.HasOne("Ressource_API.Features.RessourceStatuses.Models.RessourceStatus", "RessourceStatus")
-                        .WithMany("Ressources")
+                        .WithMany()
                         .HasForeignKey("RessourceStatusId")
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_status_id_fk");
 
                     b.HasOne("Ressource_API.Features.RessourceTypes.Models.RessourceType", "RessourceType")
-                        .WithMany("Ressources")
+                        .WithMany()
                         .HasForeignKey("RessourceTypeId")
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_type_id_fk");
@@ -1874,6 +1914,11 @@ namespace Ressource_API.Migrations
                     b.Navigation("PollsOptions");
                 });
 
+            modelBuilder.Entity("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", b =>
+                {
+                    b.Navigation("QuestionAnswers");
+                });
+
             modelBuilder.Entity("Ressource_API.Features.Quizzes.Models.Quizz", b =>
                 {
                     b.Navigation("QuizzesQuestions");
@@ -1889,32 +1934,11 @@ namespace Ressource_API.Migrations
                     b.Navigation("Reports");
                 });
 
-            modelBuilder.Entity("Ressource_API.Features.RessourceConfidentialityTypes.Models.RessourceConfidentialityType", b =>
-                {
-                    b.Navigation("Ressources");
-                });
-
-            modelBuilder.Entity("Ressource_API.Features.RessourceStatuses.Models.RessourceStatus", b =>
-                {
-                    b.Navigation("Ressources");
-                });
-
-            modelBuilder.Entity("Ressource_API.Features.RessourceTypes.Models.RessourceType", b =>
-                {
-                    b.Navigation("Ressources");
-                });
-
             modelBuilder.Entity("Ressource_API.Features.Ressources.Models.Ressource", b =>
                 {
                     b.Navigation("Articles");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Events");
-
-                    b.Navigation("Polls");
-
-                    b.Navigation("Quizzes");
 
                     b.Navigation("Reports");
 
@@ -1948,6 +1972,8 @@ namespace Ressource_API.Migrations
                     b.Navigation("PasswordsInfos");
 
                     b.Navigation("ProfilesPictures");
+
+                    b.Navigation("QuestionAnswers");
 
                     b.Navigation("ReceivedFriendRequests");
 
