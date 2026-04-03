@@ -138,6 +138,7 @@ public static class DependenciesExtensions
         builder.AddRepositories();
         builder.AddServices();
         builder.AddFactories();
+        builder.AddCorsConfiguration();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
         builder.AddHybridCache();
