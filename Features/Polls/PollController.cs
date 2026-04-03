@@ -94,7 +94,7 @@ public class PollController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.UpdatePollAsync(id, dto, cancellationToken);
+        var result = await _service.UpdatePollAsync(id, dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),

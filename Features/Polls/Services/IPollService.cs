@@ -24,6 +24,7 @@ public interface IPollService
     Task<Result<PollInfoDto>> UpdatePollAsync(
         Guid id,
         UpdatePollDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result> DeletePollAsync(

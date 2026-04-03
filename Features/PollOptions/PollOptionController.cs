@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.PollOptions.Dtos;
@@ -7,6 +8,7 @@ using Ressource_API.Features.PollOptions.Services;
 namespace Ressource_API.Features.PollOptions;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class PollOptionController : ControllerBase
 {
@@ -23,6 +25,7 @@ public class PollOptionController : ControllerBase
     /// Get all poll options (paginated)
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedList<PollOptionInfoDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PaginatedList<PollOptionInfoDto>>> GetPaginatedPollOptions(
         [FromQuery] PollOptionQuery query,
@@ -39,10 +42,11 @@ public class PollOptionController : ControllerBase
     /// Get a poll option by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PollOptionInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PollOptionInfoDto>> GetPollOptionById(
-        Guid id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.GetPollOptionByIdAsync(id, cancellationToken);
@@ -76,26 +80,21 @@ public class PollOptionController : ControllerBase
     }
 
     /// <summary>
-    /// Update a poll option
+    /// Vote for a poll option
     /// </summary>
-    [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}/vote")]
     [ProducesResponseType(typeof(PollOptionInfoDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PollOptionInfoDto>> UpdatePollOption(
-        Guid id,
-        [FromBody] UpdatePollOptionDto dto,
-        [FromRoute] Guid userId,
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PollOptionInfoDto>> VotePollOption(
+        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var result = await _service.UpdatePollOptionAsync(id, userId, dto, cancellationToken);
+        var result = await _service.VotePollOptionAsync(id, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),
-            onFailure: error => NotFound(error));
+            onFailure: error => BadRequest(error));
     }
 
     /// <summary>
@@ -105,7 +104,7 @@ public class PollOptionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePollOption(
-        Guid id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.DeletePollOptionAsync(id, cancellationToken);
