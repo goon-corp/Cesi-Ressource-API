@@ -1,7 +1,10 @@
+using Ressource_API.Features.UserRoles.UserRoleDtos;
+
 namespace Ressource_API.Features.Users.UserDtos;
 
-public class UpdateUserDto
+public class ReturnUserDto
 {
+    public Guid Id { get; set; }
 
     public string FirstName { get; set; } = null!;
 
@@ -17,5 +20,6 @@ public class UpdateUserDto
 
     public DateTime? DeletionTime { get; set; }
     
-    public Guid UserRoleId { get; set; }
+    public ReturnUserRoleDto UserRole { get; set; }
+    
 }

@@ -2,23 +2,19 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Ressource_API.Features.UserRoles.Models;
 using Ressource_API.Features.UserRoles.UserRoleDtos;
 using Ressource_API.Features.UserRoles.Repositories;
-using Ressource_API.Features.UserRoles.Factories;
 
 namespace Ressource_API.Features.UserRoles.Services;
 
 public class UserRoleService : IUserRoleService
 {
     private readonly IUserRoleRepository _repository;
-    private readonly IUserRoleFactory _factory;
     private readonly HybridCache _cache;
 
     public UserRoleService(
         IUserRoleRepository repository,
-        IUserRoleFactory factory, 
         HybridCache cache)
     {
         _repository = repository;
-        _factory = factory;
         _cache = cache;
     }
 
@@ -36,13 +32,7 @@ public class UserRoleService : IUserRoleService
         return await _repository.FindAsync(id, cancellationToken);
     }
 
-    public async Task<UserRole> CreateUserRoleAsync(CreateUserRoleDto dto, CancellationToken cancellationToken = default)
-    {
-        // Use factory to create the entity from DTO
-        var userrole = _factory.Create(dto);
-        
-        return await _repository.AddAsync(userrole, cancellationToken);
-    }
+
 
     public async Task<UserRole?> UpdateUserRoleAsync(int id, UpdateUserRoleDto dto, CancellationToken cancellationToken = default)
     {

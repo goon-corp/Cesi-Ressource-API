@@ -108,7 +108,6 @@ using Ressource_API.Features.Tags.Services;
 using Ressource_API.Features.Tags.Factories;
 using Ressource_API.Features.UserRoles.Repositories;
 using Ressource_API.Features.UserRoles.Services;
-using Ressource_API.Features.UserRoles.Factories;
 using Ressource_API.Features.Users.Repositories;
 using Ressource_API.Features.Users.Services;
 using Ressource_API.Features.Users.Factories;
@@ -205,7 +204,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<ISessionMessageFactory, SessionMessageFactory>();
         builder.Services.AddScoped<ISessionFactory, SessionFactory>();
         builder.Services.AddScoped<ITagFactory, TagFactory>();
-        builder.Services.AddScoped<IUserRoleFactory, UserRoleFactory>();
         builder.Services.AddScoped<IUserFactory, UserFactory>();
     }
 
