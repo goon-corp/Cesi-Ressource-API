@@ -51,6 +51,18 @@ public class QuizzService : IQuizzService
         return Result.Success(quizz.ToInfoDto());
     }
 
+    public async Task<Result<QuizzInfoDto>> GetQuizzByRessourceIdAsync(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default)
+    {
+        var quizz = await _repository.GetQuizzNoTrackingByRessourceId(ressourceId, cancellationToken);
+
+        if (quizz == null)
+            return Result.Failure<QuizzInfoDto>("Quizz not found");
+
+        return Result.Success(quizz.ToInfoDto());
+    }
+
     public async Task<Result<QuizzInfoDto>> CreateQuizzAsync(
         CreateQuizzDto dto,
         ClaimsPrincipal context,
@@ -71,7 +83,7 @@ public class QuizzService : IQuizzService
         })];
 
         var created = await _repository.AddAsync(quizz, cancellationToken);
-        return Result.Success(created.ToInfoDto());
+        return Result.Success(created.ToInfoDto(ressource));
     }
 
     public async Task<Result<QuizzInfoDto>> UpdateQuizzAsync(
@@ -135,7 +147,7 @@ public class QuizzService : IQuizzService
         }
 
         var updated = await _repository.FindByIdAsync(id, cancellationToken);
-        return Result.Success(updated!.ToInfoDto());
+        return Result.Success(updated!.ToInfoDto(updatedRessource!));
     }
 
     public async Task<Result> DeleteQuizzAsync(

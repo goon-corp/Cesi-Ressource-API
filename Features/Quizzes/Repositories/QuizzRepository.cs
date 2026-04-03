@@ -28,6 +28,13 @@ public class QuizzRepository : BaseRepository<Quizz>, IQuizzRepository
 
         var entities = await quizzes
             .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.Tags)
             .Include(q => q.QuizzesQuestions)
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
@@ -44,7 +51,31 @@ public class QuizzRepository : BaseRepository<Quizz>, IQuizzRepository
     {
         return await _context.Quizzes
             .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.Tags)
             .Include(q => q.QuizzesQuestions)
             .FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+    }
+
+    public async Task<Quizz?> GetQuizzNoTrackingByRessourceId(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Quizzes.AsNoTracking()
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(q => q.Ressource)
+                .ThenInclude(r => r.Tags)
+            .Include(q => q.QuizzesQuestions)
+            .FirstOrDefaultAsync(q => q.RessourceId == ressourceId, cancellationToken);
     }
 }

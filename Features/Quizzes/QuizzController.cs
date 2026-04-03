@@ -39,17 +39,17 @@ public class QuizzController : ControllerBase
     }
 
     /// <summary>
-    /// Get a quizz by ID
+    /// Get a quizz by ressource ID
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{ressourceId:guid}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<QuizzInfoDto>> GetQuizzById(
-        [FromRoute]Guid id,
+    public async Task<ActionResult<QuizzInfoDto>> GetQuizzByRessourceId(
+        [FromRoute] Guid ressourceId,
         CancellationToken cancellationToken)
     {
-        var result = await _service.GetQuizzByIdAsync(id, cancellationToken);
+        var result = await _service.GetQuizzByRessourceIdAsync(ressourceId, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),
@@ -72,10 +72,7 @@ public class QuizzController : ControllerBase
         var result = await _service.CreateQuizzAsync(dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: data => CreatedAtAction(
-                nameof(GetQuizzById),
-                new { id = data.Id },
-                data),
+            onSuccess: data => Created("quizz", data),
             onFailure: error => BadRequest(error));
     }
 
@@ -108,7 +105,7 @@ public class QuizzController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteQuizz(
-        [FromRoute]Guid id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.DeleteQuizzAsync(id, cancellationToken);

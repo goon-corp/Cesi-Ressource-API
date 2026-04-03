@@ -16,6 +16,10 @@ public interface IQuizzService
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<Result<QuizzInfoDto>> GetQuizzByRessourceIdAsync(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<QuizzInfoDto>> CreateQuizzAsync(
         CreateQuizzDto dto,
         ClaimsPrincipal context,
