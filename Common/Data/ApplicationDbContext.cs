@@ -657,7 +657,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Quizz).WithMany(p => p.QuizzesQuestions)
                 .HasForeignKey(d => d.QuizzId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("quizzes_questions_quizz_id_fk");
         });
         
