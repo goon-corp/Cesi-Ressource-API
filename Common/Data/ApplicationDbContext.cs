@@ -577,7 +577,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Poll).WithMany(p => p.PollsOptions)
                 .HasForeignKey(d => d.PollId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("polls_options_poll_id_fk");
         });
 
@@ -1119,7 +1119,7 @@ public partial class ApplicationDbContext : DbContext
                     "PollVote",
                     r => r.HasOne<PollOption>().WithMany()
                         .HasForeignKey("PollOptionId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("poll_vote_poll_option_id_fk"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
