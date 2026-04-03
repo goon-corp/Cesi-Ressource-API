@@ -164,7 +164,6 @@ public class UserController : ControllerBase
     /// Update an existing user
     /// </summary>
     [HttpPut("{id:guid}")]
-    [AllowAnonymous]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -197,8 +196,7 @@ public class UserController : ControllerBase
     /// Delete a user
     /// </summary>
     [HttpDelete("{id:guid}")]
-    // [Authorize(Roles = "Administrateur")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Administrateur")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
