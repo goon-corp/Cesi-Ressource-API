@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
+using Ressource_API.Features.QuizzQuestions.Models;
+using Ressource_API.Features.QuizzQuestions.Repositories;
 using Ressource_API.Features.Quizzes.Dtos;
 using Ressource_API.Features.Quizzes.Extensions;
 using Ressource_API.Features.Quizzes.Factories;
@@ -15,12 +17,18 @@ public class QuizzService : IQuizzService
     private readonly IQuizzRepository _repository;
     private readonly IQuizzFactory _factory;
     private readonly IRessourceService _ressourceService;
+    private readonly IQuizzQuestionRepository _questionRepository;
 
-    public QuizzService(IQuizzRepository repository, IQuizzFactory factory, IRessourceService ressourceService)
+    public QuizzService(
+        IQuizzRepository repository,
+        IQuizzFactory factory,
+        IRessourceService ressourceService,
+        IQuizzQuestionRepository questionRepository)
     {
         _repository = repository;
         _factory = factory;
         _ressourceService = ressourceService;
+        _questionRepository = questionRepository;
     }
 
     public async Task<Result<PaginatedList<QuizzInfoDto>>> GetPaginatedQuizzesAsync(
@@ -51,14 +59,25 @@ public class QuizzService : IQuizzService
         var ressource = await _ressourceService.CreateRessourceAsync(dto.Ressource, context, cancellationToken);
 
         var quizz = _factory.Create(dto, ressource.Id);
-        var created = await _repository.AddAsync(quizz, cancellationToken);
 
+        quizz.QuizzesQuestions = [..dto.Questions.Select(q => new QuizzQuestion
+        {
+            Id = Guid.CreateVersion7(),
+            Question = q.Question,
+            PossibleAnswers = q.PossibleAnswers,
+            CorrectAnswer = q.CorrectAnswer,
+            QuizzId = quizz.Id,
+            CreationTime = DateTime.UtcNow
+        })];
+
+        var created = await _repository.AddAsync(quizz, cancellationToken);
         return Result.Success(created.ToInfoDto());
     }
 
     public async Task<Result<QuizzInfoDto>> UpdateQuizzAsync(
         Guid id,
-        // UpdateQuizzDto dto,
+        UpdateQuizzDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default)
     {
         var existing = await _repository.FindByIdAsync(id, cancellationToken);
@@ -66,11 +85,57 @@ public class QuizzService : IQuizzService
         if (existing == null)
             return Result.Failure<QuizzInfoDto>("Quizz not found");
 
-        existing.ParticipationCount++;
+        var updatedRessource = await _ressourceService.UpdateRessourceAsync(existing.RessourceId, dto.Ressource, cancellationToken);
+        if (updatedRessource is null)
+            return Result.Failure<QuizzInfoDto>("Ressource not found");
 
-        await _repository.UpdateAsync(existing, cancellationToken);
+        // Delete questions not present in the incoming list
+        var incomingIds = dto.Questions
+            .Where(q => q.Id.HasValue)
+            .Select(q => q.Id!.Value)
+            .ToHashSet();
 
-        return Result.Success(existing.ToInfoDto());
+        var toDelete = existing.QuizzesQuestions
+            .Where(q => !incomingIds.Contains(q.Id))
+            .ToList();
+
+        foreach (var question in toDelete)
+            await _questionRepository.DeleteAsync(question, cancellationToken);
+
+        // Update existing or add new questions
+        foreach (var questionDto in dto.Questions)
+        {
+            if (questionDto.Id.HasValue)
+            {
+                var existingQuestion = existing.QuizzesQuestions
+                    .FirstOrDefault(q => q.Id == questionDto.Id.Value);
+
+                if (existingQuestion != null)
+                {
+                    existingQuestion.Question = questionDto.Question;
+                    existingQuestion.PossibleAnswers = questionDto.PossibleAnswers;
+                    existingQuestion.CorrectAnswer = questionDto.CorrectAnswer;
+                    existingQuestion.UpdateTime = DateTime.UtcNow;
+                    await _questionRepository.UpdateAsync(existingQuestion, cancellationToken);
+                }
+            }
+            else
+            {
+                var newQuestion = new QuizzQuestion
+                {
+                    Id = Guid.CreateVersion7(),
+                    Question = questionDto.Question,
+                    PossibleAnswers = questionDto.PossibleAnswers,
+                    CorrectAnswer = questionDto.CorrectAnswer,
+                    QuizzId = existing.Id,
+                    CreationTime = DateTime.UtcNow
+                };
+                await _questionRepository.AddAsync(newQuestion, cancellationToken);
+            }
+        }
+
+        var updated = await _repository.FindByIdAsync(id, cancellationToken);
+        return Result.Success(updated!.ToInfoDto());
     }
 
     public async Task<Result> DeleteQuizzAsync(

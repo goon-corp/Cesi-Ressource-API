@@ -80,21 +80,21 @@ public class QuizzController : ControllerBase
     }
 
     /// <summary>
-    /// Incremente participation for a quizz
+    /// Update a quizz
     /// </summary>
-    [HttpPut("{id:guid}/participate")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(QuizzInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuizzInfoDto>> UpdateQuizz(
-        [FromRoute]Guid id,
-        // [FromBody] UpdateQuizzDto dto,
+        [FromRoute] Guid id,
+        [FromBody] UpdateQuizzDto dto,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _service.UpdateQuizzAsync(id, cancellationToken);
+        var result = await _service.UpdateQuizzAsync(id, dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),

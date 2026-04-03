@@ -17,7 +17,7 @@ public class QuizzFactory : BaseFactory<Quizz>, IQuizzFactory
         {
             return new Quizz
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.CreateVersion7(),
                 RessourceId = ressourceId,
                 ParticipationCount = 0
             };

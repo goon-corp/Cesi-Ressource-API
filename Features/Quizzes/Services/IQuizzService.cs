@@ -21,7 +21,10 @@ public interface IQuizzService
         ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
-    Task<Result<QuizzInfoDto>> UpdateQuizzAsync(Guid id,
+    Task<Result<QuizzInfoDto>> UpdateQuizzAsync(
+        Guid id,
+        UpdateQuizzDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result> DeleteQuizzAsync(
