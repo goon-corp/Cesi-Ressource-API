@@ -16,6 +16,10 @@ public interface IPollService
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<Result<PollInfoDto>> GetPollByRessourceIdAsync(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<PollInfoDto>> CreatePollAsync(
         CreatePollDto dto,
         ClaimsPrincipal context,

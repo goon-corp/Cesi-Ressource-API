@@ -51,6 +51,18 @@ public class PollService : IPollService
         return Result.Success(poll.ToInfoDto());
     }
 
+    public async Task<Result<PollInfoDto>> GetPollByRessourceIdAsync(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default)
+    {
+        var poll = await _repository.GetPollNoTrackingByRessourceId(ressourceId, cancellationToken);
+
+        if (poll == null)
+            return Result.Failure<PollInfoDto>("Poll not found");
+
+        return Result.Success(poll.ToInfoDto());
+    }
+
     public async Task<Result<PollInfoDto>> CreatePollAsync(
         CreatePollDto dto,
         ClaimsPrincipal context,
@@ -69,7 +81,7 @@ public class PollService : IPollService
         })];
 
         var created = await _repository.AddAsync(poll, cancellationToken);
-        return Result.Success(created.ToInfoDto());
+        return Result.Success(created.ToInfoDto(ressource));
     }
 
     public async Task<Result<PollInfoDto>> UpdatePollAsync(
@@ -131,7 +143,7 @@ public class PollService : IPollService
         }
 
         var updated = await _repository.FindByIdAsync(id, cancellationToken);
-        return Result.Success(updated!.ToInfoDto());
+        return Result.Success(updated!.ToInfoDto(updatedRessource!));
     }
 
     public async Task<Result> DeletePollAsync(

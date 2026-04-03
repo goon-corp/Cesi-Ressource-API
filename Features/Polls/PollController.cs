@@ -39,17 +39,17 @@ public class PollController : ControllerBase
     }
 
     /// <summary>
-    /// Get a poll by ID
+    /// Get a poll by ressource ID
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{ressourceId:guid}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PollInfoDto>> GetPollById(
-        Guid id,
+    public async Task<ActionResult<PollInfoDto>> GetPollByRessourceId(
+        [FromRoute] Guid ressourceId,
         CancellationToken cancellationToken)
     {
-        var result = await _service.GetPollByIdAsync(id, cancellationToken);
+        var result = await _service.GetPollByRessourceIdAsync(ressourceId, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),
@@ -72,10 +72,7 @@ public class PollController : ControllerBase
         var result = await _service.CreatePollAsync(dto, User, cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: data => CreatedAtAction(
-                nameof(GetPollById),
-                new { id = data.Id },
-                data),
+            onSuccess: data => Created("poll", data),
             onFailure: error => BadRequest(error));
     }
 
@@ -87,7 +84,7 @@ public class PollController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PollInfoDto>> UpdatePoll(
-        Guid id,
+        [FromRoute] Guid id,
         [FromBody] UpdatePollDto dto,
         CancellationToken cancellationToken)
     {
@@ -108,7 +105,7 @@ public class PollController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePoll(
-        Guid id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
         var result = await _service.DeletePollAsync(id, cancellationToken);

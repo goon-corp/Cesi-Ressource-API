@@ -28,6 +28,13 @@ public class PollRepository : BaseRepository<Poll>, IPollRepository
 
         var entities = await polls
             .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.Tags)
             .Include(p => p.PollsOptions)
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
@@ -43,7 +50,32 @@ public class PollRepository : BaseRepository<Poll>, IPollRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Polls
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.Tags)
             .Include(p => p.PollsOptions)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    }
+
+    public async Task<Poll?> GetPollNoTrackingByRessourceId(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Polls.AsNoTracking()
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceStatus)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceConfidentialityType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.RessourceType)
+            .Include(p => p.Ressource)
+                .ThenInclude(r => r.Tags)
+            .Include(p => p.PollsOptions)
+            .FirstOrDefaultAsync(p => p.RessourceId == ressourceId, cancellationToken);
     }
 }

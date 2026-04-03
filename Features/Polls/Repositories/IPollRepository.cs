@@ -15,4 +15,8 @@ public interface IPollRepository : IBaseRepository<Poll>
     Task<Poll?> FindByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    Task<Poll?> GetPollNoTrackingByRessourceId(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default);
 }
