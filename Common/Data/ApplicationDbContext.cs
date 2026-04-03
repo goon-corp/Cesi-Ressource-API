@@ -148,22 +148,22 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.City).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.CityId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("addresses_city_id_fk");
 
             entity.HasOne(d => d.Department).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("addresses_department_id_fk");
 
             entity.HasOne(d => d.Region).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.RegionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("addresses_region_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("addresses_user_id_fk");
         });
 
@@ -181,7 +181,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("articles_ressource_id_fk");
         });
 
@@ -203,12 +203,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.BackofficeLogLevel).WithMany(p => p.BackofficeLogs)
                 .HasForeignKey(d => d.BackofficeLogLevelId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("backoffice_logs_backoffice_log_level_id_fk");
 
             entity.HasOne(d => d.BackofficeOperationType).WithMany(p => p.BackofficeLogs)
                 .HasForeignKey(d => d.BackofficeOperationTypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("backoffice_logs_backoffice_operation_type_id_fk");
         });
 
@@ -299,12 +299,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("comments_ressource_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("comments_user_id_fk");
         });
 
@@ -383,7 +383,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("events_ressource_id_fk");
         });
 
@@ -410,12 +410,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.UserReceiver).WithMany(p => p.ReceivedFriendRequests)
                 .HasForeignKey(d => d.UserReceiverId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("friends_requests_user_receiver_id_fk");
 
             entity.HasOne(d => d.UserSender).WithMany(p => p.SentFriendRequests)
                 .HasForeignKey(d => d.UserSenderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("friends_requests_user_sender_id_fk");
         });
 
@@ -447,7 +447,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.Logins)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("logins_user_id_fk");
         });
 
@@ -472,7 +472,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("notifications_user_id_fk");
         });
 
@@ -499,7 +499,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.PasswordInfos).WithMany(p => p.PasswordsHistories)
                 .HasForeignKey(d => d.PasswordInfosId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("passwords_history_password_infos_id_fk");
         });
 
@@ -530,7 +530,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.PasswordsInfos)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("passwords_infos_user_id_fk");
         });
 
@@ -548,7 +548,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("polls_ressource_id_fk");
         });
 
@@ -577,7 +577,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Poll).WithMany(p => p.PollsOptions)
                 .HasForeignKey(d => d.PollId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("polls_options_poll_id_fk");
         });
 
@@ -604,7 +604,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.ProfilesPictures)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("profiles_pictures_user_id_fk");
         });
 
@@ -622,7 +622,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany()
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("quizzes_ressource_id_fk");
         });
 
@@ -675,12 +675,12 @@ public partial class ApplicationDbContext : DbContext
         
             entity.HasOne(d => d.QuizzQuestion).WithMany(p => p.QuestionAnswers)
                 .HasForeignKey(d => d.QuizzQuestionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("question_answer_quizz_question_id_fk");
         
             entity.HasOne(d => d.User).WithMany(p => p.QuestionAnswers)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("question_answer_user_id_fk");
         });
 
@@ -708,7 +708,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("refresh_tokens_user_id_fk");
         });
 
@@ -754,17 +754,17 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.ReportType).WithMany()
                 .HasForeignKey(d => d.ReportTypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("reports_report_type_id_fk");
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("reports_ressource_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("reports_user_id_fk");
         });
 
@@ -822,22 +822,22 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.RessourceConfidentialityType).WithMany()
                 .HasForeignKey(d => d.RessourceConfidentialityTypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressources_ressource_confidentiality_type_id_fk");
 
             entity.HasOne(d => d.RessourceStatus).WithMany()
                 .HasForeignKey(d => d.RessourceStatusId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressources_ressource_status_id_fk");
 
             entity.HasOne(d => d.RessourceType).WithMany()
                 .HasForeignKey(d => d.RessourceTypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressources_ressource_type_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.AuthoredRessources)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressources_user_id_fk");
 
             entity.HasOne(d => d.Thumbnail).WithMany()
@@ -859,12 +859,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.RessourceProgressions)
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressource_progression_ressource_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.RessourceProgressions)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("ressource_progression_user_id_fk");
         });
 
@@ -984,7 +984,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Ressource).WithMany(p => p.Sessions)
                 .HasForeignKey(d => d.RessourceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sessions_ressource_id_fk");
         });
 
@@ -1008,12 +1008,12 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.Session).WithMany(p => p.SessionsMessages)
                 .HasForeignKey(d => d.SessionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sessions_messages_session_id_fk");
 
             entity.HasOne(d => d.User).WithMany(p => p.SessionsMessages)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sessions_messages_user_id_fk");
         });
 
@@ -1044,11 +1044,11 @@ public partial class ApplicationDbContext : DbContext
                     "RessourceTag",
                     r => r.HasOne<Ressource>().WithMany()
                         .HasForeignKey("RessourceId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_tag_ressource_id_fk"),
                     l => l.HasOne<Tag>().WithMany()
                         .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_tag_tag_id_fk"),
                     j =>
                     {
@@ -1092,7 +1092,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasOne(d => d.UserRole).WithMany(p => p.Users)
                 .HasForeignKey(d => d.UserRoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("users_user_role_id_fk");
 
             entity.HasMany(d => d.Events).WithMany(p => p.Users)
@@ -1100,11 +1100,11 @@ public partial class ApplicationDbContext : DbContext
                     "EventMember",
                     r => r.HasOne<Event>().WithMany()
                         .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("event_member_event_id_fk"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("event_member_user_id_fk"),
                     j =>
                     {
@@ -1119,11 +1119,11 @@ public partial class ApplicationDbContext : DbContext
                     "PollVote",
                     r => r.HasOne<PollOption>().WithMany()
                         .HasForeignKey("PollOptionId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("poll_vote_poll_option_id_fk"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("poll_vote_user_id_fk"),
                     j =>
                     {
@@ -1138,11 +1138,11 @@ public partial class ApplicationDbContext : DbContext
             //         "QuestionAnswer",
             //         r => r.HasOne<QuizzQuestion>().WithMany()
             //             .HasForeignKey("QuizzQuestionId")
-            //             .OnDelete(DeleteBehavior.ClientSetNull)
+            //             .OnDelete(DeleteBehavior.Cascade)
             //             .HasConstraintName("question_answer_quizz_question_id_fk"),
             //         l => l.HasOne<User>().WithMany()
             //             .HasForeignKey("UserId")
-            //             .OnDelete(DeleteBehavior.ClientSetNull)
+            //             .OnDelete(DeleteBehavior.Cascade)
             //             .HasConstraintName("question_answer_user_id_fk"),
             //         j =>
             //         {
@@ -1157,11 +1157,11 @@ public partial class ApplicationDbContext : DbContext
                     "RessourceLike",
                     r => r.HasOne<Ressource>().WithMany()
                         .HasForeignKey("RessourceId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_like_ressource_id_fk"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_like_user_id_fk"),
                     j =>
                     {
@@ -1176,11 +1176,11 @@ public partial class ApplicationDbContext : DbContext
                     "RessourceFavorite",
                     r => r.HasOne<Ressource>().WithMany()
                         .HasForeignKey("RessourceId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_favorite_ressource_id_fk"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("ressource_favorite_user_id_fk"),
                     j =>
                     {

@@ -1414,12 +1414,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Events.Models.Event", null)
                         .WithMany()
                         .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("event_member_event_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("event_member_user_id_fk");
                 });
@@ -1429,12 +1431,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.PollOptions.Models.PollOption", null)
                         .WithMany()
                         .HasForeignKey("PollOptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("poll_vote_poll_option_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("poll_vote_user_id_fk");
                 });
@@ -1459,12 +1463,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", null)
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_favorite_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_favorite_user_id_fk");
                 });
@@ -1474,12 +1480,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", null)
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_like_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_like_user_id_fk");
                 });
@@ -1489,12 +1497,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", null)
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_tag_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Tags.Models.Tag", null)
                         .WithMany()
                         .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_tag_tag_id_fk");
                 });
@@ -1504,24 +1514,28 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Cities.Models.City", "City")
                         .WithMany("Addresses")
                         .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("addresses_city_id_fk");
 
                     b.HasOne("Ressource_API.Features.Departments.Models.Department", "Department")
                         .WithMany("Addresses")
                         .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("addresses_department_id_fk");
 
                     b.HasOne("Ressource_API.Features.Regions.Models.Region", "Region")
                         .WithMany("Addresses")
                         .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("addresses_region_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("Addresses")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("addresses_user_id_fk");
 
@@ -1539,6 +1553,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("articles_ressource_id_fk");
 
@@ -1550,12 +1565,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.BackofficeLogLevels.Models.BackofficeLogLevel", "BackofficeLogLevel")
                         .WithMany("BackofficeLogs")
                         .HasForeignKey("BackofficeLogLevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("backoffice_logs_backoffice_log_level_id_fk");
 
                     b.HasOne("Ressource_API.Features.BackofficeOperationTypes.Models.BackofficeOperationType", "BackofficeOperationType")
                         .WithMany("BackofficeLogs")
                         .HasForeignKey("BackofficeOperationTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("backoffice_logs_backoffice_operation_type_id_fk");
 
@@ -1574,12 +1591,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany("Comments")
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("comments_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("comments_user_id_fk");
 
@@ -1595,6 +1614,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("events_ressource_id_fk");
 
@@ -1606,12 +1626,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "UserReceiver")
                         .WithMany("ReceivedFriendRequests")
                         .HasForeignKey("UserReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("friends_requests_user_receiver_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "UserSender")
                         .WithMany("SentFriendRequests")
                         .HasForeignKey("UserSenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("friends_requests_user_sender_id_fk");
 
@@ -1625,6 +1647,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("Logins")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("logins_user_id_fk");
 
@@ -1636,6 +1659,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("notifications_user_id_fk");
 
@@ -1647,6 +1671,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.PasswordInfos.Models.PasswordInfo", "PasswordInfos")
                         .WithMany("PasswordsHistories")
                         .HasForeignKey("PasswordInfosId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("passwords_history_password_infos_id_fk");
 
@@ -1658,6 +1683,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("PasswordsInfos")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("passwords_infos_user_id_fk");
 
@@ -1669,6 +1695,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Polls.Models.Poll", "Poll")
                         .WithMany("PollsOptions")
                         .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("polls_options_poll_id_fk");
 
@@ -1680,6 +1707,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("polls_ressource_id_fk");
 
@@ -1691,6 +1719,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("ProfilesPictures")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("profiles_pictures_user_id_fk");
 
@@ -1702,12 +1731,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.QuizzQuestions.Models.QuizzQuestion", "QuizzQuestion")
                         .WithMany("QuestionAnswers")
                         .HasForeignKey("QuizzQuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("question_answer_quizz_question_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("QuestionAnswers")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("question_answer_user_id_fk");
 
@@ -1733,6 +1764,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany()
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("quizzes_ressource_id_fk");
 
@@ -1744,6 +1776,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("RefreshTokens")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("refresh_tokens_user_id_fk");
 
@@ -1755,18 +1788,21 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.ReportTypes.Models.ReportType", "ReportType")
                         .WithMany()
                         .HasForeignKey("ReportTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("reports_report_type_id_fk");
 
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany("Reports")
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("reports_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("Reports")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("reports_user_id_fk");
 
@@ -1782,12 +1818,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany("RessourceProgressions")
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_progression_ressource_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("RessourceProgressions")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressource_progression_user_id_fk");
 
@@ -1801,18 +1839,21 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.RessourceConfidentialityTypes.Models.RessourceConfidentialityType", "RessourceConfidentialityType")
                         .WithMany()
                         .HasForeignKey("RessourceConfidentialityTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_confidentiality_type_id_fk");
 
                     b.HasOne("Ressource_API.Features.RessourceStatuses.Models.RessourceStatus", "RessourceStatus")
                         .WithMany()
                         .HasForeignKey("RessourceStatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_status_id_fk");
 
                     b.HasOne("Ressource_API.Features.RessourceTypes.Models.RessourceType", "RessourceType")
                         .WithMany()
                         .HasForeignKey("RessourceTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressources_ressource_type_id_fk");
 
@@ -1825,6 +1866,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("AuthoredRessources")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("ressources_user_id_fk");
 
@@ -1844,12 +1886,14 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Sessions.Models.Session", "Session")
                         .WithMany("SessionsMessages")
                         .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sessions_messages_session_id_fk");
 
                     b.HasOne("Ressource_API.Features.Users.Models.User", "User")
                         .WithMany("SessionsMessages")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sessions_messages_user_id_fk");
 
@@ -1863,6 +1907,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.Ressources.Models.Ressource", "Ressource")
                         .WithMany("Sessions")
                         .HasForeignKey("RessourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sessions_ressource_id_fk");
 
@@ -1874,6 +1919,7 @@ namespace Ressource_API.Migrations
                     b.HasOne("Ressource_API.Features.UserRoles.Models.UserRole", "UserRole")
                         .WithMany("Users")
                         .HasForeignKey("UserRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("users_user_role_id_fk");
 

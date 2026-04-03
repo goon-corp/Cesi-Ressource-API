@@ -159,45 +159,16 @@ public class UserController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user fav ressources");
         }
     }
-    
-    /// <summary>
-    /// Create a new user
-    /// </summary>
-    [HttpPost]
-    [ProducesResponseType(typeof(User), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<User>> CreateUser([FromBody] CreateUserDto dto, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var createdUser = await _service.CreateUserAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetUserById),
-                new { id = createdUser.Id },
-                createdUser
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating user");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the user");
-        }
-    }
 
     /// <summary>
     /// Update an existing user
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<User>> UpdateUser(int id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<User>> UpdateUser(Guid id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
     {
         try
         {
@@ -208,12 +179,12 @@ public class UserController : ControllerBase
 
             var updatedUser = await _service.UpdateUserAsync(id, dto, cancellationToken);
 
-            if (updatedUser == null)
+            if (!updatedUser.IsSuccess)
             {
-                return NotFound($"User with ID {id} not found");
+                return NotFound($"User not updated");
             }
 
-            return Ok(updatedUser);
+            return Ok(updatedUser.Data);
         }
         catch (Exception ex)
         {
@@ -225,16 +196,18 @@ public class UserController : ControllerBase
     /// <summary>
     /// Delete a user
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
+    // [Authorize(Roles = "Administrateur")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
         try
         {
             var deleted = await _service.DeleteUserAsync(id, cancellationToken);
 
-            if (!deleted)
+            if (!deleted.IsSuccess)
             {
                 return NotFound($"User with ID {id} not found");
             }
