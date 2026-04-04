@@ -32,7 +32,6 @@ using Ressource_API.Features.Cities.Repositories;
 using Ressource_API.Features.Cities.Factories;
 using Ressource_API.Features.Comments.Repositories;
 using Ressource_API.Features.Comments.Services;
-using Ressource_API.Features.Comments.Factories;
 using Ressource_API.Features.Departments.Repositories;
 using Ressource_API.Features.Departments.Services;
 using Ressource_API.Features.Departments.Factories;
@@ -185,7 +184,6 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IBackofficeLogLevelFactory, BackofficeLogLevelFactory>();
         builder.Services.AddScoped<IBackofficeOperationTypeFactory, BackofficeOperationTypeFactory>();
         builder.Services.AddScoped<ICityFactory, CityFactory>();
-        builder.Services.AddScoped<ICommentFactory, CommentFactory>();
         builder.Services.AddScoped<IDepartmentFactory, DepartmentFactory>();
         builder.Services.AddScoped<IEmailLogFactory, EmailLogFactory>();
         builder.Services.AddScoped<IFriendsRequestFactory, FriendsRequestFactory>();

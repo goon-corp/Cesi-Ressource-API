@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Ressource_API.Features.Comments.Models;
 using Ressource_API.Features.Comments.CommentDtos;
 using Ressource_API.Features.Comments.Services;
 
 namespace Ressource_API.Features.Comments;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/comments")]
 public class CommentController : ControllerBase
 {
     private readonly ICommentService _service;
@@ -22,132 +21,73 @@ public class CommentController : ControllerBase
     /// Get all comments
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Comment>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Comment>>> GetAllComments(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(IEnumerable<CommentInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetAllComments(CancellationToken cancellationToken)
     {
-        try
-        {
-            var comments = await _service.GetAllCommentsAsync(cancellationToken);
-            return Ok(comments);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all comments");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving comments");
-        }
+        var result = await _service.GetAllCommentsAsync(cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
     /// Get a comment by ID
     /// </summary>
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Comment), StatusCodes.Status200OK)]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(CommentInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<Comment>> GetCommentById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetCommentById(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var comment = await _service.GetCommentByIdAsync(id, cancellationToken);
+        var result = await _service.GetCommentByIdAsync(id, cancellationToken);
 
-            if (comment == null)
-            {
-                return NotFound($"Comment with ID {id} not found");
-            }
-
-            return Ok(comment);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving comment with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the comment");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
     /// Create a new comment
     /// </summary>
     [HttpPost]
-    [ProducesResponseType(typeof(Comment), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CommentInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Comment>> CreateComment([FromBody] CreateCommentDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult> CreateComment([FromBody] CreateCommentDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.CreateCommentAsync(dto, cancellationToken);
 
-            var createdComment = await _service.CreateCommentAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetCommentById),
-                new { id = createdComment.Id },
-                createdComment
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating comment");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the comment");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => CreatedAtAction(nameof(GetCommentById), new { id = data.Id }, data),
+            onFailure: error => BadRequest(error));
     }
 
     /// <summary>
     /// Update an existing comment
     /// </summary>
-    [HttpPut("{id}")]
-    [ProducesResponseType(typeof(Comment), StatusCodes.Status200OK)]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(CommentInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Comment>> UpdateComment(int id, [FromBody] UpdateCommentDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult> UpdateComment(Guid id, [FromBody] UpdateCommentDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.UpdateCommentAsync(id, dto, cancellationToken);
 
-            var updatedComment = await _service.UpdateCommentAsync(id, dto, cancellationToken);
-
-            if (updatedComment == null)
-            {
-                return NotFound($"Comment with ID {id} not found");
-            }
-
-            return Ok(updatedComment);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating comment with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the comment");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
     }
 
     /// <summary>
     /// Delete a comment
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteComment(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteComment(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteCommentAsync(id, cancellationToken);
+        var result = await _service.DeleteCommentAsync(id, cancellationToken);
 
-            if (!deleted)
-            {
-                return NotFound($"Comment with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting comment with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the comment");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }
