@@ -5,7 +5,7 @@ using Ressource_API.Features.Comments.Services;
 namespace Ressource_API.Features.Comments;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/comments")]
 public class CommentController : ControllerBase
 {
     private readonly ICommentService _service;
@@ -27,16 +27,7 @@ public class CommentController : ControllerBase
         var result = await _service.GetAllCommentsAsync(cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: data => Ok(data.Select(c => new CommentInfoDto
-            {
-                Id = c.Id,
-                Content = c.Content,
-                CreationTime = c.CreationTime,
-                UpdateTime = c.UpdateTime,
-                RessourceId = c.RessourceId,
-                UserId = c.UserId,
-                CommentId = c.CommentId
-            })),
+            onSuccess: data => Ok(data),
             onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
@@ -51,16 +42,7 @@ public class CommentController : ControllerBase
         var result = await _service.GetCommentByIdAsync(id, cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: c => Ok(new CommentInfoDto
-            {
-                Id = c.Id,
-                Content = c.Content,
-                CreationTime = c.CreationTime,
-                UpdateTime = c.UpdateTime,
-                RessourceId = c.RessourceId,
-                UserId = c.UserId,
-                CommentId = c.CommentId
-            }),
+            onSuccess: data => Ok(data),
             onFailure: error => NotFound(error));
     }
 
@@ -75,19 +57,7 @@ public class CommentController : ControllerBase
         var result = await _service.CreateCommentAsync(dto, cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: c => CreatedAtAction(
-                nameof(GetCommentById),
-                new { id = c.Id },
-                new CommentInfoDto
-                {
-                    Id = c.Id,
-                    Content = c.Content,
-                    CreationTime = c.CreationTime,
-                    UpdateTime = c.UpdateTime,
-                    RessourceId = c.RessourceId,
-                    UserId = c.UserId,
-                    CommentId = c.CommentId
-                }),
+            onSuccess: data => CreatedAtAction(nameof(GetCommentById), new { id = data.Id }, data),
             onFailure: error => BadRequest(error));
     }
 
@@ -102,16 +72,7 @@ public class CommentController : ControllerBase
         var result = await _service.UpdateCommentAsync(id, dto, cancellationToken);
 
         return result.Match<ActionResult>(
-            onSuccess: c => Ok(new CommentInfoDto
-            {
-                Id = c.Id,
-                Content = c.Content,
-                CreationTime = c.CreationTime,
-                UpdateTime = c.UpdateTime,
-                RessourceId = c.RessourceId,
-                UserId = c.UserId,
-                CommentId = c.CommentId
-            }),
+            onSuccess: data => Ok(data),
             onFailure: error => NotFound(error));
     }
 
@@ -125,11 +86,8 @@ public class CommentController : ControllerBase
     {
         var result = await _service.DeleteCommentAsync(id, cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return NotFound(result.Error);
-        }
-
-        return NoContent();
+        return result.Match<ActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }
