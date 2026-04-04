@@ -6,19 +6,19 @@ namespace Ressource_API.Features.Polls.Factories;
 
 public class PollFactory : BaseFactory<Poll>, IPollFactory
 {
-    public Poll Create(CreatePollDto dto)
+    public Poll Create(CreatePollDto dto, Guid ressourceId)
     {
-        return CreateInstance(dto);
+        return CreateInstance(dto, ressourceId);
     }
 
     protected override Poll CreateInstance(params object[] parameters)
     {
-        if (parameters.Length >= 1 && parameters[0] is CreatePollDto dto)
+        if (parameters.Length >= 2 && parameters[0] is CreatePollDto dto && parameters[1] is Guid ressourceId)
         {
             return new Poll
             {
                 Id = Guid.NewGuid(),
-                RessourceId = dto.RessourceId,
+                RessourceId = ressourceId,
                 VoteCount = 0
             };
         }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Polls.Dtos;
@@ -15,13 +16,19 @@ public interface IPollService
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<Result<PollInfoDto>> GetPollByRessourceIdAsync(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<PollInfoDto>> CreatePollAsync(
         CreatePollDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result<PollInfoDto>> UpdatePollAsync(
         Guid id,
         UpdatePollDto dto,
+        ClaimsPrincipal context,
         CancellationToken cancellationToken = default);
 
     Task<Result> DeletePollAsync(

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Logins.Services;
+using Ressource_API.Features.Ressources.Dtos;
 using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.UserDtos;
 using Ressource_API.Features.Users.Services;
@@ -71,25 +73,17 @@ public class UserController : ControllerBase
     /// <summary>
     /// Get a user profile by UseId
     /// </summary>
-    [HttpGet("profile/{id}")]
-    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [HttpGet("{id}/profile")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserProfile>> GetUserProfile(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<UserProfileDto>> GetUserProfileTest(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var user = await _service.GetUserByIdAsync(id, cancellationToken) ?? throw new Exception("User does not exist");
-            var userLoginInfos = await _loginService.GetLoginByUserId(user.Id, cancellationToken) ?? throw new Exception("Login does not exist");
-            var userProfile = new UserProfile()
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                UserName = user.UserName,
-                Email = userLoginInfos.Email
-            };
+            var profile = await _service.GetUserProfileById(id, cancellationToken);
 
-            return Ok(userProfile);
+            return Ok(profile);
         }
         catch (Exception ex)
         {
@@ -97,45 +91,83 @@ public class UserController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user");
         }
     }
-
+    
     /// <summary>
-    /// Create a new user
+    /// Return the list of liked ressources for a user
     /// </summary>
-    [HttpPost]
-    [ProducesResponseType(typeof(User), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<User>> CreateUser([FromBody] CreateUserDto dto, CancellationToken cancellationToken)
+    [HttpGet("{id}/liked-ressources")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDto>> GetUserLikedRessources(Guid id, [FromQuery] PagedQueryParameters query, CancellationToken cancellationToken)
     {
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var likedRessources = await _service.GetUserLikedRessourcesById(id, query, cancellationToken);
 
-            var createdUser = await _service.CreateUserAsync(dto, cancellationToken);
-
-            return CreatedAtAction(
-                nameof(GetUserById),
-                new { id = createdUser.Id },
-                createdUser
-            );
+            return Ok(likedRessources);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating user");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the user");
+            _logger.LogError(ex, "Error retrieving user with ID {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user liked ressources");
+        }
+    }
+    
+    
+    /// <summary>
+    /// Return the list of favorites ressources for a user
+    /// </summary>
+    [HttpGet("{id}/fav-ressources")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDto>> GetUserFavoritesRessources(Guid id, [FromQuery] PagedQueryParameters query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var favRessources = await _service.GetUserFavoriteRessourcesById(id, query, cancellationToken);
+
+            return Ok(favRessources);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user with ID {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user fav ressources");
+        }
+    }
+    
+        
+    /// <summary>
+    /// Return the list of authored ressources for a user
+    /// </summary>
+    [HttpGet("{id}/authored-ressources")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDto>> GetUserAuthoredRessources(Guid id, [FromQuery] PagedQueryParameters query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var authoredRessources = await _service.GetUserAuthoredRessourcesById(id, query, cancellationToken);
+
+            return Ok(authoredRessources);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user with ID {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user fav ressources");
         }
     }
 
     /// <summary>
     /// Update an existing user
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<User>> UpdateUser(int id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<User>> UpdateUser(Guid id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
     {
         try
         {
@@ -146,12 +178,12 @@ public class UserController : ControllerBase
 
             var updatedUser = await _service.UpdateUserAsync(id, dto, cancellationToken);
 
-            if (updatedUser == null)
+            if (!updatedUser.IsSuccess)
             {
-                return NotFound($"User with ID {id} not found");
+                return NotFound($"User not updated");
             }
 
-            return Ok(updatedUser);
+            return Ok(updatedUser.Data);
         }
         catch (Exception ex)
         {
@@ -163,16 +195,17 @@ public class UserController : ControllerBase
     /// <summary>
     /// Delete a user
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Administrateur")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
         try
         {
             var deleted = await _service.DeleteUserAsync(id, cancellationToken);
 
-            if (!deleted)
+            if (!deleted.IsSuccess)
             {
                 return NotFound($"User with ID {id} not found");
             }

@@ -15,4 +15,8 @@ public interface IQuizzRepository : IBaseRepository<Quizz>
     Task<Quizz?> FindByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    Task<Quizz?> GetQuizzNoTrackingByRessourceId(
+        Guid ressourceId,
+        CancellationToken cancellationToken = default);
 }

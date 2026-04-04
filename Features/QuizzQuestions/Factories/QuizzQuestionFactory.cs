@@ -17,7 +17,7 @@ public class QuizzQuestionFactory : BaseFactory<QuizzQuestion>, IQuizzQuestionFa
         {
             return new QuizzQuestion
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.CreateVersion7(),
                 Question = dto.Question,
                 PossibleAnswers = dto.PossibleAnswers,
                 CorrectAnswer = dto.CorrectAnswer,

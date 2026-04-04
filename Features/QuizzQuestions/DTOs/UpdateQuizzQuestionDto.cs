@@ -2,7 +2,7 @@ namespace Ressource_API.Features.QuizzQuestions.Dtos;
 
 public class UpdateQuizzQuestionDto
 {
-    public string Question { get; set; } = string.Empty;
-    public string PossibleAnswers { get; set; } = string.Empty;
-    public string CorrectAnswer { get; set; } = string.Empty;
+    public required string Question { get; set; }
+    public required string PossibleAnswers { get; set; }
+    public required string CorrectAnswer { get; set; }
 }

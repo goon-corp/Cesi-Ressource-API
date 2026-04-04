@@ -5,5 +5,5 @@ namespace Ressource_API.Features.Quizzes.Factories;
 
 public interface IQuizzFactory
 {
-    Quizz Create(CreateQuizzDto dto);
+    Quizz Create(CreateQuizzDto dto, Guid ressourceId);
 }

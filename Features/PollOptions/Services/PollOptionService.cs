@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.PollOptions.Dtos;
@@ -5,7 +6,6 @@ using Ressource_API.Features.PollOptions.Extensions;
 using Ressource_API.Features.PollOptions.Factories;
 using Ressource_API.Features.PollOptions.Query;
 using Ressource_API.Features.PollOptions.Repositories;
-using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.Repositories;
 
 namespace Ressource_API.Features.PollOptions.Services;
@@ -53,25 +53,27 @@ public class PollOptionService : IPollOptionService
         return Result.Success(created.ToInfoDto());
     }
 
-    public async Task<Result<PollOptionInfoDto>> UpdatePollOptionAsync(
+    public async Task<Result<PollOptionInfoDto>> VotePollOptionAsync(
         Guid id,
-        Guid userId,
-        UpdatePollOptionDto dto,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindByIdAsync(id, cancellationToken);
-        var existingUser = await _userRepository.FindAsync(userId, cancellationToken);
+        var userIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+            return Result.Failure<PollOptionInfoDto>("User not authenticated");
 
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
         if (existing == null)
             return Result.Failure<PollOptionInfoDto>("PollOption not found");
 
-        if (existingUser != null && existing.Users.Contains(existingUser))
-        {
-            Result.Failure<PollOptionInfoDto>("Cet utilisateur a deja voté pour cette option.");
-        }
+        var existingUser = await _userRepository.FindAsync(userId, cancellationToken);
+        if (existingUser == null)
+            return Result.Failure<PollOptionInfoDto>("User not found");
 
-        existing.Option = dto.Option;
-        if (existingUser != null) existing.Users.Add(existingUser);
+        if (existing.Users.Contains(existingUser))
+            return Result.Failure<PollOptionInfoDto>("User has already voted for this option");
+
+        existing.Users.Add(existingUser);
         existing.Poll.VoteCount++;
         existing.UpdateTime = DateTime.UtcNow;
 

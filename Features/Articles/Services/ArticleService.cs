@@ -23,8 +23,7 @@ public class ArticleService : IArticleService
     public async Task<Result<ReturnArticleDto>> GetArticleByRessourceIdAsync(Guid ressourceId,
         CancellationToken cancellationToken = default)
     {
-        var article =
-            await _repository.FirstOrDefaultAsyncAsNoTracking(a => a.RessourceId == ressourceId, cancellationToken);
+        var article = await _repository.GetArticleNoTrackingByRessourceId(ressourceId, cancellationToken);
         if (article is null) return Result.Failure<ReturnArticleDto>("Article not found");
 
         return Result.Success(article.ToReturnDto());
