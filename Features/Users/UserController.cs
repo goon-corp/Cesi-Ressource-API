@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Logins.Services;
 using Ressource_API.Features.Ressources.Dtos;
+using Ressource_API.Features.Users.Dtos;
 using Ressource_API.Features.Users.Models;
+using Ressource_API.Features.Users.Query;
 using Ressource_API.Features.Users.UserDtos;
 using Ressource_API.Features.Users.Services;
 
@@ -25,24 +27,24 @@ public class UserController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all users
-    /// </summary>
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<User>>> GetAllUsers(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var users = await _service.GetAllUsersAsync(cancellationToken);
-            return Ok(users);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving all users");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving users");
-        }
-    }
+    // /// <summary>
+    // /// Get all users
+    // /// </summary>
+    // [HttpGet]
+    // [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
+    // public async Task<ActionResult<IEnumerable<User>>> GetAllUsers(CancellationToken cancellationToken)
+    // {
+    //     try
+    //     {
+    //         var users = await _service.GetAllUsersAsync(cancellationToken);
+    //         return Ok(users);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _logger.LogError(ex, "Error retrieving all users");
+    //         return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving users");
+    //     }
+    // }
 
     /// <summary>
     /// Get a user by ID
@@ -160,62 +162,117 @@ public class UserController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Update an existing user
+     /// <summary>
+    /// Get all users (paginated)
     /// </summary>
-    [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<User>> UpdateUser(Guid id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedList<UserInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<UserInfoDto>>> GetPaginatedUsers(
+        [FromQuery] UserQuery query,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        var result = await _service.GetPaginatedUsersAsync(query, cancellationToken);
 
-            var updatedUser = await _service.UpdateUserAsync(id, dto, cancellationToken);
-
-            if (!updatedUser.IsSuccess)
-            {
-                return NotFound($"User not updated");
-            }
-
-            return Ok(updatedUser.Data);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating user with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the user");
-        }
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
     }
 
     /// <summary>
-    /// Delete a user
+    /// Get the current authenticated user
+    /// </summary>
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<UserInfoDto>> GetCurrentUser(CancellationToken cancellationToken)
+    {
+        var result = await _service.GetCurrentUserAsync(User, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => Unauthorized(error));
+    }
+
+    /// <summary>
+    /// Get a user by ID
+    /// </summary>
+    [HttpGet("get-user-by-id/{id:guid}")]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserInfoDto>> GetUserByIdAdmin(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.GetUserByIdAsync(id, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
+    }
+
+    /// <summary>
+    /// Create a new user
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserInfoDto>> CreateUser(
+        [FromBody] CreateUserDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _service.CreateUserAsync(dto, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => CreatedAtAction(
+                nameof(GetUserByIdAdmin),
+                new { id = data.Id },
+                data),
+            onFailure: error => Conflict(error));
+    }
+
+    /// <summary>
+    /// Update a user
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserInfoDto>> UpdateUser(
+        Guid id,
+        [FromBody] UpdateUserDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _service.UpdateUserAsync(id, dto, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => error.Contains("not found")
+                ? NotFound(error)
+                : Conflict(error));
+    }
+
+    /// <summary>
+    /// Soft delete a user
     /// </summary>
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Administrateur")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteUser(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var deleted = await _service.DeleteUserAsync(id, cancellationToken);
+        var result = await _service.DeleteUserAsync(id, cancellationToken);
 
-            if (!deleted.IsSuccess)
-            {
-                return NotFound($"User with ID {id} not found");
-            }
-
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting user with ID {Id}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the user");
-        }
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
     }
 }

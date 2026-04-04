@@ -1,5 +1,6 @@
 using Ressource_API.Features.UserRoles.Extensions;
 using Ressource_API.Features.UserRoles.UserRoleDtos;
+using Ressource_API.Features.Users.Dtos;
 using Ressource_API.Features.Users.Models;
 using Ressource_API.Features.Users.UserDtos;
 
@@ -39,6 +40,22 @@ public static class UserExtensions
                 UpdateTime = user.UpdateTime,
                 DeletionTime = user.DeletionTime,
                 UserRoleId = user.UserRoleId
+            };
+        }
+        
+        public UserInfoDto ToInfoDto()
+        {
+            return new UserInfoDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserName = user.UserName,
+                IsActive = user.IsActive,
+                UserRoleId = user.UserRoleId,
+                CreationTime = user.CreationTime,
+                UpdateTime = user.UpdateTime,
+                DeletionTime = user.DeletionTime
             };
         }
     }
