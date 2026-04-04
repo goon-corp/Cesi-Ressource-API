@@ -4,7 +4,6 @@ using Ressource_API.Features.PasswordInfos.Models;
 using Ressource_API.Features.PollOptions.Models;
 using Ressource_API.Features.ProfilePictures.Models;
 using Ressource_API.Features.QuizzAnswer.Models;
-using Ressource_API.Features.QuizzQuestions.Models;
 using Ressource_API.Features.SessionMessages.Models;
 using Ressource_API.Features.UserRoles.Models;
 using Address = Ressource_API.Features.Addresses.Models.Address;
@@ -73,8 +72,6 @@ public partial class User
     public virtual ICollection<Event> Events { get; set; } = new List<Event>();
 
     public virtual ICollection<PollOption> PollOptions { get; set; } = new List<PollOption>();
-
-    public virtual ICollection<QuizzQuestion> QuizzQuestions { get; set; } = new List<QuizzQuestion>();
 
     public virtual ICollection<Ressource> LikedRessources { get; set; } = new List<Ressource>();
 
