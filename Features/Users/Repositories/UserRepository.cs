@@ -9,6 +9,9 @@ using Ressource_API.Features.Ressources.Extensions;
 using Ressource_API.Features.RessourceStatuses.RessourceStatusDtos;
 using Ressource_API.Features.RessourceTypes.RessourceTypeDtos;
 using Ressource_API.Features.Tags.TagDtos;
+using Ressource_API.Features.Users.Dtos;
+using Ressource_API.Features.Users.Extensions;
+using Ressource_API.Features.Users.Query;
 using Ressource_API.Features.Users.UserDtos;
 
 namespace Ressource_API.Features.Users.Repositories;
@@ -139,5 +142,72 @@ public class UserRepository : BaseRepository<User>, IUserRepository
             .ToListAsync(cancellationToken);
 
         return new PaginatedList<ReturnRessourceDto>(dtos, query.page, query.size, totalCount);
+    }
+    public async Task<PaginatedList<UserInfoDto>> PaginatedUsersAsync(
+         UserQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var users = _context.Users
+            .AsQueryable()
+            .OrderByDescending(u => u.CreationTime)
+            .Where(u => u.DeletionTime == null);
+
+        if (!string.IsNullOrWhiteSpace(query.UserName))
+            users = users.Where(u => u.UserName.Contains(query.UserName));
+
+        if (!string.IsNullOrWhiteSpace(query.FirstName))
+            users = users.Where(u => u.FirstName.Contains(query.FirstName));
+
+        if (!string.IsNullOrWhiteSpace(query.LastName))
+            users = users.Where(u => u.LastName.Contains(query.LastName));
+
+        if (query.UserRoleId.HasValue)
+            users = users.Where(u => u.UserRoleId == query.UserRoleId.Value);
+
+        if (query.IsActive.HasValue)
+            users = users.Where(u => u.IsActive == query.IsActive.Value);
+
+        if (query.CreatedAt.HasValue)
+        {
+            var date = query.CreatedAt.Value.ToDateTime(TimeOnly.MinValue);
+            users = users.Where(u => u.CreationTime.Date == date);
+        }
+
+        if (query.IsDeleted is not null)
+        {
+            users = (bool)query.IsDeleted
+                ? users.Where(u => u.DeletionTime != null)
+                : users.Where(u => u.DeletionTime == null);
+        }
+
+        var totalCount = await users.CountAsync(cancellationToken);
+
+        var entities = await users
+            .Include(u => u.UserRole)
+            .Skip((query.page - 1) * query.size)
+            .Take(query.size)
+            .ToListAsync(cancellationToken);
+
+        return new PaginatedList<UserInfoDto>(
+            entities.Select(u => u.ToInfoDto()).ToList(),
+            query.page, query.size, totalCount);
+    }
+
+    public async Task<User?> FindByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Include(u => u.UserRole)
+            .FirstOrDefaultAsync(u => u.Id == id && u.DeletionTime == null, cancellationToken);
+    }
+
+    public async Task<User?> FindByUserNameAsync(
+        string userName,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Include(u => u.UserRole)
+            .FirstOrDefaultAsync(u => u.UserName == userName && u.DeletionTime == null, cancellationToken);
     }
 }

@@ -1,9 +1,13 @@
+using System.Security.Claims;
 using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Ressources.Dtos;
 using Ressource_API.Features.UserRoles.Repositories;
+using Ressource_API.Features.Users.Dtos;
 using Ressource_API.Features.Users.Extensions;
+using Ressource_API.Features.Users.Factories;
 using Ressource_API.Features.Users.Models;
+using Ressource_API.Features.Users.Query;
 using Ressource_API.Features.Users.UserDtos;
 using Ressource_API.Features.Users.Repositories;
 
@@ -13,69 +17,108 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _repository;
     private readonly IUserRoleRepository _roleRepository;
+    private readonly IUserFactory _factory;
 
     public UserService(
-        IUserRepository repository, IUserRoleRepository roleRepository)
+        IUserRepository repository, IUserRoleRepository roleRepository, IUserFactory factory)
     {
         _repository = repository;
         _roleRepository = roleRepository;
+        _factory = factory;
     }
 
-    public async Task<IEnumerable<User>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+public async Task<Result<PaginatedList<UserInfoDto>>> GetPaginatedUsersAsync(
+        UserQuery query,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.ListAsync(cancellationToken);
+        var result = await _repository.PaginatedUsersAsync(query, cancellationToken);
+        return Result.Success(result);
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<UserInfoDto>> GetUserByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        return await _repository.FindWithUserRoleAsync(id);
+        var user = await _repository.FindByIdAsync(id, cancellationToken);
+
+        if (user == null)
+            return Result.Failure<UserInfoDto>("User not found");
+
+        return Result.Success(user.ToInfoDto());
     }
-    
-    
-    public async Task<Result<ReturnUserDto>> UpdateUserAsync(Guid id, UpdateUserDto dto, CancellationToken cancellationToken = default)
+
+    public async Task<Result<UserInfoDto>> GetCurrentUserAsync(
+        ClaimsPrincipal principal,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
+        var currentUserIdStr = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
+            return Result.Failure<UserInfoDto>("User not authenticated or invalid user ID");
+
+        var user = await _repository.FindByIdAsync(userId, cancellationToken);
+
+        if (user == null)
+            return Result.Failure<UserInfoDto>("User not found");
+
+        return Result.Success(user.ToInfoDto());
+    }
+
+    public async Task<Result<UserInfoDto>> CreateUserAsync(
+        CreateUserDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var alreadyExists = await _repository.FindByUserNameAsync(dto.UserName, cancellationToken);
+
+        if (alreadyExists != null)
+            return Result.Failure<UserInfoDto>("Username is already taken");
+
+        var user = _factory.Create(dto);
+        var created = await _repository.AddAsync(user, cancellationToken);
+
+        return Result.Success(created.ToInfoDto());
+    }
+
+    public async Task<Result<UserInfoDto>> UpdateUserAsync(
+        Guid id,
+        UpdateUserDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
+
         if (existing == null)
+            return Result.Failure<UserInfoDto>("User not found");
+
+        if (existing.UserName != dto.UserName)
         {
-            return Result.Failure<ReturnUserDto>("User not found");
+            var userNameTaken = await _repository.FindByUserNameAsync(dto.UserName, cancellationToken);
+            if (userNameTaken != null)
+                return Result.Failure<UserInfoDto>("Username is already taken");
         }
-        
+
         existing.FirstName = dto.FirstName;
         existing.LastName = dto.LastName;
         existing.UserName = dto.UserName;
-        existing.IsActive = dto.IsActive;
-        existing.CreationTime = dto.CreationTime;
-        existing.UpdateTime = dto.UpdateTime;
-        existing.DeletionTime = dto.DeletionTime;
-        existing.UserRoleId = dto.UserRoleId;
-        
-        
-        var roleExists = await _roleRepository.FindAsync(dto.UserRoleId, cancellationToken);
-        if (roleExists is null)
-        {
-            return Result.Failure<ReturnUserDto>("Invalid user role");
-        }
-        existing.UserRoleId = dto.UserRoleId;
-        
+        existing.UpdateTime = DateTime.UtcNow;
+
         await _repository.UpdateAsync(existing, cancellationToken);
-        return Result.Success<ReturnUserDto>(existing.ToReturnDto());
+
+        return Result.Success(existing.ToInfoDto());
     }
 
-    public async Task<Result> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteUserAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
-        
-        if (existing == null)
-        {
-            return Result.Failure("User not found");
-        }
+        var existing = await _repository.FindByIdAsync(id, cancellationToken);
 
-        
-        
-        
-        await _repository.DeleteAsync(existing, cancellationToken);
-        
-        return Result.Success("User and it's related content successfully deleted");
+        if (existing == null)
+            return Result.Failure("User not found");
+
+        existing.DeletionTime = DateTime.UtcNow;
+        await _repository.UpdateAsync(existing, cancellationToken);
+
+        return Result.Success();
     }
     
     
