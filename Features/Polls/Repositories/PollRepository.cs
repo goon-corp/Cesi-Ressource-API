@@ -36,6 +36,7 @@ public class PollRepository : BaseRepository<Poll>, IPollRepository
             .Include(p => p.Ressource)
                 .ThenInclude(r => r.Tags)
             .Include(p => p.PollsOptions)
+            .AsSingleQuery()
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
             .ToListAsync(cancellationToken);
@@ -59,6 +60,7 @@ public class PollRepository : BaseRepository<Poll>, IPollRepository
             .Include(p => p.Ressource)
                 .ThenInclude(r => r.Tags)
             .Include(p => p.PollsOptions)
+            .AsSingleQuery()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
@@ -76,6 +78,7 @@ public class PollRepository : BaseRepository<Poll>, IPollRepository
             .Include(p => p.Ressource)
                 .ThenInclude(r => r.Tags)
             .Include(p => p.PollsOptions)
+            .AsSingleQuery()
             .FirstOrDefaultAsync(p => p.RessourceId == ressourceId, cancellationToken);
     }
 }
