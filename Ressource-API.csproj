@@ -28,6 +28,7 @@
     
     <!-- PRIVATE PACKAGE -->
     <PackageReference Include="SimplyAuth" Version="1.0.3" />
+<!--    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />-->
   </ItemGroup>
 
 </Project>
