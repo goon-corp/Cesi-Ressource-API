@@ -91,8 +91,7 @@ public class QuizzQuestionService : IQuizzQuestionService
         // existing.Question = dto.Question;
         // existing.PossibleAnswers = dto.PossibleAnswers;
         // existing.CorrectAnswer = dto.CorrectAnswer;
-        if (existingUser != null && existing.Users.Contains(existingUser)) return Result.Failure<QuizzQuestionInfoDto>("L'utilisateur a deja participé");
-        if (existingUser != null) existing.Users.Add(existingUser);
+        if (existing.QuestionAnswers.Any(qa => qa.UserId == userId)) return Result.Failure<QuizzQuestionInfoDto>("L'utilisateur a deja participé");
         existing.Quizz.ParticipationCount++;
         existing.UpdateTime = DateTime.UtcNow;
 
