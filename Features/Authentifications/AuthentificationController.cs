@@ -69,8 +69,9 @@ public class AuthentificationController : ControllerBase
                     {
                         HttpOnly = true,
                         Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTime.UtcNow.AddDays(15)
+                        SameSite = SameSiteMode.None,
+                        Expires = DateTime.UtcNow.AddDays(15),
+                        Path = "/api/auth/refresh-token"
                     });
 
                     return Ok(new { accessToken = tokens.AccessToken });
