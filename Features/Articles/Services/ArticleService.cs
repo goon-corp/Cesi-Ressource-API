@@ -63,7 +63,7 @@ public class ArticleService : IArticleService
     public async Task<Result> DeleteArticleAsync(Guid id, ClaimsPrincipal context,
         CancellationToken cancellationToken = default)
     {
-        var existing = await _repository.FindAsync(id, cancellationToken);
+        var existing = await _repository.GetArticle(id, cancellationToken);
         if (existing == null) return Result.Failure<ReturnArticleDto>("Article not found");
 
         var authResult = AuthorizationUtils.IsAdminOrOwner(existing.Ressource.UserId, context, cancellationToken);

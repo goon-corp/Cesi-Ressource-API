@@ -78,14 +78,14 @@ public class EventService : IEventService
         if (eventToDelete is null)
             return Result.Failure("Event not found");
 
-        var ressourceToDelete = await _ressourceRepository.FirstOrDefaultAsync(r => r.Id == eventToDelete.RessourceId, token);
-
-        if (ressourceToDelete is null)
-            return Result.Failure("Ressource not found");
+        var ressourceId = eventToDelete.RessourceId;
 
         await _eventRepository.RemoveAllMembersAsync(eventId, token);
         await _eventRepository.DeleteAsync(eventToDelete, token);
-        await _ressourceRepository.DeleteAsync(ressourceToDelete, token);
+
+        var ressourceToDelete = await _ressourceRepository.FirstOrDefaultAsync(r => r.Id == ressourceId, token);
+        if (ressourceToDelete is not null)
+            await _ressourceRepository.DeleteAsync(ressourceToDelete, token);
 
         return Result.Success();
     }
