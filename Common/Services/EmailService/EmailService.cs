@@ -15,8 +15,8 @@ public class EmailService : IEmailService
     {
         _emailSender = emailSender;
         _emailLogService = emailLogService;
-        _baseUrl = Environment.GetEnvironmentVariable("URL_FRONT") 
-            ?? throw new KeyNotFoundException("URL_FRONT environment variable is not set");
+        _baseUrl = Environment.GetEnvironmentVariable("URL_CLIENT") 
+            ?? throw new KeyNotFoundException("URL_CLIENT environment variable is not set");
     }
 
     public async Task<Result> SendRegisteringConfirmationEmail(
