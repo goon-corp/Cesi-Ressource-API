@@ -5,4 +5,5 @@ namespace Ressource_API.Features.Sessions.Repositories;
 
 public interface ISessionRepository : IBaseRepository<Session>
 {
+    Task<Session?> FindWithMessagesAsync(Guid id, CancellationToken cancellationToken = default);
 }

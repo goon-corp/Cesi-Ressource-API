@@ -5,4 +5,5 @@ namespace Ressource_API.Features.SessionMessages.Repositories;
 
 public interface ISessionMessageRepository : IBaseRepository<SessionMessage>
 {
+    Task<List<SessionMessage>> GetBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
 }
