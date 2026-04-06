@@ -374,6 +374,9 @@ public static class DependenciesExtensions
 
         var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
                             throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
+        
+        var frontUrl = Environment.GetEnvironmentVariable("URL_FRONT") ??
+                       throw new InvalidOperationException("Client app URL 'URL_FRONT' not found.");
 
         builder.Services.AddCors(options =>
         {
@@ -389,6 +392,14 @@ public static class DependenciesExtensions
                 policy =>
                 {
                     policy.WithOrigins(backofficeUrl)
+                        .AllowCredentials()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            options.AddPolicy("AllowFront",
+                policy =>
+                {
+                    policy.WithOrigins(frontUrl)
                         .AllowCredentials()
                         .AllowAnyMethod()
                         .AllowAnyHeader();

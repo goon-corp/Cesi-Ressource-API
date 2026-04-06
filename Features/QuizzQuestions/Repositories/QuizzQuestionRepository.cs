@@ -45,7 +45,7 @@ public class QuizzQuestionRepository : BaseRepository<QuizzQuestion>, IQuizzQues
 
         var entities = await questions
             .Include(q => q.Quizz)
-            .Include(q => q.Users)
+            .Include(q => q.QuestionAnswers)
             .Skip((query.page - 1) * query.size)
             .Take(query.size)
             .ToListAsync(cancellationToken);
@@ -61,7 +61,7 @@ public class QuizzQuestionRepository : BaseRepository<QuizzQuestion>, IQuizzQues
     {
         return await _context.QuizzesQuestions
             .Include(q => q.Quizz)
-            .Include(q => q.Users)
+            .Include(q => q.QuestionAnswers)
             .FirstOrDefaultAsync(q => q.Id == id && q.DeletionTime == null, cancellationToken);
     }
 }
