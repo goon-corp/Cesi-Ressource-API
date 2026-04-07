@@ -50,6 +50,10 @@ public class ReportService : IReportService
         if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out var userId))
             return Result.Failure<ReportInfoDto>("User not authenticated or invalid user ID");
 
+        var userAlreadyReported = await _repository.FirstOrDefaultAsyncAsNoTracking(r => r.UserId == userId && r.RessourceId == dto.RessourceId , cancellationToken);
+        
+        if(userAlreadyReported is not null) return Result.Failure<ReportInfoDto>("You already reported that.");
+        
         var report = _factory.Create(dto, userId);
         var created = await _repository.AddAsync(report, cancellationToken);
 

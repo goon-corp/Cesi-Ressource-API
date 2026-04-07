@@ -7,7 +7,7 @@ using Ressource_API.Features.Reports.Services;
 namespace Ressource_API.Features.Reports;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/reports")]
 public class ReportController : ControllerBase
 {
     private readonly IReportService _service;
