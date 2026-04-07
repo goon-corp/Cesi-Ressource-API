@@ -143,6 +143,69 @@ public class UserRepository : BaseRepository<User>, IUserRepository
 
         return new PaginatedList<ReturnRessourceDto>(dtos, query.page, query.size, totalCount);
     }
+
+    public async Task<PaginatedList<ReturnRessourceDto>> GetUserAsideRessourcesAsync(Guid userId,
+        PagedQueryParameters query, CancellationToken cancellationToken = default)
+    {
+        var ressources = _context.RessourceProgressions
+            .Where(p => p.UserId == userId && p.IsAside && p.Ressource.DeletionTime == null)
+            .OrderByDescending(p => p.Ressource.CreationTime)
+            .Select(p => p.Ressource);
+
+        var totalCount = await ressources.CountAsync(cancellationToken);
+
+        var dtos = await ressources
+            .Skip((query.page - 1) * query.size)
+            .Take(query.size)
+            .Select(r => new ReturnRessourceDto
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                ThumbnailId = r.ThumbnailId,
+                Status = new RessourceStatusInfoDto { Id = r.RessourceStatus.Id, Label = r.RessourceStatus.Label },
+                ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
+                Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
+                Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
+                LikeCount = r.LikedByUsers.Count(),
+                FavoriteCount = r.FavoritedByUsers.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PaginatedList<ReturnRessourceDto>(dtos, query.page, query.size, totalCount);
+    }
+
+    public async Task<PaginatedList<ReturnRessourceDto>> GetUserExploitedRessourcesAsync(Guid userId,
+        PagedQueryParameters query, CancellationToken cancellationToken = default)
+    {
+        var ressources = _context.RessourceProgressions
+            .Where(p => p.UserId == userId && p.IsExploited && p.Ressource.DeletionTime == null)
+            .OrderByDescending(p => p.Ressource.CreationTime)
+            .Select(p => p.Ressource);
+
+        var totalCount = await ressources.CountAsync(cancellationToken);
+
+        var dtos = await ressources
+            .Skip((query.page - 1) * query.size)
+            .Take(query.size)
+            .Select(r => new ReturnRessourceDto
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                ThumbnailId = r.ThumbnailId,
+                Status = new RessourceStatusInfoDto { Id = r.RessourceStatus.Id, Label = r.RessourceStatus.Label },
+                ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
+                Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
+                Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
+                LikeCount = r.LikedByUsers.Count(),
+                FavoriteCount = r.FavoritedByUsers.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        return new PaginatedList<ReturnRessourceDto>(dtos, query.page, query.size, totalCount);
+    }
+
     public async Task<PaginatedList<UserInfoDto>> PaginatedUsersAsync(
          UserQuery query,
         CancellationToken cancellationToken = default)
