@@ -54,25 +54,22 @@ public class RessourceService : IRessourceService
             ressourceQuery.RessourceTitle is not null)
             return await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
 
-        var isComplete = true;
-
         var cacheKey = $"ressources:p={ressourceQuery.page}:s={ressourceQuery.size}";
-        var incompleteRessources = new List<string> { "ressources:incompletePage" };
-        var completeRessources = new List<string> { "ressources:completePage" };
         var entryOptions = new HybridCacheEntryOptions();
+
+        PaginatedList<ReturnRessourceDto>? freshRessources = null;
 
         var ressources = await _cache.GetOrCreateAsync(cacheKey, async _ =>
             {
-                var ressources = await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
-                isComplete = ressources.Items.Count == ressourceQuery.size;
-
-                await RessourceCacheHandler(ressources, ressourceQuery, cacheKey);
-
-                return ressources;
+                freshRessources = await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
+                return freshRessources;
             },
             entryOptions,
-            isComplete ? completeRessources : incompleteRessources,
+            ["ressources:completePage"],
             cancellationToken);
+
+        if (freshRessources is not null)
+            await RessourceCacheHandler(freshRessources, ressourceQuery, cacheKey);
 
         return ressources;
     }
