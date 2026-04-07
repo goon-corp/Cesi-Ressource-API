@@ -162,7 +162,47 @@ public class UserController : ControllerBase
         }
     }
 
-     /// <summary>
+    /// <summary>
+    /// Return the list of aside ressources (watchlist) for a user
+    /// </summary>
+    [HttpGet("{id}/aside-ressources")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaginatedList<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetUserAsideRessources(Guid id, [FromQuery] PagedQueryParameters query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _service.GetUserAsideRessourcesById(id, query, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving aside ressources for user {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user aside ressources");
+        }
+    }
+
+    /// <summary>
+    /// Return the list of exploited (consulted) ressources for a user
+    /// </summary>
+    [HttpGet("{id}/exploited-ressources")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaginatedList<ReturnRessourceDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetUserExploitedRessources(Guid id, [FromQuery] PagedQueryParameters query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _service.GetUserExploitedRessourcesById(id, query, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving exploited ressources for user {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user exploited ressources");
+        }
+    }
+
+    /// <summary>
     /// Get all users (paginated)
     /// </summary>
     [HttpGet]

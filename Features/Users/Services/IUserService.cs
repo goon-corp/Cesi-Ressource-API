@@ -43,4 +43,10 @@ public interface IUserService
 
     Task<PaginatedList<ReturnRessourceDto>>
         GetUserAuthoredRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default);
+
+    Task<PaginatedList<ReturnRessourceDto>>
+        GetUserAsideRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default);
+
+    Task<PaginatedList<ReturnRessourceDto>>
+        GetUserExploitedRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default);
 }

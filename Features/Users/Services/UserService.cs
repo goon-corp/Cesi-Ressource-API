@@ -142,8 +142,16 @@ public async Task<Result<PaginatedList<UserInfoDto>>> GetPaginatedUsersAsync(
     
     public async Task<PaginatedList<ReturnRessourceDto>> GetUserAuthoredRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default)
     {
-        return await _repository.GetUserAuthoredRessourcesAsync(id,query);
+        return await _repository.GetUserAuthoredRessourcesAsync(id, query);
     }
 
-   
+    public async Task<PaginatedList<ReturnRessourceDto>> GetUserAsideRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetUserAsideRessourcesAsync(id, query, cancellationToken);
+    }
+
+    public async Task<PaginatedList<ReturnRessourceDto>> GetUserExploitedRessourcesById(Guid id, PagedQueryParameters query, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetUserExploitedRessourcesAsync(id, query, cancellationToken);
+    }
 }

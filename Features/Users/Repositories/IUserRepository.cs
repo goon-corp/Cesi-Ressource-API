@@ -26,4 +26,6 @@ public interface IUserRepository : IBaseRepository<User>
     Task<PaginatedList<ReturnRessourceDto>> GetUserAuthoredRessourcesAsync(Guid userId, PagedQueryParameters query, CancellationToken cancellationToken = default);
     Task<PaginatedList<ReturnRessourceDto>> GetUserLikedRessourcesAsync(Guid userId, PagedQueryParameters query, CancellationToken cancellationToken = default);
     Task<PaginatedList<ReturnRessourceDto>> GetUserFavoriteRessourcesAsync(Guid userId, PagedQueryParameters query, CancellationToken cancellationToken = default);
+    Task<PaginatedList<ReturnRessourceDto>> GetUserAsideRessourcesAsync(Guid userId, PagedQueryParameters query, CancellationToken cancellationToken = default);
+    Task<PaginatedList<ReturnRessourceDto>> GetUserExploitedRessourcesAsync(Guid userId, PagedQueryParameters query, CancellationToken cancellationToken = default);
 }
