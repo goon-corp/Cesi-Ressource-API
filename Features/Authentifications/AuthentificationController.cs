@@ -108,9 +108,14 @@ public class AuthentificationController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto? dto)
     {
-        var result = await _service.RefreshToken(dto);
+        var refreshToken = dto?.RefreshToken ?? Request.Cookies["refresh_token"];
+
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized(new { error = "Refresh token manquant." });
+
+        var result = await _service.RefreshToken(new RefreshTokenDto { RefreshToken = refreshToken });
 
         return result.Match<IActionResult>(
             onSuccess: tokens => Ok(tokens),
@@ -128,6 +133,12 @@ public class AuthentificationController : ControllerBase
             onFailure: error => BadRequest(new { error })
         );
     }
+
+    [Authorize]
+    [HttpGet("check")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult CheckAuth() => Ok();
 
     [Authorize]
     [HttpGet("token")]
