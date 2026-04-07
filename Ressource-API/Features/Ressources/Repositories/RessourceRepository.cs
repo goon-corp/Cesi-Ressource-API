@@ -137,6 +137,7 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
                 ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
                 Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
                 Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
+                UserId = r.UserId,
                 LikeCount = r.LikedByUsers.Count(),
                 FavoriteCount = r.FavoritedByUsers.Count()
             })
