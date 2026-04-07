@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Comments.CommentDtos;
 using Ressource_API.Features.Comments.Services;
 
@@ -25,6 +26,20 @@ public class CommentController : ControllerBase
     public async Task<ActionResult> GetAllComments(CancellationToken cancellationToken)
     {
         var result = await _service.GetAllCommentsAsync(cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
+    }
+
+    /// <summary>
+    /// Get paginated comments for a resource
+    /// </summary>
+    [HttpGet("ressource/{ressourceId:guid}")]
+    [ProducesResponseType(typeof(PagedResult<CommentInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetCommentsByRessource(Guid ressourceId, [FromQuery] PagedQueryParameters paging, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetCommentsByRessourceAsync(ressourceId, paging, cancellationToken);
 
         return result.Match<ActionResult>(
             onSuccess: data => Ok(data),

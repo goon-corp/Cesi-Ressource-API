@@ -17,7 +17,8 @@ public static class CommentExtensions
                 UpdateTime = comment.UpdateTime,
                 RessourceId = comment.RessourceId,
                 UserId = comment.UserId,
-                CommentId = comment.CommentId
+                CommentId = comment.CommentId,
+                UserName = comment.User?.UserName
             };
         }
     }
@@ -28,6 +29,8 @@ public static class CommentExtensions
         {
             return new()
             {
+                Id = Guid.CreateVersion7(),
+                CreationTime = DateTime.UtcNow,
                 Content = dto.Content,
                 UserId = dto.UserId,
                 RessourceId = dto.RessourceId,

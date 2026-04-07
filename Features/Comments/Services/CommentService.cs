@@ -1,3 +1,4 @@
+using Ressource_API.Common.Pagination;
 using Ressource_API.Common.ResultPattern;
 using Ressource_API.Features.Comments.CommentDtos;
 using Ressource_API.Features.Comments.Extensions;
@@ -19,6 +20,19 @@ public class CommentService : ICommentService
     {
         var result = await _repository.ListAsync(cancellationToken);
         return Result.Success(result.Select(c => c.ToInfoDto()).ToList());
+    }
+
+    public async Task<Result<PagedResult<CommentInfoDto>>> GetCommentsByRessourceAsync(Guid ressourceId, PagedQueryParameters paging, CancellationToken cancellationToken = default)
+    {
+        var (items, total) = await _repository.ListByRessourceAsync(ressourceId, paging.page, paging.size, cancellationToken);
+
+        return Result.Success(new PagedResult<CommentInfoDto>
+        {
+            Items = items.Select(c => c.ToInfoDto()).ToList(),
+            Total = total,
+            Page = paging.page,
+            Size = paging.size
+        });
     }
 
     public async Task<Result<CommentInfoDto>> GetCommentByIdAsync(Guid id, CancellationToken cancellationToken = default)
