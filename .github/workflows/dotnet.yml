@@ -21,8 +21,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-  - name: Add GitHub NuGet source
-      run: dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" --name GitHub --username TitouanML --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text
+      - name: Add GitHub NuGet source
+        run: dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" --name GitHub --username TitouanML --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
