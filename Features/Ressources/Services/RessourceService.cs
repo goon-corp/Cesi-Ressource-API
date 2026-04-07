@@ -64,7 +64,7 @@ public class RessourceService : IRessourceService
         var ressources = await _cache.GetOrCreateAsync(cacheKey, async _ =>
             {
                 var ressources = await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
-                isComplete = ressources.Count == ressourceQuery.size;
+                isComplete = ressources.Items.Count == ressourceQuery.size;
 
                 await RessourceCacheHandler(ressources, ressourceQuery, cacheKey);
 
@@ -80,7 +80,7 @@ public class RessourceService : IRessourceService
     public async Task RessourceCacheHandler(PaginatedList<ReturnRessourceDto> ressources, RessourceQuery ressourceQuery,
         string cacheKey)
     {
-        foreach (var ressource in ressources)
+        foreach (var ressource in ressources.Items)
         {
             var ressourcePagesCacheKey = $"invert:ressources:{ressource.Id}";
 
@@ -217,9 +217,9 @@ public class RessourceService : IRessourceService
         foreach (var pageKey in affectedPageKeys)
         {
             var page = await _cache.GetOrCreateAsync(pageKey,
-                async _ => await Task.FromResult(new PaginatedList<ReturnRessourceDto>()), cancellationToken: cancellationToken);
+                async _ => await Task.FromResult(new PaginatedList<ReturnRessourceDto>(new List<ReturnRessourceDto>(), 1, 1, 0)), cancellationToken: cancellationToken);
 
-            var entry = page.FirstOrDefault(r => r.Id == ressource.Id);
+            var entry = page.Items.FirstOrDefault(r => r.Id == ressource.Id);
             if (entry is not null)
             {
                 entry.Title = updated.Title;

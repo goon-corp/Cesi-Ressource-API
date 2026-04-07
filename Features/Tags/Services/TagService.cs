@@ -25,12 +25,10 @@ public class TagService : ITagService
         TagQuery tagQuery,
         CancellationToken cancellationToken = default)
     {
-             var tagsTask = _repository.PaginatedListAsync(tagQuery, cancellationToken);
-
         if (!string.IsNullOrWhiteSpace(tagQuery.TagName) ||
             tagQuery.CreatedAt.HasValue ||
             tagQuery.IsDeleted.HasValue)
-            return await tagsTask;
+            return await _repository.PaginatedListAsync(tagQuery, cancellationToken);;
 
         var isComplete = true;
 
@@ -41,8 +39,8 @@ public class TagService : ITagService
 
         var tags = await _cache.GetOrCreateAsync(cacheKey, async _ =>
             {
-                var tags = await tagsTask;
-                isComplete = tags.Count == tagQuery.size;
+                var tags = await _repository.PaginatedListAsync(tagQuery, cancellationToken);;
+                isComplete = tags.Items.Count == tagQuery.size;
 
                 await TagCacheHandler(tags, tagQuery, cacheKey);
 
@@ -114,7 +112,7 @@ public class TagService : ITagService
 
     public async Task TagCacheHandler(PaginatedList<Tag> tags, TagQuery tagQuery, string cacheKey)
     {
-        foreach (var tag in tags)
+        foreach (var tag in tags.Items)
         {
             var tagPagesCacheKey = $"invert:tags:{tag.Id}";
 
@@ -134,7 +132,7 @@ public class TagService : ITagService
         foreach (var pageKey in affectedPageKeys)
         {
             var page = await _cache.GetOrCreateAsync(pageKey,
-                async _ => { return await Task.FromResult(new PaginatedList<Tag>()); });
+                async _ => { return await Task.FromResult(new PaginatedList<Tag>(new List<Tag>(), 1, 1, 0)); });
 
             UpdateTagInPage(tag, page);
             await _cache.SetAsync(pageKey, page);
@@ -143,7 +141,7 @@ public class TagService : ITagService
 
     private void UpdateTagInPage(Tag existing, PaginatedList<Tag> page)
     {
-        foreach (var tag in page)
+        foreach (var tag in page.Items)
             if (existing.Id == tag.Id)
             {
                 tag.Label = existing.Label;
