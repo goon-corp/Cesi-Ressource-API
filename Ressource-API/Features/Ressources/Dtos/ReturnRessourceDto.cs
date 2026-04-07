@@ -15,6 +15,7 @@ public class ReturnRessourceDto
     public RessourceConfidentialityTypeInfoDto? ConfidentialityType { get; set; }
     public RessourceTypeInfoDto? Type { get; set; }
     public IEnumerable<ReturnTagDto> Tags { get; set; } = [];
+    public Guid UserId { get; set; }
     public int LikeCount { get; set; }
     public int FavoriteCount { get; set; }
 }

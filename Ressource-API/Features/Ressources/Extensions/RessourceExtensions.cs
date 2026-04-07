@@ -22,7 +22,8 @@ public static class RessourceExtensions
                 Status = ressource.RessourceStatus.ToReturnDto(),
                 ConfidentialityType = ressource.RessourceConfidentialityType.ToReturnDto(),
                 Type = ressource.RessourceType.ToReturnDto(),
-                Tags = ressource.Tags.Select(t => t.ToDto())
+                Tags = ressource.Tags.Select(t => t.ToDto()),
+                UserId = ressource.UserId
             };
         }
     }
