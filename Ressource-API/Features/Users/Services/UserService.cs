@@ -99,6 +99,7 @@ public async Task<Result<PaginatedList<UserInfoDto>>> GetPaginatedUsersAsync(
         existing.FirstName = dto.FirstName;
         existing.LastName = dto.LastName;
         existing.UserName = dto.UserName;
+        existing.UserRoleId = dto.UserRoleId;
         existing.UpdateTime = DateTime.UtcNow;
 
         await _repository.UpdateAsync(existing, cancellationToken);
