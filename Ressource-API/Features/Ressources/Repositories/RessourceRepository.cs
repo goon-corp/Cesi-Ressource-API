@@ -18,6 +18,27 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
     {
     }
 
+    public async Task<ReturnRessourceDto?> GetRessourceByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Ressources
+            .Where(r => r.Id == id && r.DeletionTime == null)
+            .Select(r => new ReturnRessourceDto
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                ThumbnailId = r.ThumbnailId,
+                Status = new RessourceStatusInfoDto { Id = r.RessourceStatus.Id, Label = r.RessourceStatus.Label },
+                ConfidentialityType = new RessourceConfidentialityTypeInfoDto { Id = r.RessourceConfidentialityType.Id, Label = r.RessourceConfidentialityType.Label },
+                Type = new RessourceTypeInfoDto { Id = r.RessourceType.Id, Label = r.RessourceType.Label },
+                Tags = r.Tags.Select(t => new ReturnTagDto { Id = t.Id, Label = t.Label }),
+                UserId = r.UserId,
+                LikeCount = r.LikedByUsers.Count(),
+                FavoriteCount = r.FavoritedByUsers.Count()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<Ressource?> FindWithTagsAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Ressources

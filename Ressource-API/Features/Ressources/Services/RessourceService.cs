@@ -44,6 +44,17 @@ public class RessourceService : IRessourceService
         _typeRepository = typeRepository;
     }
 
+    public async Task<ReturnRessourceDto?> GetRessourceByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = $"ressources:{id}";
+
+        var ressource = await _cache.GetOrCreateAsync(cacheKey, async _ =>
+            await _repository.GetRessourceByIdAsync(id, cancellationToken),
+            cancellationToken: cancellationToken);
+
+        return ressource;
+    }
+
     public async Task<PaginatedList<ReturnRessourceDto>> GetAllRessourcesAsync(RessourceQuery ressourceQuery,
         CancellationToken cancellationToken = default)
     {

@@ -23,6 +23,19 @@ public class RessourceController : ControllerBase
     }
 
     /// <summary>
+    /// Get a ressource by id
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ReturnRessourceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetRessourceById([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var ressource = await _service.GetRessourceByIdAsync(id, cancellationToken);
+        if (ressource is null) return NotFound();
+        return Ok(ressource);
+    }
+
+    /// <summary>
     /// Get all ressources
     /// </summary>
     [HttpGet]
