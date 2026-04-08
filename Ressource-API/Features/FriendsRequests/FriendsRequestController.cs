@@ -7,7 +7,7 @@ using Ressource_API.Features.FriendsRequests.Services;
 namespace Ressource_API.Features.FriendsRequests;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/friends-requests")]
 public class FriendsRequestController : ControllerBase
 {
     private readonly IFriendsRequestService _service;
