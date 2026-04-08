@@ -90,6 +90,19 @@ public class RessourceController : ControllerBase
             onFailure: NotFound);
     }
 
+    [HttpGet("{id:guid}/user-status")]
+    [Authorize]
+    [ProducesResponseType(typeof(RessourceUserStatusDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserStatus([FromRoute] Guid id)
+    {
+        var result = await _service.GetUserStatus(id, User);
+
+        return result.Match<IActionResult>(
+            onSuccess: status => Ok(status),
+            onFailure: NotFound);
+    }
+
     [HttpPost("{id:guid}/favorite")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

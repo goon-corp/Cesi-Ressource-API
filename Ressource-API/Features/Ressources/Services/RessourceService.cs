@@ -204,6 +204,17 @@ public class RessourceService : IRessourceService
         return Result.Success();
     }
 
+    public async Task<Result<RessourceUserStatusDto>> GetUserStatus(Guid id, ClaimsPrincipal user)
+    {
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null) return Result.Failure<RessourceUserStatusDto>("User not authenticated");
+
+        var status = await _repository.GetUserStatusAsync(id, Guid.Parse(userId));
+        if (status is null) return Result.Failure<RessourceUserStatusDto>("Ressource not found");
+
+        return Result.Success(status);
+    }
+
     private async Task UpdateAffectedPages(Ressource ressource, CancellationToken cancellationToken = default)
     {
         var updated = ressource.ToReturnDto();

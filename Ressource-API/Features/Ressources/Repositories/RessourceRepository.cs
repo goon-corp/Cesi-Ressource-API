@@ -80,6 +80,19 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
         return true;
     }
 
+    public async Task<RessourceUserStatusDto?> GetUserStatusAsync(Guid ressourceId, Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Ressources
+            .Where(r => r.Id == ressourceId)
+            .Select(r => new RessourceUserStatusDto
+            {
+                IsLiked = r.LikedByUsers.Any(u => u.Id == userId),
+                IsFavorited = r.FavoritedByUsers.Any(u => u.Id == userId)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<PaginatedList<ReturnRessourceDto>> PaginatedRessourcesAsync(RessourceQuery query,
         CancellationToken cancellationToken = default)
     {
