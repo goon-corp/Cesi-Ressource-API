@@ -36,6 +36,17 @@ public class EmailService : IEmailService
             mainContent: $"""
                 <p>{message}</p>
                 <p>Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
+                <div style="margin: 24px 0; padding: 20px; background-color: #f4f4f7; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <p style="margin: 0 0 10px; font-size: 13px; color: #666666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Token de confirmation — Application mobile
+                    </p>
+                    <p style="margin: 0 0 10px; font-family: 'Courier New', Courier, monospace; font-size: 15px; color: #1a1a2e; word-break: break-all; background-color: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e0e0e0;">
+                        {confirmationToken}
+                    </p>
+                    <p style="margin: 0; font-size: 12px; color: #888888;">
+                        Copiez ce token dans l'application mobile pour confirmer votre compte.
+                    </p>
+                </div>
             """,
             buttonText: "Confirmer mon email",
             buttonLink: confirmationLink,
