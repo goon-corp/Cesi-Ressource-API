@@ -367,6 +367,45 @@ public static class DependenciesExtensions
         );
     }
 
+    // private static void AddCorsConfiguration(this WebApplicationBuilder builder)
+    // {
+    //     var clientUrl = Environment.GetEnvironmentVariable("URL_CLIENT") ??
+    //                     throw new InvalidOperationException("Client app URL 'URL_CLIENT' not found.");
+    //
+    //     var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
+    //                         throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
+    //     
+    //     var frontUrl = Environment.GetEnvironmentVariable("URL_FRONT") ??
+    //                    throw new InvalidOperationException("Client app URL 'URL_FRONT' not found.");
+    //
+    //     builder.Services.AddCors(options =>
+    //     {
+    //         options.AddPolicy("AllowClientApp",
+    //             policy =>
+    //             {
+    //                 policy
+    //                     .AllowAnyOrigin()
+    //                     .AllowAnyMethod()
+    //                     .AllowAnyHeader();
+    //             });
+    //         options.AddPolicy("AllowBackLog",
+    //             policy =>
+    //             {
+    //                 policy.WithOrigins(backofficeUrl)
+    //                     .AllowCredentials()
+    //                     .AllowAnyMethod()
+    //                     .AllowAnyHeader();
+    //             });
+    //         options.AddPolicy("AllowFront",
+    //             policy =>
+    //             {
+    //                 policy.WithOrigins(frontUrl)
+    //                     .AllowCredentials()
+    //                     .AllowAnyMethod()
+    //                     .AllowAnyHeader();
+    //             });
+    //     });
+    // }
     private static void AddCorsConfiguration(this WebApplicationBuilder builder)
     {
         var clientUrl = Environment.GetEnvironmentVariable("URL_CLIENT") ??
@@ -374,32 +413,16 @@ public static class DependenciesExtensions
 
         var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
                             throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
-        
+
         var frontUrl = Environment.GetEnvironmentVariable("URL_FRONT") ??
                        throw new InvalidOperationException("Client app URL 'URL_FRONT' not found.");
 
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowClientApp",
+            options.AddPolicy("AllowAll",
                 policy =>
                 {
-                    policy.WithOrigins(clientUrl)
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-                });
-            options.AddPolicy("AllowBackLog",
-                policy =>
-                {
-                    policy.WithOrigins(backofficeUrl)
-                        .AllowCredentials()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-                });
-            options.AddPolicy("AllowFront",
-                policy =>
-                {
-                    policy.WithOrigins(frontUrl)
+                    policy.WithOrigins(clientUrl, backofficeUrl, frontUrl)
                         .AllowCredentials()
                         .AllowAnyMethod()
                         .AllowAnyHeader();

@@ -212,9 +212,9 @@ public static class AppBuildingExtensions
 
     private static void AddCorsRules(this WebApplication app)
     {
-        app.UseCors("AllowFront");
-        app.UseCors("AllowClientApp");
-        app.UseCors("AllowBacklog");
+        app.UseCors("AllowAll");
+        
+        // app.UseCors("AllowFront");
     }
 
     private static void AddOpenApiMapping(this WebApplication app)
