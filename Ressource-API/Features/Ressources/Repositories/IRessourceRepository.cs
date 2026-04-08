@@ -4,6 +4,7 @@ using Ressource_API.Common.Pagination;
 using Ressource_API.Features.Ressources.Dtos;
 using Ressource_API.Features.Ressources.Query;
 
+
 namespace Ressource_API.Features.Ressources.Repositories;
 
 public interface IRessourceRepository : IBaseRepository<Ressource>
@@ -18,4 +19,6 @@ public interface IRessourceRepository : IBaseRepository<Ressource>
 
     // Returns true = now favorited, false = now unfavorited, null = ressource or user not found
     Task<bool?> ToggleFavoriteAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default);
+
+    Task<RessourceUserStatusDto?> GetUserStatusAsync(Guid ressourceId, Guid userId, CancellationToken cancellationToken = default);
 }

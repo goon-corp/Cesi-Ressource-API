@@ -21,4 +21,5 @@ public interface IRessourceService
     Task<bool> DeleteRessourceAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result> LikeRessource(Guid id, ClaimsPrincipal user);
     Task<Result> FavoriteRessource(Guid id, ClaimsPrincipal user);
+    Task<Result<RessourceUserStatusDto>> GetUserStatus(Guid id, ClaimsPrincipal user);
 }
