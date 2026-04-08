@@ -55,48 +55,10 @@ public class RessourceService : IRessourceService
         return ressource;
     }
 
-    public async Task<PaginatedList<ReturnRessourceDto>> GetAllRessourcesAsync(RessourceQuery ressourceQuery,
-        CancellationToken cancellationToken = default)
+    public async Task<PaginatedList<ReturnRessourceDto>> GetAllRessourcesAsync(RessourceQuery ressourceQuery, CancellationToken cancellationToken = default)
     {
-        if (!string.IsNullOrWhiteSpace(ressourceQuery.RessourceType) ||
-            ressourceQuery.RessourceTags is { Count: > 0 } ||
-            ressourceQuery.CreatedAt.HasValue ||
-            ressourceQuery.IsDeleted.HasValue ||
-            ressourceQuery.RessourceTitle is not null)
-            return await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
 
-        var cacheKey = $"ressources:p={ressourceQuery.page}:s={ressourceQuery.size}";
-        var entryOptions = new HybridCacheEntryOptions();
-
-        PaginatedList<ReturnRessourceDto>? freshRessources = null;
-
-        var ressources = await _cache.GetOrCreateAsync(cacheKey, async _ =>
-            {
-                freshRessources = await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
-                return freshRessources;
-            },
-            entryOptions,
-            ["ressources:completePage"],
-            cancellationToken);
-
-        if (freshRessources is not null)
-            await RessourceCacheHandler(freshRessources, ressourceQuery, cacheKey);
-
-        return ressources;
-    }
-
-    public async Task RessourceCacheHandler(PaginatedList<ReturnRessourceDto> ressources, RessourceQuery ressourceQuery,
-        string cacheKey)
-    {
-        foreach (var ressource in ressources.Items)
-        {
-            var ressourcePagesCacheKey = $"invert:ressources:{ressource.Id}";
-
-            var invertedRessourcesPages = await _cache.GetOrCreateAsync(ressourcePagesCacheKey,
-                async _ => { return await Task.FromResult(new HashSet<string>()); });
-            invertedRessourcesPages.Add(cacheKey);
-            await _cache.SetAsync(ressourcePagesCacheKey, invertedRessourcesPages);
-        }
+        return await _repository.PaginatedRessourcesAsync(ressourceQuery, cancellationToken);
     }
 
     public async Task<ReturnRessourceDto> CreateRessourceAsync(CreateRessourceDto dto, ClaimsPrincipal context,
@@ -138,7 +100,6 @@ public class RessourceService : IRessourceService
         };
 
         await _repository.AddAsync(ressource, token);
-        await _cache.RemoveByTagAsync("ressources:incompletePage", token);
 
         return ressource.ToReturnDto();
     }
@@ -169,8 +130,6 @@ public class RessourceService : IRessourceService
         existing.Tags = tags;
 
         await _repository.UpdateAsync(existing, cancellationToken);
-        await _cache.RemoveAsync($"ressources:{id}", cancellationToken);
-        await UpdateAffectedPages(existing, cancellationToken);
 
         return existing.ToReturnDto();
     }
@@ -180,15 +139,7 @@ public class RessourceService : IRessourceService
         var existing = await _repository.FindAsync(id, cancellationToken);
         if (existing is null) return false;
 
-        var affectedPageKeys = await _cache.GetOrCreateAsync($"invert:ressources:{id}",
-            async _ => await Task.FromResult(new HashSet<string>()));
-
-        foreach (var page in affectedPageKeys)
-            await _cache.RemoveAsync(page, cancellationToken);
-
         await _repository.DeleteAsync(existing, cancellationToken);
-        await _cache.RemoveAsync($"ressources:{id}", cancellationToken);
-        await _cache.RemoveAsync($"invert:ressources:{id}", cancellationToken);
 
         return true;
     }
@@ -224,33 +175,5 @@ public class RessourceService : IRessourceService
         if (status is null) return Result.Failure<RessourceUserStatusDto>("Ressource not found");
 
         return Result.Success(status);
-    }
-
-    private async Task UpdateAffectedPages(Ressource ressource, CancellationToken cancellationToken = default)
-    {
-        var updated = ressource.ToReturnDto();
-
-        var affectedPageKeys = await _cache.GetOrCreateAsync($"invert:ressources:{ressource.Id}",
-            async _ => await Task.FromResult(new HashSet<string>()), cancellationToken: cancellationToken);
-
-        foreach (var pageKey in affectedPageKeys)
-        {
-            var page = await _cache.GetOrCreateAsync(pageKey,
-                async _ => await Task.FromResult(new PaginatedList<ReturnRessourceDto>(new List<ReturnRessourceDto>(), 1, 1, 0)), cancellationToken: cancellationToken);
-
-            var entry = page.Items.FirstOrDefault(r => r.Id == ressource.Id);
-            if (entry is not null)
-            {
-                entry.Title = updated.Title;
-                entry.Description = updated.Description;
-                entry.ThumbnailId = updated.ThumbnailId;
-                entry.Status = updated.Status;
-                entry.ConfidentialityType = updated.ConfidentialityType;
-                entry.Type = updated.Type;
-                entry.Tags = updated.Tags;
-            }
-
-            await _cache.SetAsync(pageKey, page, cancellationToken: cancellationToken);
-        }
     }
 }
