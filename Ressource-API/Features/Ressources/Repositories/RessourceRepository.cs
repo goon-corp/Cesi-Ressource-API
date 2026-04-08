@@ -105,7 +105,7 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
 
         if (!string.IsNullOrWhiteSpace(query.RessourceTitle))
         {
-            ressources = ressources.Where(r => r.Title.Contains(query.RessourceTitle));
+            ressources = ressources.Where(r => EF.Functions.ILike(r.Title, $"%{query.RessourceTitle}%"));
         }
 
         // filtrage par tag
@@ -116,7 +116,7 @@ public class RessourceRepository : BaseRepository<Ressource>, IRessourceReposito
 
         if (!string.IsNullOrWhiteSpace(query.RessourceType))
         {
-            ressources = ressources.Where(r => r.RessourceType.Label.Contains(query.RessourceType));
+            ressources = ressources.Where(r => EF.Functions.ILike(r.RessourceType.Label, $"%{query.RessourceType}%"));
         }
 
         if (query.CreatedAt.HasValue)
