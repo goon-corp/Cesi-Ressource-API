@@ -1,0 +1,117 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Ressource_API.Common.Pagination;
+using Ressource_API.Features.Polls.Dtos;
+using Ressource_API.Features.Polls.Query;
+using Ressource_API.Features.Polls.Services;
+
+namespace Ressource_API.Features.Polls;
+
+[ApiController]
+[Authorize]
+[Route("api/polls")]
+public class PollController : ControllerBase
+{
+    private readonly IPollService _service;
+    private readonly ILogger<PollController> _logger;
+
+    public PollController(IPollService service, ILogger<PollController> logger)
+    {
+        _service = service;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Get all polls (paginated)
+    /// </summary>
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaginatedList<PollInfoDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaginatedList<PollInfoDto>>> GetPaginatedPolls(
+        [FromQuery] PollQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.GetPaginatedPollsAsync(query, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => StatusCode(StatusCodes.Status500InternalServerError, error));
+    }
+
+    /// <summary>
+    /// Get a poll by ressource ID
+    /// </summary>
+    [HttpGet("{ressourceId:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PollInfoDto>> GetPollByRessourceId(
+        [FromRoute] Guid ressourceId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.GetPollByRessourceIdAsync(ressourceId, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
+    }
+
+    /// <summary>
+    /// Create a new poll
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PollInfoDto>> CreatePoll(
+        [FromForm] CreatePollDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _service.CreatePollAsync(dto, User, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Created("poll", data),
+            onFailure: error => BadRequest(error));
+    }
+
+    /// <summary>
+    /// Update a poll
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(PollInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PollInfoDto>> UpdatePoll(
+        [FromRoute] Guid id,
+        [FromBody] UpdatePollDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _service.UpdatePollAsync(id, dto, User, cancellationToken);
+
+        return result.Match<ActionResult>(
+            onSuccess: data => Ok(data),
+            onFailure: error => NotFound(error));
+    }
+
+    /// <summary>
+    /// Delete a poll
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePoll(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.DeletePollAsync(id, cancellationToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => NotFound(error));
+    }
+}

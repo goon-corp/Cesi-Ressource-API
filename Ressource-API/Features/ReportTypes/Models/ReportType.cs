@@ -1,0 +1,18 @@
+﻿using System;
+using System.Collections.Generic;
+using Ressource_API.Features.Reports.Models;
+
+namespace Ressource_API.Features.ReportTypes.Models;
+
+public partial class ReportType
+{
+    public Guid Id { get; set; }
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
+    public string Label { get; set; } = null!;
+}
