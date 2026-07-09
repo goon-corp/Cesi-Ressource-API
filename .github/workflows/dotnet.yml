@@ -124,15 +124,15 @@ jobs:
         uses: docker/setup-buildx-action@v3
         
       - name: Build and push
-          uses: docker/build-push-action@v6
-          with:
-            context: ./Ressource-API
-            file: ./Ressource-API/Dockerfile
-            push: true
-            tags: ${{ steps.meta.outputs.tags }}
-            labels: ${{ steps.meta.outputs.labels }}
-            # Indispensable pour lier le secret de GitHub au Dockerfile
-            secrets: |
-              "NUGET_PAT=${{ secrets.NUGET_PAT }}"
-            cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
-            cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Ressource-API
+          file: ./Ressource-API/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Indispensable pour lier le secret de GitHub au Dockerfile
+          secrets: |
+            "NUGET_PAT=${{ secrets.NUGET_PAT }}"
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
