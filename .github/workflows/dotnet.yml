@@ -30,8 +30,12 @@ jobs:
     
       - name: Add GitHub NuGet source
         run: |
-          dotnet nuget remove source GitHub || true
-          dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" --name GitHub --username TitouanML --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text --username TitouanML --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text
+          dotnet nuget list source | grep -q "GitHub" && dotnet nuget remove source GitHub || true
+          dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" \
+            --name "GitHub" \
+            --username "TitouanML" \
+            --password "${{ secrets.NUGET_PAT }}" \
+            --store-password-in-clear-text
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -123,7 +127,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./Ressource-API
-          file: cesizen-backend/Dockerfile
+          file: ./Ressource-API/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
