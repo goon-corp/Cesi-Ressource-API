@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest # Repris de ta première pipeline pour éviter un blocage si tu n'as pas de runner self-hosted actif
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
