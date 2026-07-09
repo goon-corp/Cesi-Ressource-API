@@ -1,4 +1,4 @@
-# Consultez https://aka.ms/customizecontainer pour savoir comment personnaliser votre conteneur de débogage et comment Visual Studio utilise ce Dockerfile pour générer vos images afin d’accélérer le débogage.
+# Consultez https://aka.ms/customizecontainer pour savoir comment personnaliser votre conteneur de débogage et comment Visual Studio utilise ce Dockerfile pour générer vos images afin d’accélérer le débogage.
 
 # Cet index est utilisé lors de l’exécution à partir de VS en mode rapide (par défaut pour la configuration de débogage)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
@@ -13,7 +13,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Ressource-API.csproj", "."]
-RUN dotnet restore "./Ressource-API.csproj"
+
+# Modification ici : Montage du secret pour s'authentifier auprès du registre de TitouanML
+RUN --mount=type=secret,id=NUGET_PAT \
+    dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" --name GitHub --username TitouanML --password "$(cat /run/secrets/NUGET_PAT)" --store-password-in-clear-text && \
+    dotnet restore "./Ressource-API.csproj"
+
 COPY . .
 WORKDIR "/src/."
 RUN dotnet build "./Ressource-API.csproj" -c $BUILD_CONFIGURATION -o /app/build
