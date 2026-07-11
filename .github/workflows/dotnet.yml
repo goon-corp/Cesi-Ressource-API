@@ -56,7 +56,7 @@ jobs:
       - name: Begin SonarQube analysis
         run: >
           dotnet sonarscanner begin
-          /k:"cesizen-backend"
+          /k:"cesizen-ressource"
           /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
